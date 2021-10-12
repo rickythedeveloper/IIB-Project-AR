@@ -1,11 +1,13 @@
-const scene = document.getElementById('scene')
+const scene = document.getElementById('scene').object3D
 
 const sceneInit = () => {
-	const box = document.createElement('a-box')
-	box.setAttribute('position', '0 3 0')
-	box.setAttribute('material', 'opacity: 0.5;')
+	const geometry = new THREE.BoxGeometry()
+	const material = new THREE.MeshStandardMaterial({ color: 0xff0000, opacity: 0.5 })
+	const cube = new THREE.Mesh(geometry, material)
+	cube.position.z = 2
+	cube.position.y = 2
+	scene.add(cube)
 
-	scene.appendChild(box)
 	console.log(scene)
 }
 
