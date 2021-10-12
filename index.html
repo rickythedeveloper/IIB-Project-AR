@@ -6,16 +6,14 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Document</title>
 	<link rel="stylesheet" href="style.css">
-	<script src="index.js"></script>
+	<script src="index.js" defer type="module"></script>
 	<!-- include A-Frame obviously -->
 	<script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
 	<!-- include ar.js for A-Frame -->
 	<script src="https://jeromeetienne.github.io/AR.js/aframe/build/aframe-ar.js"></script>
 </head>
 <body>
-	<a-scene embedded arjs>
-		<!-- create your content here. just a box for now -->
-		<a-box position='0 3 0' material='opacity: 0.5;'></a-box>
+	<a-scene device-orientation-permission-ui="enabled: false" embedded arjs id='scene'>
 		<!-- define a camera which will move according to the marker position -->
 		<a-marker-camera preset='hiro'></a-marker-camera>
 	</a-scene>
