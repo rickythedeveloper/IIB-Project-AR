@@ -77,12 +77,13 @@ const updatePlaneColors = (newColors) => {
 	plane.geometry.attributes.color.needsUpdate = true;
 }
 
-const createSlider = (min, max, initialValue) => {
+const createSlider = (min, max, initialValue, step) => {
 	const slider = document.createElement('input')
 	slider.type = 'range'
 	slider.min = min
 	slider.max = max
 	slider.value = initialValue
+	slider.step = step
 	return slider
 }
 
@@ -91,13 +92,17 @@ scene.add(plane)
 updatePlaneVertices(vertices)
 updatePlaneColors(colors)
 
-
-const testSlider = createSlider(0, 100, 50)
+const testSlider = createSlider(0, 5, 3, 0.1)
 document.body.appendChild(testSlider)
 testSlider.style.zIndex = 1000
 testSlider.style.position = 'absolute'
-testSlider.style.top = 0
-testSlider.style.left = 0
+testSlider.style.top = '20px'
+testSlider.style.left = '20px'
 testSlider.oninput = (e) => {
-	console.log(e.target.value);
+	const y = e.target.value
+	const positionArray = plane.geometry.attributes.position.array
+	for (let i = 1; i < positionArray.length; i += 3) {
+		positionArray[i] = y
+	}
+	plane.geometry.attributes.position.needsUpdate = true;
 }
