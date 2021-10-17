@@ -1,17 +1,19 @@
-import { convertRowsToVertices } from "./utils.js";
+import { convertRowsToVertices, createSlider } from "./utils.js";
 
-const vertices = convertRowsToVertices([
-	[
-		[0.0, 3.0, 0.0],
-		[0.5, 3.0, 0.0],
-		[1.0, 3.0, 0.0]
-	],
-	[
-		[0.0, 3.0, 0.5],
-		[0.5, 3.0, 0.5],
-		[1.0, 3.0, 0.5]
-	]
-])
+const getVertices = (y) => {
+	return convertRowsToVertices([
+		[
+			[0.0, y, 0.0],
+			[0.5, y, 0.0],
+			[1.0, y, 0.0]
+		],
+		[
+			[0.0, y, 0.5],
+			[0.5, y, 0.5],
+			[1.0, y, 0.5]
+		]
+	])
+}
 
 const getColors = (time) => {
 	const halfAmplitudeValue = 1 / 2 + Math.sin(time * 2) / 4
@@ -30,32 +32,23 @@ const getColors = (time) => {
 	])
 }
 
-const scene = document.getElementById('scene').object3D
-
-let plane;
-
 const createPlane = (nVertices) => {
 	const vertexShader = `
-		attribute vec3 color;
-	
-		varying vec3 v_color;
-	
-		void main() {
-			v_color = color;
-			gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-		}
+	attribute vec3 color;	
+	varying vec3 v_color;
+	void main() {
+		v_color = color;
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	}
 	`
-
 	const fragmentShader = `
-		varying vec3 v_color;
-	
-		void main() {
-			gl_FragColor = vec4(v_color, 0.5);
-		}
+	varying vec3 v_color;
+	void main() {
+		gl_FragColor = vec4(v_color, 0.5);
+	}
 	`
 
 	const planeGeometry = new THREE.BufferGeometry()
-
 	const planeVertices = new Float32Array(nVertices * 3)
 	const colors = new Float32Array(nVertices * 3)
 	planeGeometry.setAttribute('position', new THREE.BufferAttribute(planeVertices, 3))
@@ -71,32 +64,18 @@ const createPlane = (nVertices) => {
 	return plane
 }
 
-const updatePlaneVertices = (newVertices) => {
+const updatePlaneVertices = (plane, newVertices) => {
 	plane.geometry.attributes.position.array = newVertices
 	plane.geometry.attributes.position.needsUpdate = true;
 }
 
-const updatePlaneColors = (newColors) => {
+const updatePlaneColors = (plane, newColors) => {
 	plane.geometry.attributes.color.array = newColors
 	plane.geometry.attributes.color.needsUpdate = true;
 }
 
-const createSlider = (min, max, initialValue, step) => {
-	const slider = document.createElement('input')
-	slider.type = 'range'
-	slider.min = min
-	slider.max = max
-	slider.value = initialValue
-	slider.step = step
-	return slider
-}
-
-plane = createPlane(vertices.length / 3)
-scene.add(plane)
-updatePlaneVertices(vertices)
-updatePlaneColors(getColors(0))
-
-const testSlider = createSlider(0, 5, 3, 0.1)
+const minY = 0, maxY = 5, initialY = 3.0, stepY = 0.1
+const testSlider = createSlider(minY, maxY, initialY, stepY)
 document.body.appendChild(testSlider)
 testSlider.style.zIndex = 1000
 testSlider.style.position = 'absolute'
@@ -110,9 +89,18 @@ testSlider.oninput = (e) => {
 	}
 	plane.geometry.attributes.position.needsUpdate = true;
 }
+
+const scene = document.getElementById('scene').object3D
+const initialVertices = getVertices(initialY)
+const plane = createPlane(initialVertices.length / 3)
+scene.add(plane)
+
 let time = 0
 const interval = 100
 setInterval(() => {
 	time += interval / 1000
-	updatePlaneColors(getColors(time))
+	updatePlaneColors(plane, getColors(time))
 }, interval);
+
+updatePlaneVertices(plane, initialVertices)
+updatePlaneColors(plane, getColors(time))

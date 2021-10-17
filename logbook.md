@@ -15,3 +15,7 @@
 
 ## 13 Oct 2021
 - Add a slider that moves the plane in y-axis
+
+## 17 Oct 2021
+- Change colour over time
+- Neaten the code

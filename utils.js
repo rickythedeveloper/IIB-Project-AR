@@ -21,4 +21,14 @@ const convertRowsToVertices = (rows) => {
 	return new Float32Array(verticesArray)
 }
 
-export { convertRowsToVertices }
+const createSlider = (min, max, initialValue, step) => {
+	const slider = document.createElement('input')
+	slider.type = 'range'
+	slider.min = min
+	slider.max = max
+	slider.value = initialValue
+	slider.step = step
+	return slider
+}
+
+export { convertRowsToVertices, createSlider }
