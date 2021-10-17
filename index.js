@@ -13,18 +13,22 @@ const vertices = convertRowsToVertices([
 	]
 ])
 
-const colors = convertRowsToVertices([
-	[
-		[0.0, 0.0, 0.0],
-		[0.0, 0.0, 0.5],
-		[0.0, 0.0, 1.0]
-	],
-	[
-		[0.0, 1.0, 0.0],
-		[0.5, 0.5, 0.0],
-		[1.0, 0.0, 0.0]
-	]
-])
+const getColors = (time) => {
+	const halfAmplitudeValue = 1 / 2 + Math.sin(time * 2) / 4
+	const fullAmplitudeValue = 1 / 2 + Math.sin(time * 2) / 2
+	return convertRowsToVertices([
+		[
+			[0.0, 0.0, 0.0],
+			[0.0, 0.0, halfAmplitudeValue],
+			[0.0, 0.0, fullAmplitudeValue]
+		],
+		[
+			[0.0, fullAmplitudeValue, 0.0],
+			[halfAmplitudeValue, halfAmplitudeValue, 0.0],
+			[fullAmplitudeValue, 0.0, 0.0]
+		]
+	])
+}
 
 const scene = document.getElementById('scene').object3D
 
@@ -90,7 +94,7 @@ const createSlider = (min, max, initialValue, step) => {
 plane = createPlane(vertices.length / 3)
 scene.add(plane)
 updatePlaneVertices(vertices)
-updatePlaneColors(colors)
+updatePlaneColors(getColors(0))
 
 const testSlider = createSlider(0, 5, 3, 0.1)
 document.body.appendChild(testSlider)
@@ -106,3 +110,9 @@ testSlider.oninput = (e) => {
 	}
 	plane.geometry.attributes.position.needsUpdate = true;
 }
+let time = 0
+const interval = 100
+setInterval(() => {
+	time += interval / 1000
+	updatePlaneColors(getColors(time))
+}, interval);
