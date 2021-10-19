@@ -19,3 +19,7 @@
 ## 17 Oct 2021
 - Change colour over time
 - Neaten the code
+
+## 19 Oct 2021
+- Research into other AR / tracking libraries
+- Probably best to stick to using AR.js for marker tracking and three.js for rendering.
