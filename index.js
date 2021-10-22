@@ -84,13 +84,26 @@ const updatePlaneColors = (plane, newColors) => {
 	plane.geometry.attributes.color.needsUpdate = true;
 }
 
+
+const controlPanelWrapper = document.createElement('div')
+controlPanelWrapper.style.position = 'absolute'
+controlPanelWrapper.style.top = 0
+controlPanelWrapper.style.left = 0
+controlPanelWrapper.style.width = '100%'
+controlPanelWrapper.style.height = '100%'
+controlPanelWrapper.style.zIndex = 1000
+controlPanelWrapper.style.display = 'flex'
+controlPanelWrapper.style.flexDirection = 'column'
+document.body.appendChild(controlPanelWrapper)
+
+const controlPanel = document.createElement('div')
+controlPanel.style.margin = '20px'
+controlPanel.style.flexGrow = 1;
+controlPanelWrapper.appendChild(controlPanel)
+
 const minY = 0, maxY = 5, initialY = 0.0, stepY = 0.1
 const testSlider = createSlider(minY, maxY, initialY, stepY)
-document.body.appendChild(testSlider)
-testSlider.style.zIndex = 1000
-testSlider.style.position = 'absolute'
-testSlider.style.top = '20px'
-testSlider.style.left = '20px'
+controlPanel.appendChild(testSlider)
 testSlider.oninput = (e) => {
 	const y = e.target.value
 	const positionArray = plane.geometry.attributes.position.array
@@ -114,25 +127,62 @@ const zArrow = createArrow('z', arrowLength, 0x0000ff)
 marker.add(xArrow, yArrow, zArrow)
 
 let time = 0
-const interval = 10
-const theta = interval / 1000
+const updateInterval = 10
 setInterval(() => {
-	time += interval / 1000
-	updatePlaneColors(plane, getColors(time))
-
-	const scale = Math.min(time / 3, 3)
-	plane.scale.set(scale, scale, scale)
-
-	if (time < 4) {
-		plane.applyQuaternion(rotationQuaternion('x', theta))
-	} else if (time < 8) {
-		plane.applyQuaternion(rotationQuaternion('y', theta))
-	} else if (time < 12) {
-		plane.applyQuaternion(rotationQuaternion('x', theta))
-	} else {
-		plane.applyQuaternion(rotationQuaternion('z', theta))
-	}
-}, interval);
+	time += updateInterval
+	updatePlaneColors(plane, getColors(time / 300))
+}, updateInterval);
 
 updatePlaneVertices(plane, initialVertices)
 updatePlaneColors(plane, getColors(time))
+
+const optionDropdown = document.createElement('select')
+controlPanel.appendChild(optionDropdown)
+
+const xOption = document.createElement('option'), yOption = document.createElement('option'), zOption = document.createElement('option'), scaleOption = document.createElement('option')
+xOption.value = 'x'; xOption.innerText = 'x';
+yOption.value = 'y'; yOption.innerText = 'y';
+zOption.value = 'z'; zOption.innerText = 'z';
+scaleOption.value = 'scale'; scaleOption.innerText = 'scale'
+optionDropdown.appendChild(xOption)
+optionDropdown.appendChild(yOption)
+optionDropdown.appendChild(zOption)
+optionDropdown.appendChild(scaleOption)
+let selectedOption = 'x'
+optionDropdown.onchange = (e) => {
+	selectedOption = e.target.value
+}
+
+const rotationInterval = 10
+const angleChange = rotationInterval / 1000
+const scaleChange = 0.005
+let rotationIntervalObject
+
+const plusButton = document.createElement('button')
+plusButton.innerText = '+'
+controlPanel.appendChild(plusButton)
+plusButton.onclick = () => {
+	rotationIntervalObject = createChangeInterval(1, selectedOption, rotationIntervalObject, rotationInterval, scaleChange, angleChange, plane)
+}
+
+const minusButton = document.createElement('button')
+minusButton.innerText = '-'
+controlPanel.appendChild(minusButton)
+minusButton.onclick = () => {
+	rotationIntervalObject = createChangeInterval(-1, selectedOption, rotationIntervalObject, rotationInterval, scaleChange, angleChange, plane)
+}
+
+const createChangeInterval = (direction, option, intervalObject, interval, scaleChange, angleChange, plane) => {
+	if (intervalObject !== undefined) {
+		clearInterval(intervalObject)
+		return undefined
+	}
+
+	return setInterval(() => {
+		if (option === 'scale') {
+			plane.scale.addScalar(direction * scaleChange)
+		} else {
+			plane.applyQuaternion(rotationQuaternion(selectedOption, direction * angleChange))
+		}
+	}, interval)
+}
