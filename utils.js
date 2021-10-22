@@ -31,4 +31,18 @@ const createSlider = (min, max, initialValue, step) => {
 	return slider
 }
 
-export { convertRowsToVertices, createSlider }
+const createArrow = (direction, length, colorHex) => new THREE.ArrowHelper(
+	new THREE.Vector3(direction === 'x' ? 1 : 0, direction === 'y' ? 1 : 0, direction === 'z' ? 1 : 0),
+	new THREE.Vector3(0, 0, 0),
+	length,
+	colorHex
+)
+
+const rotationQuaternion = (direction, angle) => new THREE.Quaternion(
+	direction == 'x' ? Math.sin(angle / 2) : 0,
+	direction == 'y' ? Math.sin(angle / 2) : 0,
+	direction == 'z' ? Math.sin(angle / 2) : 0,
+	Math.cos(angle / 2)
+)
+
+export { convertRowsToVertices, createSlider, createArrow, rotationQuaternion }
