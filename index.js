@@ -1,78 +1,6 @@
-import { convertRowsToVertices, createSlider, createArrow, rotationQuaternion } from "./utils.js";
-
-const getVertices = (y) => {
-	return convertRowsToVertices([
-		[
-			[-0.5, y, -0.5],
-			[0.0, y, -0.5],
-			[0.5, y, -0.5]
-		],
-		[
-			[-0.5, y, 0.0],
-			[0.0, y, 0.0],
-			[0.5, y, 0.0]
-		],
-		[
-			[-0.5, y, 0.5],
-			[0.0, y, 0.5],
-			[0.5, y, 0.5]
-		]
-	])
-}
-
-const getColors = (time) => {
-	const halfAmplitudeValue = 1 / 2 + Math.sin(time * 2) / 4
-	const fullAmplitudeValue = 1 / 2 + Math.sin(time * 2) / 2
-	return convertRowsToVertices([
-		[
-			[0.0, 0.0, 0.0],
-			[0.0, 0.0, halfAmplitudeValue],
-			[0.0, 0.0, fullAmplitudeValue]
-		],
-		[
-			[0.0, fullAmplitudeValue, 0.0],
-			[halfAmplitudeValue, halfAmplitudeValue, 0.0],
-			[fullAmplitudeValue, 0.0, 0.0]
-		],
-		[
-			[0.0, 0.0, 0.0],
-			[0.0, 0.0, halfAmplitudeValue],
-			[0.0, 0.0, fullAmplitudeValue]
-		],
-	])
-}
-
-const createPlane = (nVertices) => {
-	const vertexShader = `
-	attribute vec3 color;	
-	varying vec3 v_color;
-	void main() {
-		v_color = color;
-		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-	}
-	`
-	const fragmentShader = `
-	varying vec3 v_color;
-	void main() {
-		gl_FragColor = vec4(v_color, 0.5);
-	}
-	`
-
-	const planeGeometry = new THREE.BufferGeometry()
-	const planeVertices = new Float32Array(nVertices * 3)
-	const colors = new Float32Array(nVertices * 3)
-	planeGeometry.setAttribute('position', new THREE.BufferAttribute(planeVertices, 3))
-	planeGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-
-	const planeMaterial = new THREE.ShaderMaterial({
-		vertexShader,
-		fragmentShader,
-		side: THREE.DoubleSide
-	})
-	const plane = new THREE.Mesh(planeGeometry, planeMaterial)
-
-	return plane
-}
+import { createArrow, rotationQuaternion, createPlane } from "./utils/three.js";
+import { createSlider, createControlPanel, createOption, createButton } from "./utils/elements.js";
+import { getVertices, getColors } from "./utils/convenience.js";
 
 const updatePlaneVertices = (plane, newVertices) => {
 	plane.geometry.attributes.position.array = newVertices
@@ -85,47 +13,34 @@ const updatePlaneColors = (plane, newColors) => {
 }
 
 
-const controlPanelWrapper = document.createElement('div')
-controlPanelWrapper.style.position = 'absolute'
-controlPanelWrapper.style.top = 0
-controlPanelWrapper.style.left = 0
-controlPanelWrapper.style.width = '100%'
-controlPanelWrapper.style.height = '100%'
-controlPanelWrapper.style.zIndex = 1000
-controlPanelWrapper.style.display = 'flex'
-controlPanelWrapper.style.flexDirection = 'column'
+// Add a 'control panel' div to put controls on
+const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
-const controlPanel = document.createElement('div')
-controlPanel.style.margin = '20px'
-controlPanel.style.flexGrow = 1;
-controlPanelWrapper.appendChild(controlPanel)
-
-const minY = 0, maxY = 5, initialY = 0.0, stepY = 0.1
-const testSlider = createSlider(minY, maxY, initialY, stepY)
-controlPanel.appendChild(testSlider)
-testSlider.oninput = (e) => {
-	const y = e.target.value
+// Slider to control y value of the plane
+const initialY = 0.0
+const planeYSlider = createSlider(0, 5, initialY, 0.1)
+controlPanel.appendChild(planeYSlider)
+planeYSlider.oninput = (e) => {
+	const newY = e.target.value
 	const positionArray = plane.geometry.attributes.position.array
 	for (let i = 1; i < positionArray.length; i += 3) {
-		positionArray[i] = y
+		positionArray[i] = newY
 	}
 	plane.geometry.attributes.position.needsUpdate = true;
 }
 
-
+// Get the marker
 const marker = document.getElementById('marker').object3D
 
+// Add a plane
 const initialVertices = getVertices(initialY)
 const plane = createPlane(initialVertices.length / 3)
 marker.add(plane)
+updatePlaneVertices(plane, initialVertices)
+updatePlaneColors(plane, getColors(0))
 
-const arrowLength = 1.3
-const xArrow = createArrow('x', arrowLength, 0xff0000)
-const yArrow = createArrow('y', arrowLength, 0x00ff00)
-const zArrow = createArrow('z', arrowLength, 0x0000ff)
-marker.add(xArrow, yArrow, zArrow)
-
+// Update the plane color
 let time = 0
 const updateInterval = 10
 setInterval(() => {
@@ -133,44 +48,33 @@ setInterval(() => {
 	updatePlaneColors(plane, getColors(time / 300))
 }, updateInterval);
 
-updatePlaneVertices(plane, initialVertices)
-updatePlaneColors(plane, getColors(time))
+// Add arrows to indicate axes
+const arrowLength = 1.3
+const xArrow = createArrow('x', arrowLength, 0xff0000)
+const yArrow = createArrow('y', arrowLength, 0x00ff00)
+const zArrow = createArrow('z', arrowLength, 0x0000ff)
+marker.add(xArrow, yArrow, zArrow)
 
+// Add rotation / scale control
 const optionDropdown = document.createElement('select')
 controlPanel.appendChild(optionDropdown)
 
-const xOption = document.createElement('option'), yOption = document.createElement('option'), zOption = document.createElement('option'), scaleOption = document.createElement('option')
-xOption.value = 'x'; xOption.innerText = 'x';
-yOption.value = 'y'; yOption.innerText = 'y';
-zOption.value = 'z'; zOption.innerText = 'z';
-scaleOption.value = 'scale'; scaleOption.innerText = 'scale'
-optionDropdown.appendChild(xOption)
-optionDropdown.appendChild(yOption)
-optionDropdown.appendChild(zOption)
-optionDropdown.appendChild(scaleOption)
+optionDropdown.appendChild(createOption('x', 'X'))
+optionDropdown.appendChild(createOption('y', 'Y'))
+optionDropdown.appendChild(createOption('z', 'Z'))
+optionDropdown.appendChild(createOption('scale', 'Scale'))
 let selectedOption = 'x'
-optionDropdown.onchange = (e) => {
-	selectedOption = e.target.value
-}
+optionDropdown.onchange = (e) => { selectedOption = e.target.value }
 
-const rotationInterval = 10
-const angleChange = rotationInterval / 1000
+const changeInterval = 10
+const angleChange = changeInterval / 1000
 const scaleChange = 0.005
-let rotationIntervalObject
+let changeIntervalObject
 
-const plusButton = document.createElement('button')
-plusButton.innerText = '+'
+const plusButton = createButton('+', () => { changeIntervalObject = createChangeInterval(1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, plane) })
 controlPanel.appendChild(plusButton)
-plusButton.onclick = () => {
-	rotationIntervalObject = createChangeInterval(1, selectedOption, rotationIntervalObject, rotationInterval, scaleChange, angleChange, plane)
-}
-
-const minusButton = document.createElement('button')
-minusButton.innerText = '-'
+const minusButton = createButton('-', () => { changeIntervalObject = createChangeInterval(-1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, plane) })
 controlPanel.appendChild(minusButton)
-minusButton.onclick = () => {
-	rotationIntervalObject = createChangeInterval(-1, selectedOption, rotationIntervalObject, rotationInterval, scaleChange, angleChange, plane)
-}
 
 const createChangeInterval = (direction, option, intervalObject, interval, scaleChange, angleChange, plane) => {
 	if (intervalObject !== undefined) {
@@ -182,7 +86,7 @@ const createChangeInterval = (direction, option, intervalObject, interval, scale
 		if (option === 'scale') {
 			plane.scale.addScalar(direction * scaleChange)
 		} else {
-			plane.applyQuaternion(rotationQuaternion(selectedOption, direction * angleChange))
+			plane.applyQuaternion(rotationQuaternion(option, direction * angleChange))
 		}
 	}, interval)
 }

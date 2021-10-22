@@ -21,16 +21,6 @@ const convertRowsToVertices = (rows) => {
 	return new Float32Array(verticesArray)
 }
 
-const createSlider = (min, max, initialValue, step) => {
-	const slider = document.createElement('input')
-	slider.type = 'range'
-	slider.min = min
-	slider.max = max
-	slider.value = initialValue
-	slider.step = step
-	return slider
-}
-
 const createArrow = (direction, length, colorHex) => new THREE.ArrowHelper(
 	new THREE.Vector3(direction === 'x' ? 1 : 0, direction === 'y' ? 1 : 0, direction === 'z' ? 1 : 0),
 	new THREE.Vector3(0, 0, 0),
@@ -45,4 +35,35 @@ const rotationQuaternion = (direction, angle) => new THREE.Quaternion(
 	Math.cos(angle / 2)
 )
 
-export { convertRowsToVertices, createSlider, createArrow, rotationQuaternion }
+const vertexShader = `
+	attribute vec3 color;	
+	varying vec3 v_color;
+	void main() {
+		v_color = color;
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	}
+`
+const fragmentShader = `
+	varying vec3 v_color;
+	void main() {
+		gl_FragColor = vec4(v_color, 0.5);
+	}
+`
+const createPlane = (nVertices) => {
+	const planeGeometry = new THREE.BufferGeometry()
+	const planeVertices = new Float32Array(nVertices * 3)
+	const colors = new Float32Array(nVertices * 3)
+	planeGeometry.setAttribute('position', new THREE.BufferAttribute(planeVertices, 3))
+	planeGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+
+	const planeMaterial = new THREE.ShaderMaterial({
+		vertexShader,
+		fragmentShader,
+		side: THREE.DoubleSide
+	})
+	const plane = new THREE.Mesh(planeGeometry, planeMaterial)
+
+	return plane
+}
+
+export { convertRowsToVertices, createArrow, rotationQuaternion, createPlane }
