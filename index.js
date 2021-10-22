@@ -115,14 +115,24 @@ marker.add(xArrow, yArrow, zArrow)
 
 let time = 0
 const interval = 10
+const theta = interval / 1000
 setInterval(() => {
 	time += interval / 1000
 	updatePlaneColors(plane, getColors(time))
 
-	const theta = interval / 1000
-	plane.applyQuaternion(rotationQuaternion('x', -theta))
+	const scale = Math.min(time / 3, 3)
+	plane.scale.set(scale, scale, scale)
+
+	if (time < 4) {
+		plane.applyQuaternion(rotationQuaternion('x', theta))
+	} else if (time < 8) {
+		plane.applyQuaternion(rotationQuaternion('y', theta))
+	} else if (time < 12) {
+		plane.applyQuaternion(rotationQuaternion('x', theta))
+	} else {
+		plane.applyQuaternion(rotationQuaternion('z', theta))
+	}
 }, interval);
 
-plane.scale.set(2, 2, 2)
 updatePlaneVertices(plane, initialVertices)
 updatePlaneColors(plane, getColors(time))
