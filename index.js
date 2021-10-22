@@ -1,4 +1,4 @@
-import { convertRowsToVertices, createSlider } from "./utils.js";
+import { convertRowsToVertices, createSlider, createArrow, rotationQuaternion } from "./utils.js";
 
 const getVertices = (y) => {
 	return convertRowsToVertices([
@@ -100,17 +100,29 @@ testSlider.oninput = (e) => {
 	plane.geometry.attributes.position.needsUpdate = true;
 }
 
+
+const marker = document.getElementById('marker').object3D
+
 const initialVertices = getVertices(initialY)
 const plane = createPlane(initialVertices.length / 3)
-const marker = document.getElementById('marker').object3D
 marker.add(plane)
 
+const arrowLength = 1.3
+const xArrow = createArrow('x', arrowLength, 0xff0000)
+const yArrow = createArrow('y', arrowLength, 0x00ff00)
+const zArrow = createArrow('z', arrowLength, 0x0000ff)
+marker.add(xArrow, yArrow, zArrow)
+
 let time = 0
-const interval = 100
+const interval = 10
 setInterval(() => {
 	time += interval / 1000
 	updatePlaneColors(plane, getColors(time))
+
+	const theta = interval / 1000
+	plane.applyQuaternion(rotationQuaternion('x', -theta))
 }, interval);
 
+plane.scale.set(2, 2, 2)
 updatePlaneVertices(plane, initialVertices)
 updatePlaneColors(plane, getColors(time))

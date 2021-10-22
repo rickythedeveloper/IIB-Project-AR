@@ -23,3 +23,10 @@
 ## 19 Oct 2021
 - Research into other AR / tracking libraries
 - Probably best to stick to using AR.js for marker tracking and three.js for rendering.
+
+## 22 Oct 2021
+- Change the html to resemble the example from AR.js docs.
+- The coordinates of Hiro marker seems to be x=[-.5, .5] y=[-.5, .5] z = 0 exactly.
+- The rotation of an object in three.js can be done using Euler angles. The default order of the rotation is XYZ, i.e. rotate around the object's x-axis first, and then around its y-axis and then around its z-axis.
+- The rotation can be done more easily with Quaternion
+- Spent quite a long time looking into quaternions in general
