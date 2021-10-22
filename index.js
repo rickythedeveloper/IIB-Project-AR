@@ -3,14 +3,19 @@ import { convertRowsToVertices, createSlider } from "./utils.js";
 const getVertices = (y) => {
 	return convertRowsToVertices([
 		[
-			[0.0, y, 0.0],
-			[0.5, y, 0.0],
-			[1.0, y, 0.0]
+			[-0.5, y, -0.5],
+			[0.0, y, -0.5],
+			[0.5, y, -0.5]
 		],
 		[
+			[-0.5, y, 0.0],
+			[0.0, y, 0.0],
+			[0.5, y, 0.0]
+		],
+		[
+			[-0.5, y, 0.5],
 			[0.0, y, 0.5],
-			[0.5, y, 0.5],
-			[1.0, y, 0.5]
+			[0.5, y, 0.5]
 		]
 	])
 }
@@ -28,7 +33,12 @@ const getColors = (time) => {
 			[0.0, fullAmplitudeValue, 0.0],
 			[halfAmplitudeValue, halfAmplitudeValue, 0.0],
 			[fullAmplitudeValue, 0.0, 0.0]
-		]
+		],
+		[
+			[0.0, 0.0, 0.0],
+			[0.0, 0.0, halfAmplitudeValue],
+			[0.0, 0.0, fullAmplitudeValue]
+		],
 	])
 }
 
@@ -74,7 +84,7 @@ const updatePlaneColors = (plane, newColors) => {
 	plane.geometry.attributes.color.needsUpdate = true;
 }
 
-const minY = 0, maxY = 5, initialY = 3.0, stepY = 0.1
+const minY = 0, maxY = 5, initialY = 0.0, stepY = 0.1
 const testSlider = createSlider(minY, maxY, initialY, stepY)
 document.body.appendChild(testSlider)
 testSlider.style.zIndex = 1000
@@ -90,10 +100,10 @@ testSlider.oninput = (e) => {
 	plane.geometry.attributes.position.needsUpdate = true;
 }
 
-const scene = document.getElementById('scene').object3D
 const initialVertices = getVertices(initialY)
 const plane = createPlane(initialVertices.length / 3)
-scene.add(plane)
+const marker = document.getElementById('marker').object3D
+marker.add(plane)
 
 let time = 0
 const interval = 100
