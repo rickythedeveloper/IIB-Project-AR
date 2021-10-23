@@ -12,7 +12,6 @@ const updatePlaneColors = (plane, newColors) => {
 	plane.geometry.attributes.color.needsUpdate = true;
 }
 
-
 // Add a 'control panel' div to put controls on
 const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
@@ -33,20 +32,20 @@ planeYSlider.oninput = (e) => {
 // Get the marker
 const marker = document.getElementById('marker').object3D
 
+// Add a cube
+const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
+const boxMaterial = new THREE.MeshPhysicalMaterial({ color: 0xff0000, opacity: 0.3 })
+const box = new THREE.Mesh(boxGeometry, boxMaterial)
+box.position.set(0, 0.5, 0)
+marker.add(box)
+
 // Add a plane
 const initialVertices = getVertices(initialY)
 const plane = createPlane(initialVertices.length / 3)
 marker.add(plane)
+plane.translateX(1)
 updatePlaneVertices(plane, initialVertices)
 updatePlaneColors(plane, getColors(0))
-
-// Update the plane color
-let time = 0
-const updateInterval = 10
-setInterval(() => {
-	time += updateInterval
-	updatePlaneColors(plane, getColors(time / 300))
-}, updateInterval);
 
 // Add arrows to indicate axes
 const arrowLength = 1.3
@@ -55,28 +54,44 @@ const yArrow = createArrow('y', arrowLength, 0x00ff00)
 const zArrow = createArrow('z', arrowLength, 0x0000ff)
 marker.add(xArrow, yArrow, zArrow)
 
+// Update the plane color
+let time = 0
+const updateInterval = 10
+setInterval(() => {
+	time += updateInterval
+	updatePlaneColors(plane, getColors(time / 300))
+
+	xArrow.position.set(box.position.x, box.position.y, box.position.z)
+	yArrow.position.set(box.position.x, box.position.y, box.position.z)
+	zArrow.position.set(box.position.x, box.position.y, box.position.z)
+}, updateInterval);
+
 // Add rotation / scale control
 const optionDropdown = document.createElement('select')
 controlPanel.appendChild(optionDropdown)
 
-optionDropdown.appendChild(createOption('x', 'X'))
-optionDropdown.appendChild(createOption('y', 'Y'))
-optionDropdown.appendChild(createOption('z', 'Z'))
+optionDropdown.appendChild(createOption('rotx', 'Rotate about X'))
+optionDropdown.appendChild(createOption('roty', 'Rotate about Y'))
+optionDropdown.appendChild(createOption('rotz', 'Rotate about Z'))
+optionDropdown.appendChild(createOption('transx', 'Translate along X'))
+optionDropdown.appendChild(createOption('transy', 'Translate along Y'))
+optionDropdown.appendChild(createOption('transz', 'Translate along Z'))
 optionDropdown.appendChild(createOption('scale', 'Scale'))
-let selectedOption = 'x'
+let selectedOption = 'rotx'
 optionDropdown.onchange = (e) => { selectedOption = e.target.value }
 
 const changeInterval = 10
 const angleChange = changeInterval / 1000
 const scaleChange = 0.005
+const positionChange = changeInterval / 1000
 let changeIntervalObject
 
-const plusButton = createButton('+', () => { changeIntervalObject = createChangeInterval(1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, plane) })
+const plusButton = createButton('+', () => { changeIntervalObject = createChangeInterval(1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, box) })
 controlPanel.appendChild(plusButton)
-const minusButton = createButton('-', () => { changeIntervalObject = createChangeInterval(-1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, plane) })
+const minusButton = createButton('-', () => { changeIntervalObject = createChangeInterval(-1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, box) })
 controlPanel.appendChild(minusButton)
 
-const createChangeInterval = (direction, option, intervalObject, interval, scaleChange, angleChange, plane) => {
+const createChangeInterval = (direction, option, intervalObject, interval, scaleChange, angleChange, positionChange, object) => {
 	if (intervalObject !== undefined) {
 		clearInterval(intervalObject)
 		return undefined
@@ -84,9 +99,14 @@ const createChangeInterval = (direction, option, intervalObject, interval, scale
 
 	return setInterval(() => {
 		if (option === 'scale') {
-			plane.scale.addScalar(direction * scaleChange)
-		} else {
-			plane.applyQuaternion(rotationQuaternion(option, direction * angleChange))
-		}
+			object.scale.addScalar(direction * scaleChange)
+		} else if (option.includes('rot')) {
+			const axis = option.slice(3)
+			object.applyQuaternion(rotationQuaternion(axis, direction * angleChange))
+		} else if (option.includes('trans')) {
+			const axis = option.slice(5)
+			const axisVector = new THREE.Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0)
+			object.position.addScaledVector(axisVector, direction * positionChange)
+		} else throw new Exception('invalid change type')
 	}, interval)
 }

@@ -31,3 +31,7 @@
 - The rotation can be done more easily with Quaternion
 - Spent quite a long time looking into quaternions in general ([Quaternion Wikipedia](https://en.wikipedia.org/wiki/Quaternion), [Notes by Stanford Comp Graphics](https://graphics.stanford.edu/courses/cs348a-17-winter/Papers/quaternion.pdf), [Quaternion and spatial rotation (Wikipedia)](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation))
 - Add controls for x, y, z axis rotation (using Quaternion) and scale change
+- refactor the code
+
+## 23 Oct 2021
+- Add translation control along each axis
