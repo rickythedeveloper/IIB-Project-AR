@@ -29,8 +29,14 @@ planeYSlider.oninput = (e) => {
 	plane.geometry.attributes.position.needsUpdate = true;
 }
 
+const scneeElement = document.getElementById('scene')
+
 // Get the marker
-const marker = document.getElementById('marker').object3D
+const markerElement = document.createElement('a-marker')
+markerElement.setAttribute('type', 'barcode')
+markerElement.setAttribute('value', 5)
+scneeElement.appendChild(markerElement)
+const marker = markerElement.object3D
 
 // Add a cube
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
