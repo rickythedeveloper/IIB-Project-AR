@@ -74,6 +74,16 @@ setInterval(() => {
 	xArrow.position.set(box.position.x, box.position.y, box.position.z)
 	yArrow.position.set(box.position.x, box.position.y, box.position.z)
 	zArrow.position.set(box.position.x, box.position.y, box.position.z)
+
+	let minDistance, nearestVisibleMarker;
+	for (let i = 0; i < markers.length; i++) {
+		const marker = markers[i]
+		if (marker.visible) {
+			const distance = marker.position.distanceTo(new THREE.Vector3(0, 0, 0))
+			if (minDistance === undefined || distance < minDistance) nearestVisibleMarker = marker
+		}
+	}
+	if (nearestVisibleMarker !== undefined) nearestVisibleMarker.attach(box)
 }, updateInterval);
 
 // Add rotation / scale control
