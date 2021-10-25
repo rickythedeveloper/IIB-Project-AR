@@ -3,7 +3,7 @@
  * @param {number[][][]} rows Each point is a 3D array. Each row is an array of points.
  * @returns 
  */
-const convertRowsToVertices = (rows) => {
+export const convertRowsToVertices = (rows) => {
 	const verticesArray = [];
 	for (let i = 0; i < rows.length - 1; i++) {
 		const row = rows[i]
@@ -21,14 +21,14 @@ const convertRowsToVertices = (rows) => {
 	return new Float32Array(verticesArray)
 }
 
-const createArrow = (direction, length, colorHex) => new THREE.ArrowHelper(
+export const createArrow = (direction, length, colorHex) => new THREE.ArrowHelper(
 	new THREE.Vector3(direction === 'x' ? 1 : 0, direction === 'y' ? 1 : 0, direction === 'z' ? 1 : 0),
 	new THREE.Vector3(0, 0, 0),
 	length,
 	colorHex
 )
 
-const rotationQuaternion = (direction, angle) => new THREE.Quaternion(
+export const rotationQuaternion = (direction, angle) => new THREE.Quaternion(
 	direction == 'x' ? Math.sin(angle / 2) : 0,
 	direction == 'y' ? Math.sin(angle / 2) : 0,
 	direction == 'z' ? Math.sin(angle / 2) : 0,
@@ -49,7 +49,7 @@ const fragmentShader = `
 		gl_FragColor = vec4(v_color, 0.5);
 	}
 `
-const createPlane = (nVertices) => {
+export const createPlane = (nVertices) => {
 	const planeGeometry = new THREE.BufferGeometry()
 	const planeVertices = new Float32Array(nVertices * 3)
 	const colors = new Float32Array(nVertices * 3)
@@ -65,5 +65,3 @@ const createPlane = (nVertices) => {
 
 	return plane
 }
-
-export { convertRowsToVertices, createArrow, rotationQuaternion, createPlane }

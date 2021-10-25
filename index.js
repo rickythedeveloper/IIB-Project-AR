@@ -1,5 +1,5 @@
 import { createArrow, rotationQuaternion, createPlane } from "./utils/three.js";
-import { createSlider, createControlPanel, createOption, createButton } from "./utils/elements.js";
+import { createSlider, createControlPanel, createOption, createButton, createBarcodeMarkerElement } from "./utils/elements.js";
 import { getVertices, getColors } from "./utils/convenience.js";
 
 const updatePlaneVertices = (plane, newVertices) => {
@@ -31,24 +31,28 @@ planeYSlider.oninput = (e) => {
 
 const scneeElement = document.getElementById('scene')
 
-// Get the marker
-const markerElement = document.createElement('a-marker')
-markerElement.setAttribute('type', 'barcode')
-markerElement.setAttribute('value', 5)
-scneeElement.appendChild(markerElement)
-const marker = markerElement.object3D
+// Create markers
+const marker0Element = createBarcodeMarkerElement(0)
+scneeElement.appendChild(marker0Element)
+const marker0 = marker0Element.object3D
+
+const marker3Element = createBarcodeMarkerElement(3)
+scneeElement.appendChild(marker3Element)
+const marker3 = marker3Element.object3D
+
+const markers = [marker0, marker3]
 
 // Add a cube
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
 const boxMaterial = new THREE.MeshPhysicalMaterial({ color: 0xff0000, opacity: 0.3 })
 const box = new THREE.Mesh(boxGeometry, boxMaterial)
 box.position.set(0, 0.5, 0)
-marker.add(box)
+marker0.add(box)
 
 // Add a plane
 const initialVertices = getVertices(initialY)
 const plane = createPlane(initialVertices.length / 3)
-marker.add(plane)
+marker0.add(plane)
 plane.translateX(1)
 updatePlaneVertices(plane, initialVertices)
 updatePlaneColors(plane, getColors(0))
@@ -58,9 +62,9 @@ const arrowLength = 1.3
 const xArrow = createArrow('x', arrowLength, 0xff0000)
 const yArrow = createArrow('y', arrowLength, 0x00ff00)
 const zArrow = createArrow('z', arrowLength, 0x0000ff)
-marker.add(xArrow, yArrow, zArrow)
+marker0.add(xArrow, yArrow, zArrow)
 
-// Update the plane color
+// Main update loop
 let time = 0
 const updateInterval = 10
 setInterval(() => {

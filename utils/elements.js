@@ -40,3 +40,10 @@ export const createButton = (innerText, onclick) => {
 	button.onclick = onclick
 	return button
 }
+
+export const createBarcodeMarkerElement = (value) => {
+	const markerElement = document.createElement('a-marker')
+	markerElement.setAttribute('type', 'barcode')
+	markerElement.setAttribute('value', value)
+	return markerElement
+}
