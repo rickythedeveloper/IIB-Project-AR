@@ -34,4 +34,18 @@
 - refactor the code
 
 ## 23 Oct 2021
-- Add translation control along each axis
+- Add translation control along each parent axis
+
+## 25 Oct 2021
+- modelViewMatrix transforms the position of a vertex on the model to the coordinates relative to the camera / view.
+- in AR.js, camera is always positioned at the origin in the world. Right-hand direction on the camera is x, up is y and out of the page is z.
+- we could use a technique where we know the exact dimensions and distance / orientation difference between two markers, but this may not work out so well. if the surface is not perfectly flat (like in a compressor surface), then we are more interested in the relationship between the markers when perceived by the camera rather than the actual accurate measurements.
+
+## TODO
+- multi-marker stuff
+- what native features can we use? (orientation, accelerometer, world tracking)
+- webar
+- entirely new stuff
+	 - get camera feed
+	 - detect a marker
+	 - setting a scene
