@@ -41,6 +41,12 @@
 - in AR.js, camera is always positioned at the origin in the world. Right-hand direction on the camera is x, up is y and out of the page is z.
 - we could use a technique where we know the exact dimensions and distance / orientation difference between two markers, but this may not work out so well. if the surface is not perfectly flat (like in a compressor surface), then we are more interested in the relationship between the markers when perceived by the camera rather than the actual accurate measurements.
 
+## 26 Oct 2021
+- thought a bit more about change of reference of position vector / quaternion using quaternions. ([this](https://stackoverflow.com/questions/18818102/convert-quaternion-representing-rotation-from-one-coordinate-system-to-another) may be a little useful as well as the above Wikipedia pages)
+
+## 1 Nov 2021
+- the change of reference of a position vector or a quaternion is done by simply applying the inverse of the orientation quaternion. i.e. to change from coordinate system 0 to 1, then first get quaternion q_{01|0}, and apply q_{01|0}^{-1} to convert the position vector / quaternion in coordinate system 0 to the values in coordinate system 1.
+
 ## TODO
 - multi-marker stuff
 - what native features can we use? (orientation, accelerometer, world tracking)
