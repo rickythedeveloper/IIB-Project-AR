@@ -143,3 +143,21 @@ const createChangeInterval = (direction, option, intervalObject, interval, scale
 		} else throw new Exception('invalid change type')
 	}, interval)
 }
+
+const requestDeviceMotion = () => {
+	DeviceMotionEvent.requestPermission().then(response => {
+		if (response == 'granted') {
+			window.addEventListener('devicemotion', (event) => {
+				console.log(event.acceleration.x, event.acceleration.y, event.acceleration.z);
+			});
+			window.addEventListener('deviceorientation', (event) => {
+				console.log(event.alpha, event.beta, event.gamma);
+			});
+		}
+	});
+}
+
+const deviceMotionButton = document.createElement("button")
+deviceMotionButton.innerText = 'request motion'
+deviceMotionButton.onclick = requestDeviceMotion
+controlPanel.appendChild(deviceMotionButton)
