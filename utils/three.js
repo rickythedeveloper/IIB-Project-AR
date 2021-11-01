@@ -65,10 +65,3 @@ export const createPlane = (nVertices) => {
 
 	return plane
 }
-
-export const quaternionChangeRef = (quaternion, transformQ) => {
-	const rotationAxis = new THREE.Vector3(quaternion.x, quaternion.y, quaternion.z)
-	rotationAxis.applyQuaternion(transformQ.clone().invert()) // now rotation axis in the new reference frame
-	const newQuaternion = new THREE.Quaternion(rotationAxis.x, rotationAxis.y, rotationAxis.z, quaternion.w)
-	return newQuaternion
-}

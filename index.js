@@ -1,4 +1,4 @@
-import { createArrow, rotationQuaternion, createPlane, quaternionChangeRef } from "./utils/three.js";
+import { createArrow, rotationQuaternion, createPlane } from "./utils/three.js";
 import { createSlider, createControlPanel, createOption, createButton, createBarcodeMarkerElement } from "./utils/elements.js";
 import { getVertices, getColors } from "./utils/convenience.js";
 
@@ -36,7 +36,7 @@ const marker0Element = createBarcodeMarkerElement(0)
 scneeElement.appendChild(marker0Element)
 const marker0 = marker0Element.object3D
 
-const marker3Element = createBarcodeMarkerElement(3)
+const marker3Element = createBarcodeMarkerElement(5)
 scneeElement.appendChild(marker3Element)
 const marker3 = marker3Element.object3D
 
@@ -90,7 +90,7 @@ setInterval(() => {
 		relativePosition.applyQuaternion(dominantMarker.quaternion.clone().invert())
 
 		const relativeQuaternionCameraFrame = marker.quaternion.clone().multiply(dominantMarker.quaternion.clone().invert())
-		const relativeQuaternion = quaternionChangeRef(relativeQuaternionCameraFrame, dominantMarker.quaternion)
+		const relativeQuaternion = dominantMarker.quaternion.clone().invert().multiply(relativeQuaternionCameraFrame).multiply(dominantMarker.quaternion.clone())
 
 		box2.position.set(relativePosition.x, relativePosition.y, relativePosition.z)
 		box2.quaternion.set(relativeQuaternion.x, relativeQuaternion.y, relativeQuaternion.z, relativeQuaternion.w)
