@@ -143,3 +143,40 @@ const createChangeInterval = (direction, option, intervalObject, interval, scale
 		} else throw new Exception('invalid change type')
 	}, interval)
 }
+
+const getData = new Promise(async (resolve, reject) => {
+	let indices, vertices, data;
+	const indicesResponse = await fetch('data/indices.bin')
+	const indicesBlob = await indicesResponse.blob()
+	const indicesReader = new FileReader()
+	indicesReader.onload = () => {
+		indices = new Uint32Array(indicesReader.result)
+		if (indices && vertices && data) resolve({ indices, vertices, data })
+	}
+	indicesReader.onerror = reject
+	indicesReader.readAsArrayBuffer(indicesBlob)
+
+	const verticesResponse = await fetch('data/vertices.bin')
+	const verticesBlob = await verticesResponse.blob()
+	const verticesReader = new FileReader()
+	verticesReader.onload = () => {
+		vertices = new Float32Array(verticesReader.result)
+		if (indices && vertices && data) resolve({ indices, vertices, data })
+	}
+	verticesReader.onerror = reject
+	verticesReader.readAsArrayBuffer(verticesBlob);
+
+	const dataResponse = await fetch('https://dl.dropboxusercontent.com/s/0mmd7dczala0ljd/values_sch_all.bin')
+	const dataBlob = await dataResponse.blob()
+	const dataReader = new FileReader()
+	dataReader.onload = () => {
+		data = new Float32Array(dataReader.result)
+		if (indices && vertices && data) resolve({ indices, vertices, data })
+	}
+	dataReader.onerror = reject
+	dataReader.readAsArrayBuffer(dataBlob)
+})
+
+getData.then(({ indices, vertices, data }) => {
+	console.log(indices, vertices, data);
+})
