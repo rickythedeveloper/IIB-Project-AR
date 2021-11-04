@@ -41,7 +41,10 @@ scneeElement.appendChild(marker3Element)
 const marker3 = marker3Element.object3D
 
 const markers = [marker0, marker3]
+const markerPositions = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(4.203, 0, 0)]
+const markerOrientations = [new THREE.Quaternion(0, 0, 0, 1), new THREE.Quaternion(0, 0, 0, 1)]
 const dominantMarker = marker0
+let usedMarkerIndex = 0
 
 // Add a cube
 const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
@@ -76,10 +79,6 @@ const updateInterval = 10
 setInterval(() => {
 	time += updateInterval
 	updatePlaneColors(plane, getColors(time / 300))
-
-	xArrow.position.set(box.position.x, box.position.y, box.position.z)
-	yArrow.position.set(box.position.x, box.position.y, box.position.z)
-	zArrow.position.set(box.position.x, box.position.y, box.position.z)
 
 	for (let i = 0; i < markers.length; i++) {
 		const marker = markers[i]
@@ -195,7 +194,7 @@ getData.then(({ indices, vertices, data }) => {
 	vertices.forEach((value, index) => {
 		if (index % 2 === 0) {
 			vertices3D[index * 3 / 2] = ((value - minX) / normalisationConstant - 0.5) * scale // x
-			vertices3D[index * 3 / 2 + 1] = 1 // y
+			vertices3D[index * 3 / 2 + 1] = 0 // y
 			vertices3D[index * 3 / 2 + 2] = (vertices[index + 1] - minY) / normalisationConstant * scale // z
 		}
 	})
@@ -212,3 +211,29 @@ getData.then(({ indices, vertices, data }) => {
 	const bufferObject = createBufferObject(vertices3D, indices, colorsT0)
 	marker0.add(bufferObject)
 })
+
+setInterval(() => {
+	const children = [...markers[usedMarkerIndex].children]
+
+	for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
+		const thisMarker = markers[markerIndex]
+		if (!thisMarker.visible) continue
+		if (markerIndex === usedMarkerIndex) break
+
+		for (let childIndex = 0; childIndex < children.length; childIndex++) {
+			const child = children[childIndex]
+			const currentChildPosition = child.position.clone()
+
+			const p030 = child.position.clone().applyQuaternion(markerOrientations[usedMarkerIndex]).add(markerPositions[usedMarkerIndex])
+			const p230 = p030.clone().sub(markerPositions[markerIndex])
+			const p232 = p230.clone().applyQuaternion(markerOrientations[markerIndex].clone().invert())
+			const newChildPosition = p232
+
+			thisMarker.attach(child)
+			child.position.set(newChildPosition.x, newChildPosition.y, newChildPosition.z)
+		}
+
+		usedMarkerIndex = markerIndex
+		break
+	}
+}, 100);
