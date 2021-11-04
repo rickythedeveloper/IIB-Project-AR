@@ -1,4 +1,4 @@
-import { createArrow, rotationQuaternion, createPlane } from "./utils/three.js";
+import { createArrow, rotationQuaternion, createPlane, createBufferObject } from "./utils/three.js";
 import { createSlider, createControlPanel, createOption, createButton, createBarcodeMarkerElement } from "./utils/elements.js";
 import { getVertices, getColors } from "./utils/convenience.js";
 
@@ -48,17 +48,17 @@ const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
 const boxMaterial = new THREE.MeshPhysicalMaterial({ color: 0xff0000, opacity: 0.3 })
 const box = new THREE.Mesh(boxGeometry, boxMaterial)
 box.position.set(0, 0.5, 0)
-marker0.add(box)
+// marker0.add(box)
 
 const boxGeometry2 = new THREE.BoxGeometry(1, 1, 1)
 const boxMaterial2 = new THREE.MeshPhysicalMaterial({ color: 0x00ff00, opacity: 0.3 })
 const box2 = new THREE.Mesh(boxGeometry2, boxMaterial2)
-marker0.add(box2)
+// marker0.add(box2)
 
 // Add a plane
 const initialVertices = getVertices(initialY)
 const plane = createPlane(initialVertices.length / 3)
-marker0.add(plane)
+// marker0.add(plane)
 plane.translateX(1)
 updatePlaneVertices(plane, initialVertices)
 updatePlaneColors(plane, getColors(0))
@@ -178,5 +178,37 @@ const getData = new Promise(async (resolve, reject) => {
 })
 
 getData.then(({ indices, vertices, data }) => {
-	console.log(indices, vertices, data);
+	let minX, maxX, minY, maxY
+	vertices.forEach((value, index) => {
+		if (index % 2 === 0) {
+			if (minX === undefined || minX > value) minX = value
+			if (maxX === undefined || maxX < value) maxX = value
+		} else {
+			if (minY === undefined || minY > value) minY = value
+			if (maxY === undefined || maxY < value) maxY = value
+		}
+	})
+	const normalisationConstant = Math.max(maxX - minX, maxY - minY)
+
+	const scale = 3
+	const vertices3D = new Float32Array(vertices.length / 2 * 3)
+	vertices.forEach((value, index) => {
+		if (index % 2 === 0) {
+			vertices3D[index * 3 / 2] = ((value - minX) / normalisationConstant - 0.5) * scale // x
+			vertices3D[index * 3 / 2 + 1] = 1 // y
+			vertices3D[index * 3 / 2 + 2] = (vertices[index + 1] - minY) / normalisationConstant * scale // z
+		}
+	})
+
+	const minValue = 0, maxValue = 10
+	const colors = new Float32Array(data.length * 3)
+	data.forEach((datum, index) => {
+		colors[index * 3] = (datum - minValue) / (maxValue - minValue) // red
+		colors[index * 3 + 1] = 0.0 // green
+		colors[index * 3 + 2] = 0.0 // blue
+	})
+
+	const colorsT0 = colors.slice(0, vertices.length / 2 * 3)
+	const bufferObject = createBufferObject(vertices3D, indices, colorsT0)
+	marker0.add(bufferObject)
 })

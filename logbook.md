@@ -47,6 +47,12 @@
 ## 1 Nov 2021
 - the change of reference of a position vector or a quaternion is done by simply applying the inverse of the orientation quaternion. i.e. to change from coordinate system 0 to 1, then first get quaternion q_{01|0}, and apply q_{01|0}^{-1} to convert the position vector / quaternion in coordinate system 0 to the values in coordinate system 1.
 
+## 2 Nov 2021
+- managed to fetch the example simulation data (vertices, indices and data values)
+
+## 3 Nov 2021
+- show the data for one time step on a marker
+
 ## TODO
 - multi-marker stuff
 - what native features can we use? (orientation, accelerometer, world tracking)

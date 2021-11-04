@@ -65,3 +65,19 @@ export const createPlane = (nVertices) => {
 
 	return plane
 }
+
+export const createBufferObject = (vertices, indices, colors) => {
+	const geometry = new THREE.BufferGeometry()
+	geometry.index = new THREE.BufferAttribute(indices, 1)
+	geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+	geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+
+	const material = new THREE.ShaderMaterial({
+		vertexShader,
+		fragmentShader,
+		side: THREE.DoubleSide
+	})
+
+	const mesh = new THREE.Mesh(geometry, material)
+	return mesh
+}
