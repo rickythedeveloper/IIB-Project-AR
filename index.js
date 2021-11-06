@@ -1,6 +1,6 @@
-import { createArrow, rotationQuaternion, createPlane, createBufferObject } from "./utils/three.js";
+import { createArrow, rotationQuaternion, createBufferObject } from "./utils/three.js";
 import { createSlider, createControlPanel, createOption, createButton, createBarcodeMarkerElement } from "./utils/elements.js";
-import { getVertices, getColors } from "./utils/convenience.js";
+import { getProcessedData } from "./utils/convenience.js";
 
 const updatePlaneVertices = (plane, newVertices) => {
 	plane.geometry.attributes.position.array = newVertices
@@ -32,75 +32,31 @@ planeYSlider.oninput = (e) => {
 const scneeElement = document.getElementById('scene')
 
 // Create markers
-const marker0Element = createBarcodeMarkerElement(0)
-scneeElement.appendChild(marker0Element)
-const marker0 = marker0Element.object3D
-
-const marker3Element = createBarcodeMarkerElement(5)
-scneeElement.appendChild(marker3Element)
-const marker3 = marker3Element.object3D
-
-const markers = [marker0, marker3]
-const markerPositions = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(2, 0, 0)]
-const markerOrientations = [new THREE.Quaternion(0, 0, 0, 1), new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4))]
-const dominantMarker = marker0
+const markers = [], markerPositions = [], markerOrientations = []
+for (let i = 0; i < 8; i++) {
+	const markerElement = createBarcodeMarkerElement(i)
+	scneeElement.appendChild(markerElement)
+	const marker = markerElement.object3D
+	markers.push(marker)
+	markerPositions.push(new THREE.Vector3(
+		(110 / 2 / 40) * (i % 3),
+		0,
+		(110.5 / 2 / 40) * (i - i % 3) / 3
+	))
+	markerOrientations.push(new THREE.Quaternion(0, 0, 0, 1))
+}
+const dominantMarker = markers[0]
 let usedMarkerIndex = 0
-const objectPositions = []
-const objectQuaternions = []
-
-// Add a cube
-const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
-const boxMaterial = new THREE.MeshPhysicalMaterial({ color: 0xff0000, opacity: 0.3 })
-const box = new THREE.Mesh(boxGeometry, boxMaterial)
-box.position.set(0, 0.5, 0)
-// marker0.add(box)
-
-const boxGeometry2 = new THREE.BoxGeometry(1, 1, 1)
-const boxMaterial2 = new THREE.MeshPhysicalMaterial({ color: 0x00ff00, opacity: 0.3 })
-const box2 = new THREE.Mesh(boxGeometry2, boxMaterial2)
-// marker0.add(box2)
-
-// Add a plane
-const initialVertices = getVertices(initialY)
-const plane = createPlane(initialVertices.length / 3)
-// marker0.add(plane)
-plane.translateX(1)
-updatePlaneVertices(plane, initialVertices)
-updatePlaneColors(plane, getColors(0))
+const objectPositions = [], objectQuaternions = []
 
 // Add arrows to indicate axes
 const arrowLength = 1.3
 const xArrow = createArrow('x', arrowLength, 0xff0000)
 const yArrow = createArrow('y', arrowLength, 0x00ff00)
 const zArrow = createArrow('z', arrowLength, 0x0000ff)
-marker0.add(xArrow, yArrow, zArrow)
+dominantMarker.add(xArrow, yArrow, zArrow)
 objectPositions.push(xArrow.position.clone(), yArrow.position.clone(), zArrow.position.clone())
 objectQuaternions.push(xArrow.quaternion.clone(), yArrow.quaternion.clone(), zArrow.quaternion.clone())
-
-// Main update loop
-let time = 0
-const updateInterval = 10
-setInterval(() => {
-	time += updateInterval
-	updatePlaneColors(plane, getColors(time / 300))
-
-	for (let i = 0; i < markers.length; i++) {
-		const marker = markers[i]
-		if (marker.id === dominantMarker.id) continue
-		if (!marker.visible) continue
-		const relativePosition = marker.position.clone()
-		relativePosition.sub(dominantMarker.position) // relative position in the camera frame
-		relativePosition.applyQuaternion(dominantMarker.quaternion.clone().invert())
-
-		const relativeQuaternionCameraFrame = marker.quaternion.clone().multiply(dominantMarker.quaternion.clone().invert())
-		const relativeQuaternion = dominantMarker.quaternion.clone().invert().multiply(relativeQuaternionCameraFrame).multiply(dominantMarker.quaternion.clone())
-
-		box2.position.set(relativePosition.x, relativePosition.y, relativePosition.z)
-		box2.quaternion.set(relativeQuaternion.x, relativeQuaternion.y, relativeQuaternion.z, relativeQuaternion.w)
-		box2.translateY(0.5)
-	}
-
-}, updateInterval);
 
 // Add rotation / scale control
 const optionDropdown = document.createElement('select')
@@ -147,74 +103,10 @@ const createChangeInterval = (direction, option, intervalObject, interval, scale
 	}, interval)
 }
 
-const getData = new Promise(async (resolve, reject) => {
-	let indices, vertices, data;
-	const indicesResponse = await fetch('data/indices.bin')
-	const indicesBlob = await indicesResponse.blob()
-	const indicesReader = new FileReader()
-	indicesReader.onload = () => {
-		indices = new Uint32Array(indicesReader.result)
-		if (indices && vertices && data) resolve({ indices, vertices, data })
-	}
-	indicesReader.onerror = reject
-	indicesReader.readAsArrayBuffer(indicesBlob)
-
-	const verticesResponse = await fetch('data/vertices.bin')
-	const verticesBlob = await verticesResponse.blob()
-	const verticesReader = new FileReader()
-	verticesReader.onload = () => {
-		vertices = new Float32Array(verticesReader.result)
-		if (indices && vertices && data) resolve({ indices, vertices, data })
-	}
-	verticesReader.onerror = reject
-	verticesReader.readAsArrayBuffer(verticesBlob);
-
-	const dataResponse = await fetch('https://dl.dropboxusercontent.com/s/0mmd7dczala0ljd/values_sch_all.bin')
-	const dataBlob = await dataResponse.blob()
-	const dataReader = new FileReader()
-	dataReader.onload = () => {
-		data = new Float32Array(dataReader.result)
-		if (indices && vertices && data) resolve({ indices, vertices, data })
-	}
-	dataReader.onerror = reject
-	dataReader.readAsArrayBuffer(dataBlob)
-})
-
-getData.then(({ indices, vertices, data }) => {
-	let minX, maxX, minY, maxY
-	vertices.forEach((value, index) => {
-		if (index % 2 === 0) {
-			if (minX === undefined || minX > value) minX = value
-			if (maxX === undefined || maxX < value) maxX = value
-		} else {
-			if (minY === undefined || minY > value) minY = value
-			if (maxY === undefined || maxY < value) maxY = value
-		}
-	})
-	const normalisationConstant = Math.max(maxX - minX, maxY - minY)
-
-	const scale = 3
-	const vertices3D = new Float32Array(vertices.length / 2 * 3)
-	vertices.forEach((value, index) => {
-		if (index % 2 === 0) {
-			vertices3D[index * 3 / 2] = ((value - minX) / normalisationConstant - 0.5) * scale // x
-			vertices3D[index * 3 / 2 + 1] = 0 // y
-			vertices3D[index * 3 / 2 + 2] = (vertices[index + 1] - minY) / normalisationConstant * scale // z
-		}
-	})
-
-	const minValue = 0, maxValue = 10
-	const colors = new Float32Array(data.length * 3)
-	data.forEach((datum, index) => {
-		colors[index * 3] = (datum - minValue) / (maxValue - minValue) // red
-		colors[index * 3 + 1] = 0.0 // green
-		colors[index * 3 + 2] = 0.0 // blue
-	})
-
-	const colorsT0 = colors.slice(0, vertices.length / 2 * 3)
-	const bufferObject = createBufferObject(vertices3D, indices, colorsT0)
+getProcessedData().then(({ vertices, indices, colors }) => {
+	const bufferObject = createBufferObject(vertices, indices, colors)
 	bufferObject.quaternion.set(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4))
-	marker0.add(bufferObject)
+	dominantMarker.add(bufferObject)
 	objectPositions.push(bufferObject.position.clone())
 	objectQuaternions.push(bufferObject.quaternion.clone())
 })
@@ -237,7 +129,7 @@ setInterval(() => {
 
 			const q232 = markerOrientations[markerIndex].clone().invert().multiply(objectQuaternions[childIndex])
 
-			thisMarker.attach(child)
+			thisMarker.add(child) // the child will be removed from the current parent automatically
 			child.position.set(newChildPosition.x, newChildPosition.y, newChildPosition.z)
 			child.quaternion.set(q232.x, q232.y, q232.z, q232.w)
 		}

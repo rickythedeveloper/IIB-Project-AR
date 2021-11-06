@@ -43,28 +43,13 @@ const vertexShader = `
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
 `
+
 const fragmentShader = `
 	varying vec3 v_color;
 	void main() {
 		gl_FragColor = vec4(v_color, 0.5);
 	}
 `
-export const createPlane = (nVertices) => {
-	const planeGeometry = new THREE.BufferGeometry()
-	const planeVertices = new Float32Array(nVertices * 3)
-	const colors = new Float32Array(nVertices * 3)
-	planeGeometry.setAttribute('position', new THREE.BufferAttribute(planeVertices, 3))
-	planeGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-
-	const planeMaterial = new THREE.ShaderMaterial({
-		vertexShader,
-		fragmentShader,
-		side: THREE.DoubleSide
-	})
-	const plane = new THREE.Mesh(planeGeometry, planeMaterial)
-
-	return plane
-}
 
 export const createBufferObject = (vertices, indices, colors) => {
 	const geometry = new THREE.BufferGeometry()
