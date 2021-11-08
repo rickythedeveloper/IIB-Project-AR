@@ -130,37 +130,28 @@ const usedMarkerColor = 0x00ff00, unusedMarkerColor = 0xff0000
 
 setInterval(() => {
 	// determine the distances to the markers / work out the weight
-	const weights = []
-	let nearestMarkerIndex, weightSum = 0;
+	let nearestMarkerIndex
 	for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
-		if (!markers[markerIndex].visible) {
-			weights.push(0)
-			continue
-		}
-		const distance = markers[markerIndex].position.length()
-		const weight = 1 / distance
-		weights.push(weight)
-		weightSum += weight
-
-		if (nearestMarkerIndex === undefined || distance < markers[nearestMarkerIndex].position.length()) nearestMarkerIndex = markerIndex
+		if (!markers[markerIndex].visible) continue
+		if (nearestMarkerIndex === undefined || markers[markerIndex].position.length() < markers[nearestMarkerIndex].position.length()) nearestMarkerIndex = markerIndex
 	}
-
 	if (nearestMarkerIndex === undefined) return
-
-	// normalise the weights
-	for (let w = 0; w < weights.length; w++) {
-		weights[w] /= weightSum
-	}
 
 	const children = [...markers[usedMarkerIndex].children]
 	// on the cloeset marker, show the children based on averaging
 	for (let childIndex = 0; childIndex < children.length; childIndex++) {
 		const child = children[childIndex]
 
-		let x = 0, y = 0, z = 0; // in world coordinates (camera frame)
-		let qx = 0, qy = 0, qz = 0, qw = 0; // camera frame
+		const arr_p030 = [], arr_q030 = []
+		const weights = []
+		let weightSum = 0;
 		for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
-			if (!markers[markerIndex].visible) continue
+			if (!markers[markerIndex].visible) {
+				arr_p030.push(null)
+				arr_q030.push(null)
+				weights.push(0)
+				continue
+			}
 
 			// 0: camera, 1: dominant marker, 2: this marker, 3: object
 			const p020 = markers[markerIndex].position
@@ -175,11 +166,32 @@ setInterval(() => {
 
 			const p030 = p020.clone().add(p232.clone().applyQuaternion(q020))
 			const q030 = q020.clone().multiply(q232)
+			arr_p030.push(p030)
+			arr_q030.push(q030)
+
+			const d02 = p020.length()
+			const d23 = p232.length()
+			const weight = (1 / d02) * (d23 < 0.1 ? 10 : 1 / d23)
+			weights.push(weight)
+			weightSum += weight
+		}
+
+		// normalise the weights
+		for (let w = 0; w < weights.length; w++) {
+			weights[w] /= weightSum
+		}
+
+		let x = 0, y = 0, z = 0; // in world coordinates (camera frame)
+		let qx = 0, qy = 0, qz = 0, qw = 0; // camera frame
+		for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
+			if (weights[markerIndex] === 0) continue
+
+			const p030 = arr_p030[markerIndex]
+			const q030 = arr_q030[markerIndex]
 
 			x += weights[markerIndex] * p030.x
 			y += weights[markerIndex] * p030.y
 			z += weights[markerIndex] * p030.z
-
 			qx += weights[markerIndex] * q030.x
 			qy += weights[markerIndex] * q030.y
 			qz += weights[markerIndex] * q030.z
