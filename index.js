@@ -32,7 +32,7 @@ planeYSlider.oninput = (e) => {
 const scneeElement = document.getElementById('scene')
 
 // Create markers
-const markers = [], markerPositions = [], markerOrientations = []
+const markers = [], markerPositions = [], markerQuaternions = []
 for (let i = 0; i < 8; i++) {
 	const markerElement = createBarcodeMarkerElement(i)
 	scneeElement.appendChild(markerElement)
@@ -43,7 +43,7 @@ for (let i = 0; i < 8; i++) {
 		0,
 		(110.5 / 2 / 40) * (i - i % 3) / 3
 	))
-	markerOrientations.push(new THREE.Quaternion(0, 0, 0, 1))
+	markerQuaternions.push(new THREE.Quaternion(0, 0, 0, 1))
 }
 const dominantMarker = markers[0]
 let usedMarkerIndex = 0
@@ -141,10 +141,10 @@ setInterval(() => {
 
 			const p030 = objectPositions[childIndex].clone()
 			const p230 = p030.clone().sub(markerPositions[markerIndex])
-			const p232 = p230.clone().applyQuaternion(markerOrientations[markerIndex].clone().invert())
+			const p232 = p230.clone().applyQuaternion(markerQuaternions[markerIndex].clone().invert())
 			const newChildPosition = p232
 
-			const q232 = markerOrientations[markerIndex].clone().invert().multiply(objectQuaternions[childIndex])
+			const q232 = markerQuaternions[markerIndex].clone().invert().multiply(objectQuaternions[childIndex])
 
 			thisMarker.add(child) // the child will be removed from the current parent automatically
 			child.position.set(newChildPosition.x, newChildPosition.y, newChildPosition.z)
