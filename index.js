@@ -1,6 +1,6 @@
-import { createArrow, rotationQuaternion, createPlane } from "./utils/three.js";
+import { createArrow, rotationQuaternion, createBufferObject } from "./utils/three.js";
 import { createSlider, createControlPanel, createOption, createButton, createBarcodeMarkerElement } from "./utils/elements.js";
-import { getVertices, getColors } from "./utils/convenience.js";
+import { getProcessedData } from "./utils/convenience.js";
 
 const updatePlaneVertices = (plane, newVertices) => {
 	plane.geometry.attributes.position.array = newVertices
@@ -32,72 +32,31 @@ planeYSlider.oninput = (e) => {
 const scneeElement = document.getElementById('scene')
 
 // Create markers
-const marker0Element = createBarcodeMarkerElement(0)
-scneeElement.appendChild(marker0Element)
-const marker0 = marker0Element.object3D
-
-const marker3Element = createBarcodeMarkerElement(5)
-scneeElement.appendChild(marker3Element)
-const marker3 = marker3Element.object3D
-
-const markers = [marker0, marker3]
-const dominantMarker = marker0
-
-// Add a cube
-const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
-const boxMaterial = new THREE.MeshPhysicalMaterial({ color: 0xff0000, opacity: 0.3 })
-const box = new THREE.Mesh(boxGeometry, boxMaterial)
-box.position.set(0, 0.5, 0)
-marker0.add(box)
-
-const boxGeometry2 = new THREE.BoxGeometry(1, 1, 1)
-const boxMaterial2 = new THREE.MeshPhysicalMaterial({ color: 0x00ff00, opacity: 0.3 })
-const box2 = new THREE.Mesh(boxGeometry2, boxMaterial2)
-marker0.add(box2)
-
-// Add a plane
-const initialVertices = getVertices(initialY)
-const plane = createPlane(initialVertices.length / 3)
-marker0.add(plane)
-plane.translateX(1)
-updatePlaneVertices(plane, initialVertices)
-updatePlaneColors(plane, getColors(0))
+const markers = [], markerPositions = [], markerOrientations = []
+for (let i = 0; i < 8; i++) {
+	const markerElement = createBarcodeMarkerElement(i)
+	scneeElement.appendChild(markerElement)
+	const marker = markerElement.object3D
+	markers.push(marker)
+	markerPositions.push(new THREE.Vector3(
+		(110 / 2 / 40) * (i % 3),
+		0,
+		(110.5 / 2 / 40) * (i - i % 3) / 3
+	))
+	markerOrientations.push(new THREE.Quaternion(0, 0, 0, 1))
+}
+const dominantMarker = markers[0]
+let usedMarkerIndex = 0
+const objectPositions = [], objectQuaternions = []
 
 // Add arrows to indicate axes
 const arrowLength = 1.3
 const xArrow = createArrow('x', arrowLength, 0xff0000)
 const yArrow = createArrow('y', arrowLength, 0x00ff00)
 const zArrow = createArrow('z', arrowLength, 0x0000ff)
-marker0.add(xArrow, yArrow, zArrow)
-
-// Main update loop
-let time = 0
-const updateInterval = 10
-setInterval(() => {
-	time += updateInterval
-	updatePlaneColors(plane, getColors(time / 300))
-
-	xArrow.position.set(box.position.x, box.position.y, box.position.z)
-	yArrow.position.set(box.position.x, box.position.y, box.position.z)
-	zArrow.position.set(box.position.x, box.position.y, box.position.z)
-
-	for (let i = 0; i < markers.length; i++) {
-		const marker = markers[i]
-		if (marker.id === dominantMarker.id) continue
-		if (!marker.visible) continue
-		const relativePosition = marker.position.clone()
-		relativePosition.sub(dominantMarker.position) // relative position in the camera frame
-		relativePosition.applyQuaternion(dominantMarker.quaternion.clone().invert())
-
-		const relativeQuaternionCameraFrame = marker.quaternion.clone().multiply(dominantMarker.quaternion.clone().invert())
-		const relativeQuaternion = dominantMarker.quaternion.clone().invert().multiply(relativeQuaternionCameraFrame).multiply(dominantMarker.quaternion.clone())
-
-		box2.position.set(relativePosition.x, relativePosition.y, relativePosition.z)
-		box2.quaternion.set(relativeQuaternion.x, relativeQuaternion.y, relativeQuaternion.z, relativeQuaternion.w)
-		box2.translateY(0.5)
-	}
-
-}, updateInterval);
+dominantMarker.add(xArrow, yArrow, zArrow)
+objectPositions.push(xArrow.position.clone(), yArrow.position.clone(), zArrow.position.clone())
+objectQuaternions.push(xArrow.quaternion.clone(), yArrow.quaternion.clone(), zArrow.quaternion.clone())
 
 // Add rotation / scale control
 const optionDropdown = document.createElement('select')
@@ -143,3 +102,39 @@ const createChangeInterval = (direction, option, intervalObject, interval, scale
 		} else throw new Exception('invalid change type')
 	}, interval)
 }
+
+getProcessedData().then(({ vertices, indices, colors }) => {
+	const bufferObject = createBufferObject(vertices, indices, colors)
+	bufferObject.quaternion.set(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4))
+	dominantMarker.add(bufferObject)
+	objectPositions.push(bufferObject.position.clone())
+	objectQuaternions.push(bufferObject.quaternion.clone())
+})
+
+setInterval(() => {
+	const children = [...markers[usedMarkerIndex].children]
+
+	for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
+		const thisMarker = markers[markerIndex]
+		if (!thisMarker.visible) continue
+		if (markerIndex === usedMarkerIndex) break
+
+		for (let childIndex = 0; childIndex < children.length; childIndex++) {
+			const child = children[childIndex]
+
+			const p030 = objectPositions[childIndex].clone()
+			const p230 = p030.clone().sub(markerPositions[markerIndex])
+			const p232 = p230.clone().applyQuaternion(markerOrientations[markerIndex].clone().invert())
+			const newChildPosition = p232
+
+			const q232 = markerOrientations[markerIndex].clone().invert().multiply(objectQuaternions[childIndex])
+
+			thisMarker.add(child) // the child will be removed from the current parent automatically
+			child.position.set(newChildPosition.x, newChildPosition.y, newChildPosition.z)
+			child.quaternion.set(q232.x, q232.y, q232.z, q232.w)
+		}
+
+		usedMarkerIndex = markerIndex
+		break
+	}
+}, 100);
