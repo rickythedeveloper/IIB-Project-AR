@@ -12,6 +12,26 @@ const updatePlaneColors = (plane, newColors) => {
 	plane.geometry.attributes.color.needsUpdate = true;
 }
 
+/**
+ * @param {*} object
+ * @param {*} position relative to the dominant marker
+ * @param {*} quaternion relative to the dominant marker
+ */
+const addObject = (object, position, quaternion) => {
+	// 0: dominant marker, 1: used marker, 2: object
+	const p010 = markerPositions[usedMarkerIndex].clone()
+	const q010 = markerQuaternions[usedMarkerIndex].clone()
+	const p020 = position.clone()
+	const q020 = quaternion.clone()
+	const p121 = p020.clone().sub(p010).applyQuaternion(q010.clone().invert())
+	const q121 = q010.clone().invert().multiply(q020)
+	markers[usedMarkerIndex].add(object)
+	object.position.set(p121.x, p121.y, p121.z)
+	object.quaternion.set(q121.x, q121.y, q121.z, q121.w)
+	objectPositions.push(position.clone())
+	objectQuaternions.push(quaternion.clone())
+}
+
 // Add a 'control panel' div to put controls on
 const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
@@ -57,10 +77,8 @@ for (let i = 0; i < markers.length; i++) {
 	const markerIndicator = new THREE.Mesh(markerIndicatorGeometry, markerIndicatorMaterial)
 	markerIndicator.position.set(markerPositions[i].x, markerPositions[i].y, markerPositions[i].z)
 	markerIndicator.quaternion.set(Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4))
-	dominantMarker.add(markerIndicator)
+	addObject(markerIndicator, markerIndicator.position.clone(), markerIndicator.quaternion.clone())
 	markerIndicators.push(markerIndicator)
-	objectPositions.push(markerIndicator.position.clone())
-	objectQuaternions.push(markerIndicator.quaternion.clone())
 }
 
 // Add arrows to indicate axes
@@ -68,9 +86,9 @@ const arrowLength = 1.3
 const xArrow = createArrow('x', arrowLength, 0xff0000)
 const yArrow = createArrow('y', arrowLength, 0x00ff00)
 const zArrow = createArrow('z', arrowLength, 0x0000ff)
-dominantMarker.add(xArrow, yArrow, zArrow)
-objectPositions.push(xArrow.position.clone(), yArrow.position.clone(), zArrow.position.clone())
-objectQuaternions.push(xArrow.quaternion.clone(), yArrow.quaternion.clone(), zArrow.quaternion.clone())
+for (let arrow of [xArrow, yArrow, zArrow]) {
+	addObject(arrow, arrow.position.clone(), arrow.quaternion.clone())
+}
 
 // Add rotation / scale control
 const optionDropdown = document.createElement('select')
@@ -121,9 +139,7 @@ getProcessedData().then(({ vertices, indices, colors }) => {
 	const bufferObject = createBufferObject(vertices, indices, colors)
 	bufferObject.position.set(0, 1, 0)
 	bufferObject.quaternion.set(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4))
-	dominantMarker.add(bufferObject)
-	objectPositions.push(bufferObject.position.clone())
-	objectQuaternions.push(bufferObject.quaternion.clone())
+	addObject(bufferObject, bufferObject.position.clone(), bufferObject.quaternion.clone())
 })
 
 const usedMarkerColor = 0x00ff00, unusedMarkerColor = 0xff0000
