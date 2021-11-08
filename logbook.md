@@ -53,6 +53,9 @@
 ## 3 Nov 2021
 - show the data for one time step on a marker
 
+## 5 / 6 Nov 2021
+- use multiple markers to show the results / box
+
 ## TODO
 - multi-marker stuff
 - what native features can we use? (orientation, accelerometer, world tracking)
