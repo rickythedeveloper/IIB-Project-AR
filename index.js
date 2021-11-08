@@ -49,6 +49,20 @@ const dominantMarker = markers[0]
 let usedMarkerIndex = 0
 const objectPositions = [], objectQuaternions = []
 
+// Add indicators on markers
+const markerIndicators = []
+for (let i = 0; i < markers.length; i++) {
+	const markerIndicatorGeometry = new THREE.PlaneGeometry(1, 1)
+	const markerIndicatorMaterial = new THREE.MeshBasicMaterial({ opacity: 0.5, side: THREE.DoubleSide })
+	const markerIndicator = new THREE.Mesh(markerIndicatorGeometry, markerIndicatorMaterial)
+	markerIndicator.position.set(markerPositions[i].x, markerPositions[i].y, markerPositions[i].z)
+	markerIndicator.quaternion.set(Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4))
+	dominantMarker.add(markerIndicator)
+	markerIndicators.push(markerIndicator)
+	objectPositions.push(markerIndicator.position.clone())
+	objectQuaternions.push(markerIndicator.quaternion.clone())
+}
+
 // Add arrows to indicate axes
 const arrowLength = 1.3
 const xArrow = createArrow('x', arrowLength, 0xff0000)
@@ -105,11 +119,14 @@ const createChangeInterval = (direction, option, intervalObject, interval, scale
 
 getProcessedData().then(({ vertices, indices, colors }) => {
 	const bufferObject = createBufferObject(vertices, indices, colors)
+	bufferObject.position.set(0, 1, 0)
 	bufferObject.quaternion.set(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4))
 	dominantMarker.add(bufferObject)
 	objectPositions.push(bufferObject.position.clone())
 	objectQuaternions.push(bufferObject.quaternion.clone())
 })
+
+const usedMarkerColor = 0x00ff00, unusedMarkerColor = 0xff0000
 
 setInterval(() => {
 	const children = [...markers[usedMarkerIndex].children]
@@ -136,5 +153,10 @@ setInterval(() => {
 
 		usedMarkerIndex = markerIndex
 		break
+	}
+
+
+	for (let i = 0; i < markers.length; i++) {
+		markerIndicators[i].material.color.set(usedMarkerIndex === i ? usedMarkerColor : unusedMarkerColor)
 	}
 }, 100);
