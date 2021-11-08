@@ -17,7 +17,8 @@
 - native function to preserve the world coordinates not working as we would've liked
 
 ## demo
-## more challanges
+## more challanges / work
 - marker positions - scanning would be a good idea?
 - inaccuracy?
+- save callibration data / server stuff
 
