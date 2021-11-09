@@ -39,7 +39,7 @@ document.body.appendChild(controlPanelWrapper)
 // Slider to control y value of the plane
 const initialY = 0.0
 const planeYSlider = createSlider(0, 5, initialY, 0.1)
-controlPanel.appendChild(planeYSlider)
+// controlPanel.appendChild(planeYSlider)
 planeYSlider.oninput = (e) => {
 	const newY = e.target.value
 	const positionArray = plane.geometry.attributes.position.array
@@ -92,7 +92,7 @@ for (let arrow of [xArrow, yArrow, zArrow]) {
 
 // Add rotation / scale control
 const optionDropdown = document.createElement('select')
-controlPanel.appendChild(optionDropdown)
+// controlPanel.appendChild(optionDropdown)
 
 optionDropdown.appendChild(createOption('rotx', 'Rotate about X'))
 optionDropdown.appendChild(createOption('roty', 'Rotate about Y'))
@@ -111,9 +111,9 @@ const positionChange = changeInterval / 1000
 let changeIntervalObject
 
 const plusButton = createButton('+', () => { changeIntervalObject = createChangeInterval(1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, box) })
-controlPanel.appendChild(plusButton)
+// controlPanel.appendChild(plusButton)
 const minusButton = createButton('-', () => { changeIntervalObject = createChangeInterval(-1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, box) })
-controlPanel.appendChild(minusButton)
+// controlPanel.appendChild(minusButton)
 
 const createChangeInterval = (direction, option, intervalObject, interval, scaleChange, angleChange, positionChange, object) => {
 	if (intervalObject !== undefined) {
