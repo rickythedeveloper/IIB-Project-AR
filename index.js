@@ -135,11 +135,21 @@ const createChangeInterval = (direction, option, intervalObject, interval, scale
 	}, interval)
 }
 
+let time = 0;
 getProcessedData().then(({ vertices, indices, colors }) => {
-	const bufferObject = createBufferObject(vertices, indices, colors)
+	const colorBufferSizePerTime = vertices.length
+	const nTimes = colors.length / colorBufferSizePerTime
+	if (!Number.isInteger(nTimes)) throw Error('totalTime is not an integer')
+	const bufferObject = createBufferObject(vertices, indices, colors.slice(0, colorBufferSizePerTime))
 	bufferObject.position.set(0, 1, 0)
 	bufferObject.quaternion.set(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4))
 	addObject(bufferObject, bufferObject.position.clone(), bufferObject.quaternion.clone())
+
+	setInterval(() => {
+		time = time < nTimes - 1 ? time + 1 : 0
+		bufferObject.geometry.attributes.color.array = colors.slice(time * colorBufferSizePerTime, (time + 1) * colorBufferSizePerTime)
+		bufferObject.geometry.attributes.color.needsUpdate = true
+	}, 50)
 })
 
 const usedMarkerColor = 0x00ff00, unusedMarkerColor = 0xff0000

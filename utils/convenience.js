@@ -65,7 +65,5 @@ export const getProcessedData = async () => {
 		colors[index * 3 + 2] = 0.0 // blue
 	})
 
-	const colorsT0 = colors.slice(0, vertices.length / 2 * 3)
-
-	return { vertices: vertices3D, indices, colors: colorsT0 }
+	return { vertices: vertices3D, indices, colors }
 }
