@@ -53,21 +53,34 @@ const scneeElement = document.getElementById('scene')
 
 // Create markers
 const markers = [], markerPositions = [], markerQuaternions = []
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 4; i++) {
 	const markerElement = createBarcodeMarkerElement(i)
 	scneeElement.appendChild(markerElement)
 	const marker = markerElement.object3D
 	markers.push(marker)
 	markerPositions.push(new THREE.Vector3(
-		(110 / 2 / 40) * (i % 3),
+		(126.5 / 30) * (i % 2),
 		0,
-		(110.5 / 2 / 40) * (i - i % 3) / 3
+		(210.2 / 30) * (i - i % 2) / 2
 	))
-	markerQuaternions.push(new THREE.Quaternion(0, 0, 0, 1))
+	markerQuaternions.push(
+		i === 0 ? new THREE.Quaternion(0, 0, 0, 1) :
+			i === 1 ? new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)) :
+				i === 2 ? new THREE.Quaternion(0, Math.sin(Math.PI / 2), 0, Math.cos(Math.PI / 2)) :
+					i === 3 ? new THREE.Quaternion(0, Math.sin(-Math.PI / 4), 0, Math.cos(-Math.PI / 4)) :
+						new THREE.Quaternion(0, 0, 0, 1)
+	)
 }
 const dominantMarker = markers[0]
 let usedMarkerIndex = 0
 const objectPositions = [], objectQuaternions = []
+
+// Add a box
+const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
+const boxMaterial = new THREE.MeshPhysicalMaterial({ color: 0xff0000, opacity: 0.3 })
+const box = new THREE.Mesh(boxGeometry, boxMaterial)
+box.position.set(2, 0.5, 3)
+addObject(box, box.position.clone(), box.quaternion.clone())
 
 // Add indicators on markers
 const markerIndicators = []
@@ -192,6 +205,10 @@ setInterval(() => {
 		// normalise the weights
 		for (let w = 0; w < weights.length; w++) {
 			weights[w] /= weightSum
+		}
+
+		if (childIndex === 0) {
+			console.log(weights);
 		}
 
 		let x = 0, y = 0, z = 0; // in world coordinates (camera frame)
