@@ -177,7 +177,7 @@ setInterval(() => {
 			const p131 = objectPositions[childIndex].clone()
 			const q131 = objectQuaternions[childIndex].clone()
 
-			const p232 = p131.clone().sub(p121).applyQuaternion(q121)
+			const p232 = p131.clone().sub(p121).applyQuaternion(q121.clone().invert())
 			const q232 = q121.clone().invert().multiply(q131)
 
 			const p030 = p020.clone().add(p232.clone().applyQuaternion(q020))
