@@ -152,7 +152,7 @@ getProcessedData().then(({ vertices, indices, colors }) => {
 	}, 50)
 })
 
-const usedMarkerColor = 0x00ff00, unusedMarkerColor = 0xff0000
+const usedMarkerColor = 0x00ff00, visibleUnusedMarkerColor = 0xffff00, hiddenMarkerColor = 0xff0000
 
 setInterval(() => {
 	// determine the distances to the markers / work out the weight
@@ -240,6 +240,6 @@ setInterval(() => {
 	usedMarkerIndex = nearestMarkerIndex
 
 	for (let i = 0; i < markers.length; i++) {
-		markerIndicators[i].material.color.set(usedMarkerIndex === i ? usedMarkerColor : unusedMarkerColor)
+		markerIndicators[i].material.color.set(usedMarkerIndex === i ? usedMarkerColor : markers[i].visible ? visibleUnusedMarkerColor : hiddenMarkerColor)
 	}
 }, 100);
