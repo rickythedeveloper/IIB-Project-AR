@@ -56,6 +56,17 @@
 ## 5 / 6 Nov 2021
 - use multiple markers to show the results / box
 
+## 8 Nov
+- put indicators on markers (green and red)
+- stabalise objects by averaging their positions with weights
+
+## 9 Nov
+- use all time steps of the example sim to make a nice animation
+- add yellow to indicator color for visible but not nearest markers
+
+## 10/11
+- make a python script to convert the xy coordinates data for airfoil to an stl file for 3d printing
+
 ## TODO
 - multi-marker stuff
 - what native features can we use? (orientation, accelerometer, world tracking)
