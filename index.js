@@ -71,13 +71,6 @@ const dominantMarker = markers[0]
 let usedMarkerIndex = 0
 const objectPositions = [], objectQuaternions = []
 
-// Add a box
-const boxGeometry = new THREE.BoxGeometry(1, 1, 1)
-const boxMaterial = new THREE.MeshPhysicalMaterial({ color: 0xff0000, opacity: 0.3 })
-const box = new THREE.Mesh(boxGeometry, boxMaterial)
-box.position.set(2, 0.5, 3)
-// addObject(box, box.position.clone(), box.quaternion.clone())
-
 // Add indicators on markers
 const markerIndicators = []
 for (let i = 0; i < markers.length; i++) {
