@@ -28,6 +28,7 @@ const addObject = (object, position, quaternion) => {
 	markers[usedMarkerIndex].add(object)
 	object.position.set(p121.x, p121.y, p121.z)
 	object.quaternion.set(q121.x, q121.y, q121.z, q121.w)
+	object.indexInProject = objectPositions.length
 	objectPositions.push(position.clone())
 	objectQuaternions.push(quaternion.clone())
 }
@@ -53,17 +54,18 @@ const scneeElement = document.getElementById('scene')
 
 // Create markers
 const markers = [], markerPositions = [], markerQuaternions = []
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 6; i++) {
 	const markerElement = createBarcodeMarkerElement(i)
 	scneeElement.appendChild(markerElement)
 	const marker = markerElement.object3D
 	markers.push(marker)
 	markerPositions.push(new THREE.Vector3(
-		(110 / 2 / 40) * (i % 3),
+		(76 / 30) * (i % 2),
 		0,
-		(110.5 / 2 / 40) * (i - i % 3) / 3
+		(66 / 30) * (i - i % 2) / 2
 	))
-	markerQuaternions.push(new THREE.Quaternion(0, 0, 0, 1))
+	const theta = Math.PI / 2 * (i % 4)
+	markerQuaternions.push(new THREE.Quaternion(0, Math.sin(theta / 2), 0, Math.cos(theta / 2)))
 }
 const dominantMarker = markers[0]
 let usedMarkerIndex = 0
@@ -101,9 +103,10 @@ const scaleChange = 0.005
 const positionChange = changeInterval / 1000
 let changeIntervalObject
 
-const plusButton = createButton('+', () => { changeIntervalObject = createChangeInterval(1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, box) })
+let simulationResult;
+const plusButton = createButton('+', () => { changeIntervalObject = createChangeInterval(1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, simulationResult) })
 // controlPanel.appendChild(plusButton)
-const minusButton = createButton('-', () => { changeIntervalObject = createChangeInterval(-1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, box) })
+const minusButton = createButton('-', () => { changeIntervalObject = createChangeInterval(-1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, simulationResult) })
 // controlPanel.appendChild(minusButton)
 
 const createChangeInterval = (direction, option, intervalObject, interval, scaleChange, angleChange, positionChange, object) => {
@@ -117,11 +120,11 @@ const createChangeInterval = (direction, option, intervalObject, interval, scale
 			object.scale.addScalar(direction * scaleChange)
 		} else if (option.includes('rot')) {
 			const axis = option.slice(3)
-			object.applyQuaternion(rotationQuaternion(axis, direction * angleChange))
+			objectQuaternions[object.indexInProject].premultiply(rotationQuaternion(axis, direction * angleChange))
 		} else if (option.includes('trans')) {
 			const axis = option.slice(5)
 			const axisVector = new THREE.Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0)
-			object.position.addScaledVector(axisVector, direction * positionChange)
+			objectPositions[object.indexInProject].addScaledVector(axisVector, direction * positionChange)
 		} else throw new Exception('invalid change type')
 	}, interval)
 }
@@ -131,15 +134,18 @@ getProcessedData().then(({ vertices, indices, colors }) => {
 	const colorBufferSizePerTime = vertices.length
 	const nTimes = colors.length / colorBufferSizePerTime
 	if (!Number.isInteger(nTimes)) throw Error('totalTime is not an integer')
-	const bufferObject = createBufferObject(vertices, indices, colors.slice(0, colorBufferSizePerTime))
-	bufferObject.position.set(0, 1, 0)
-	bufferObject.quaternion.set(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4))
-	addObject(bufferObject, bufferObject.position.clone(), bufferObject.quaternion.clone())
+	simulationResult = createBufferObject(vertices, indices, colors.slice(0, colorBufferSizePerTime))
+	const simResultPosition = new THREE.Vector3(0.47, 0.5, -0.43)
+	const simResultScale = 1.475
+	simulationResult.position.set(simResultPosition.x, simResultPosition.y, simResultPosition.z)
+	simulationResult.quaternion.set(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4))
+	simulationResult.scale.set(simResultScale, simResultScale, simResultScale)
+	addObject(simulationResult, simulationResult.position.clone(), simulationResult.quaternion.clone())
 
 	setInterval(() => {
 		time = time < nTimes - 1 ? time + 1 : 0
-		bufferObject.geometry.attributes.color.array = colors.slice(time * colorBufferSizePerTime, (time + 1) * colorBufferSizePerTime)
-		bufferObject.geometry.attributes.color.needsUpdate = true
+		simulationResult.geometry.attributes.color.array = colors.slice(time * colorBufferSizePerTime, (time + 1) * colorBufferSizePerTime)
+		simulationResult.geometry.attributes.color.needsUpdate = true
 	}, 50)
 })
 
