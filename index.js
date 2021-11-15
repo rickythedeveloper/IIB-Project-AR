@@ -81,15 +81,6 @@ for (let i = 0; i < markers.length; i++) {
 	markerIndicators.push(markerIndicator)
 }
 
-// Add arrows to indicate axes
-const arrowLength = 1.3
-const xArrow = createArrow('x', arrowLength, 0xff0000)
-const yArrow = createArrow('y', arrowLength, 0x00ff00)
-const zArrow = createArrow('z', arrowLength, 0x0000ff)
-for (let arrow of [xArrow, yArrow, zArrow]) {
-	addObject(arrow, arrow.position.clone(), arrow.quaternion.clone())
-}
-
 // Add rotation / scale control
 const optionDropdown = document.createElement('select')
 // controlPanel.appendChild(optionDropdown)
@@ -172,16 +163,12 @@ setInterval(() => {
 		const weights = []
 		let weightSum = 0;
 		for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
-			if (!markers[markerIndex].visible) {
-				arr_p030.push(null)
-				arr_q030.push(null)
-				weights.push(0)
-				continue
-			}
+			if (!markers[markerIndex].visible) continue
 
 			// 0: camera, 1: dominant marker, 2: this marker, 3: object
 			const p020 = markers[markerIndex].position
 			const q020 = markers[markerIndex].quaternion
+			if (p020.length() > 1000) continue
 			const p121 = markerPositions[markerIndex].clone()
 			const q121 = markerQuaternions[markerIndex].clone()
 			const p131 = objectPositions[childIndex].clone()
@@ -209,19 +196,19 @@ setInterval(() => {
 
 		let x = 0, y = 0, z = 0; // in world coordinates (camera frame)
 		let qx = 0, qy = 0, qz = 0, qw = 0; // camera frame
-		for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
-			if (weights[markerIndex] === 0) continue
+		for (let w = 0; w < weights.length; w++) {
+			if (weights[w] === 0) continue
 
-			const p030 = arr_p030[markerIndex]
-			const q030 = arr_q030[markerIndex]
+			const p030 = arr_p030[w]
+			const q030 = arr_q030[w]
 
-			x += weights[markerIndex] * p030.x
-			y += weights[markerIndex] * p030.y
-			z += weights[markerIndex] * p030.z
-			qx += weights[markerIndex] * q030.x
-			qy += weights[markerIndex] * q030.y
-			qz += weights[markerIndex] * q030.z
-			qw += weights[markerIndex] * q030.w
+			x += weights[w] * p030.x
+			y += weights[w] * p030.y
+			z += weights[w] * p030.z
+			qx += weights[w] * q030.x
+			qy += weights[w] * q030.y
+			qz += weights[w] * q030.z
+			qw += weights[w] * q030.w
 		}
 
 		// 4: nearest marker

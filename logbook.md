@@ -67,6 +67,16 @@
 ## 10/11
 - make a python script to convert the xy coordinates data for airfoil to an stl file for 3d printing
 
+## 11/11
+- modify the python script to close the surface of the 3d model
+
+## 12/11
+- 3d print the wing section
+- record a demo of how the simulation result fits the physical model
+
+## 15/11
+- seems like marker 5 indicator is super unstable when we cover markers 3 and 5 and the camera is near marker 1.
+
 ## TODO
 - multi-marker stuff
 - what native features can we use? (orientation, accelerometer, world tracking)
