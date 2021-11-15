@@ -150,7 +150,6 @@ getProcessedData().then(({ vertices, indices, colors }) => {
 })
 
 const usedMarkerColor = 0x00ff00, visibleUnusedMarkerColor = 0xffff00, hiddenMarkerColor = 0xff0000
-
 setInterval(() => {
 	// determine the distances to the markers / work out the weight
 	let nearestMarkerIndex
@@ -211,10 +210,10 @@ setInterval(() => {
 			x += weights[w] * p030.x
 			y += weights[w] * p030.y
 			z += weights[w] * p030.z
-			qx += weights[w] * q030.x
-			qy += weights[w] * q030.y
-			qz += weights[w] * q030.z
-			qw += weights[w] * q030.w
+			qx += weights[w] * q030.x * Math.sign(q030.w)
+			qy += weights[w] * q030.y * Math.sign(q030.w)
+			qz += weights[w] * q030.z * Math.sign(q030.w)
+			qw += weights[w] * q030.w * Math.sign(q030.w)
 		}
 
 		// 4: nearest marker

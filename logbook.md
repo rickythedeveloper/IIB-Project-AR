@@ -76,9 +76,12 @@
 
 ## 15/11
 - seems like marker 5 indicator is super unstable when we cover markers 3 and 5 and the camera is near marker 1.
+- marker 4 indicator is unstable when covering marker 4 and the camera is near marker 0 / 2.
+- fixed this bug. The problem was that some of the world frame quaternions stored for weighting were facing the other direction with negative rotation.
+They represent the same operation but the nature of averaging meant that this was poorly managed.
+Used the sign of w to correct it.
 
 ## TODO
-- multi-marker stuff
 - what native features can we use? (orientation, accelerometer, world tracking)
 - webar
 - entirely new stuff
