@@ -81,6 +81,11 @@
 They represent the same operation but the nature of averaging meant that this was poorly managed.
 Used the sign of w to correct it.
 
+## 16/11
+- refactoring things (Arena class, put things into functions)
+
+## 17/11
+
 ## TODO
 - what native features can we use? (orientation, accelerometer, world tracking)
 - webar
