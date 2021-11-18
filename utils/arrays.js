@@ -36,3 +36,14 @@ export const getVariance = (values, mean) => {
 	values.forEach(value => squaredErrorSum += (value - mean) ** 2)
 	return squaredErrorSum / values.length
 }
+
+export const initMatrix = (shape, initialValueFunc) => {
+	const arr = []
+	for (let i = 0; i < shape[0]; i++) {
+		arr.push([])
+		for (let j = 0; j < shape[1]; j++) {
+			arr[i].push(initialValueFunc())
+		}
+	}
+	return arr
+}

@@ -4,7 +4,7 @@ import { getProcessedData } from "./utils/convenience.js";
 import { createMoveDropdown, createSimulationResultObject, createMarkerIndicators } from "./utils/scene_init.js";
 import Arena from "./Arena.js";
 import { getMeanVector, getAverageQuaternion } from "./utils/index.js";
-import { arrayIsFilled } from "./utils/arrays.js";
+import { initMatrix } from "./utils/arrays.js";
 
 const MODES = {
 	SCAN: 'scan',
@@ -44,6 +44,9 @@ const show = () => {
 	}, 100);
 }
 
+const zeroVector = new THREE.Vector3(0, 0, 0)
+const maxMarkerDistance = 100
+
 const scan = () => {
 	const scene = document.getElementById('scene')
 	// register which markers to use
@@ -61,65 +64,104 @@ const scan = () => {
 	markerPositions[dominantMarkerIndex] = new THREE.Vector3(0, 0, 0)
 	markerQuaternions[dominantMarkerIndex] = new THREE.Quaternion(0, 0, 0, 1)
 
-	// container for recorded values
-	const recordedMarkerPositions = [], recordedMarkerQuaternions = []
+	// container matrix for the relative positions and quaternions
+	const markerPositionsMatrix = initMatrix([markers.length, markers.length], () => null), markerQuaternionsMatrix = initMatrix([markers.length, markers.length], () => null)
 	for (let i = 0; i < markers.length; i++) {
-		// if (i === dominantMarkerIndex) continue
-		recordedMarkerPositions.push([])
-		recordedMarkerQuaternions.push([])
+		markerPositionsMatrix[i][i] = new THREE.Vector3(0, 0, 0)
+		markerQuaternionsMatrix[i][i] = new THREE.Quaternion(0, 0, 0, 1)
 	}
+
+	// container for recorded values
+	const recordedMarkerPositions = initMatrix([markers.length, markers.length], () => [])
+	const recordedMarkerQuaternions = initMatrix([markers.length, markers.length], () => [])
 
 	// record relative positions and quaternions
 	const recordValueInterval = setInterval(() => {
 		for (let i = 0; i < markers.length; i++) {
-			if (i === dominantMarkerIndex) continue
-			if (!markers[i].visible || !markers[dominantMarkerIndex].visible) continue
+			for (let j = 0; j < markers.length; j++) {
+				if (i === j) continue
+				if (!markers[i].visible || !markers[j].visible) continue
 
-			// 0: camera, 1: dominant marker, 2: this marker
-			const p010 = markers[dominantMarkerIndex].position
-			const q010 = markers[dominantMarkerIndex].quaternion
-			const p020 = markers[i].position
-			const q020 = markers[i].quaternion
+				// 0: camera, 1: marker i, 2: marker j
+				const p010 = markers[i].position
+				const q010 = markers[i].quaternion
+				const p020 = markers[j].position
+				const q020 = markers[j].quaternion
 
-			if (p010.equals(new THREE.Vector3(0, 0, 0)) || p020.equals(new THREE.Vector3(0, 0, 0))) continue
-			if (p010.length() > 100 || p020.length() > 100) continue
 
-			const q121 = q010.clone().invert().multiply(q020)
-			const p120 = p020.clone().sub(p010)
-			const p121 = p120.clone().applyQuaternion(q010.clone().invert())
+				if (p010.equals(zeroVector) || p020.equals(zeroVector)) continue
+				if (p010.length() > maxMarkerDistance || p020.length() > maxMarkerDistance) continue
 
-			recordedMarkerPositions[i].push(p121)
-			recordedMarkerQuaternions[i].push(q121)
+				const q121 = q010.clone().invert().multiply(q020)
+				const p120 = p020.clone().sub(p010)
+				const p121 = p120.clone().applyQuaternion(q010.clone().invert())
+
+				recordedMarkerPositions[i][j].push(p121)
+				recordedMarkerQuaternions[i][j].push(q121)
+			}
 		}
 	}, 20)
 
-	const n_min = 100
-	const maxVariance = 0.1
-	// decide whether to put the mean into the final value container
+	const minMeasurements = 150
+	const maxVariance = 0.7
 	const setValueInterval = setInterval(() => {
+		// decide whether to put the average into the relative position and quaternion matrices
 		for (let i = 0; i < markers.length; i++) {
-			if (i === dominantMarkerIndex) continue
-			const positions = recordedMarkerPositions[i]
-			if (positions.length > n_min) {
-				const { vector: meanPosition, variances: positionVariances } = getMeanVector(positions)
-				if (positionVariances.every(v => v < maxVariance)) {
-					markerPositions[i] = meanPosition
-				}
-			}
+			for (let j = 0; j < markers.length; j++) {
+				if (i === j) continue
+				const positions = recordedMarkerPositions[i][j]
+				const quaternions = recordedMarkerQuaternions[i][j]
+				if (positions.length < minMeasurements) continue
 
-			const quaternions = recordedMarkerQuaternions[i]
-			if (quaternions.length > n_min) {
+				const { vector: meanPosition, variances: positionVariances } = getMeanVector(positions)
+				if (positionVariances.every(v => v < maxVariance)) markerPositionsMatrix[i][j] = meanPosition
+
 				const averageQuaternion = getAverageQuaternion(quaternions)
-				markerQuaternions[i] = averageQuaternion
+				markerQuaternionsMatrix[i][j] = averageQuaternion
 			}
 		}
 
-		if (arrayIsFilled(markerPositions) && arrayIsFilled(markerQuaternions)) {
-			clearInterval(recordValueInterval)
-			clearInterval(setValueInterval)
-			console.log('complete!');
+		// check if all markers are accessible from the dominant marker
+		const connectedMarkers = [dominantMarkerIndex]
+		const routes = []
+		for (let i = 0; i < markers.length; i++) {
+			if (i === connectedMarkers.length) break
+
+			for (let j = 0; j < markers.length; j++) {
+				if (connectedMarkers.includes(j)) continue
+				const startMarker = connectedMarkers[i]
+				const endMarker = j
+				const relativePosition = markerPositionsMatrix[startMarker][endMarker]
+				if (relativePosition === null) continue
+				connectedMarkers.push(endMarker)
+				routes.push([startMarker, endMarker])
+			}
+		}
+
+		// if all markers accessible, calculate the marker positions and quaternions relative to the dominant marker
+		if (connectedMarkers.length === markers.length) {
+			console.log('All connected!');
+
+			for (const route of routes) {
+				console.log(route);
+				// 0: dominant marker
+				// 1: marker at the beginning of the route, 
+				// 2: marker at the end of the route
+				const p121 = markerPositionsMatrix[route[0]][route[1]]
+				const q121 = markerQuaternionsMatrix[route[0]][route[1]]
+				const p010 = markerPositions[route[0]]
+				const q010 = markerQuaternions[route[0]]
+
+				const p020 = p010.clone().add(p121.clone().applyQuaternion(q010))
+				const q020 = q010.clone().multiply(q121)
+				markerPositions[route[1]] = p020
+				markerQuaternions[route[1]] = q020
+			}
+
 			console.log(markerPositions);
 			console.log(markerQuaternions);
+			clearInterval(recordValueInterval)
+			clearInterval(setValueInterval)
 		}
 	}, 500)
 
