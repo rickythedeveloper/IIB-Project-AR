@@ -85,6 +85,18 @@ Used the sign of w to correct it.
 - refactoring things (Arena class, put things into functions)
 
 ## 17/11
+- started working on calibration
+- had a problem with quaternion rotation close to 180 degrees, in which case i didnt quite know how to clean the quaternion.
+
+## 18/11
+- based on [this paper](http://www.acsu.buffalo.edu/%7Ejohnc/ave_quat07.pdf), devise a way to average quaternions
+- the code for calibration is done
+- add confidence indicator lines between markers to show how accurate the relative positions seem
+- film a demo video on calibration
+- the error can be around 1/10 of marker size within a reasonable time
+
+## 19/11
+- 
 
 ## TODO
 - what native features can we use? (orientation, accelerometer, world tracking)
