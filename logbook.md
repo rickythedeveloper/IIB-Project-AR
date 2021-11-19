@@ -96,7 +96,8 @@ Used the sign of w to correct it.
 - the error can be around 1/10 of marker size within a reasonable time
 
 ## 19/11
-- 
+- connect scan and show functions together
+- we can now scan the markers and then show the simulation results without hard-coding the marker positions and quaternions!!!!
 
 ## TODO
 - what native features can we use? (orientation, accelerometer, world tracking)
