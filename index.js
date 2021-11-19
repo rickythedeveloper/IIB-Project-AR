@@ -4,6 +4,7 @@ import { createMoveDropdown, createSimulationResultObject, createMarkerIndicator
 import Arena from "./Arena.js";
 import { getMeanVector, getAverageQuaternion } from "./utils/index.js";
 import { initMatrix } from "./utils/arrays.js";
+import { createLine, createMarkerIndicator } from "./utils/three.js";
 
 const MODES = {
 	SCAN: 'scan',
@@ -43,8 +44,6 @@ const show = () => {
 	}, 100);
 }
 
-const zeroVector = new THREE.Vector3(0, 0, 0)
-const maxMarkerDistance = 100
 
 const scan = () => {
 	const scene = document.getElementById('scene')
@@ -58,21 +57,14 @@ const scan = () => {
 		markers.push(marker)
 	}
 
-	markers.forEach(marker => {
-		const markerIndicatorGeometry = new THREE.PlaneGeometry(1, 1)
-		const markerIndicatorMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00, opacity: 0.5, side: THREE.DoubleSide })
-		const markerIndicator = new THREE.Mesh(markerIndicatorGeometry, markerIndicatorMaterial)
-		markerIndicator.quaternion.set(Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4))
-		marker.add(markerIndicator)
-	})
+	// add marker indicators
+	markers.forEach(marker => marker.add(createMarkerIndicator(0x0000ff, 0.5)))
 
 	const indicatorLines = initMatrix([markers.length, markers.length], () => null)
 	for (let i = 0; i < markers.length; i++) {
 		for (let j = 0; j < markers.length; j++) {
 			if (i === j) continue
-			const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 })
-			const lineGeometry = new THREE.BufferGeometry()
-			const line = new THREE.Line(lineGeometry, lineMaterial)
+			const line = createLine(0xff0000)
 			markers[i].add(line)
 			indicatorLines[i][j] = line
 		}
@@ -87,18 +79,22 @@ const scan = () => {
 	// container matrix for the relative positions and quaternions
 	const markerPositionsMatrix = initMatrix([markers.length, markers.length], () => null)
 	const markerQuaternionsMatrix = initMatrix([markers.length, markers.length], () => null)
-	const averageMarkerPositionsMatrix = initMatrix([markers.length, markers.length], () => null)
-	const markerPositionsConfidenceMatrix = initMatrix([markers.length, markers.length], () => 0)
 	for (let i = 0; i < markers.length; i++) {
 		markerPositionsMatrix[i][i] = new THREE.Vector3(0, 0, 0)
 		markerQuaternionsMatrix[i][i] = new THREE.Quaternion(0, 0, 0, 1)
 	}
 
-	// container for recorded values
+	// container for the current average positions and their confidence
+	const averageMarkerPositionsMatrix = initMatrix([markers.length, markers.length], () => null)
+	const markerPositionsConfidenceMatrix = initMatrix([markers.length, markers.length], () => 0)
+
+	// container for all recorded values
 	const recordedMarkerPositions = initMatrix([markers.length, markers.length], () => [])
 	const recordedMarkerQuaternions = initMatrix([markers.length, markers.length], () => [])
 
 	// record relative positions and quaternions
+	const zeroVector = new THREE.Vector3(0, 0, 0)
+	const maxMarkerDistance = 100
 	const recordValueInterval = setInterval(() => {
 		for (let i = 0; i < markers.length; i++) {
 			for (let j = 0; j < markers.length; j++) {
@@ -110,7 +106,6 @@ const scan = () => {
 				const q010 = markers[i].quaternion
 				const p020 = markers[j].position
 				const q020 = markers[j].quaternion
-
 
 				if (p010.equals(zeroVector) || p020.equals(zeroVector)) continue
 				if (p010.length() > maxMarkerDistance || p020.length() > maxMarkerDistance) continue
@@ -144,7 +139,7 @@ const scan = () => {
 					Math.min(1, maxVariance / positionVariances[2])
 				averageMarkerPositionsMatrix[i][j] = meanPosition
 				markerPositionsConfidenceMatrix[i][j] = confidence
-				if (positionVariances.every(v => v < maxVariance) && confidence === 1) markerPositionsMatrix[i][j] = meanPosition
+				if (confidence === 1) markerPositionsMatrix[i][j] = meanPosition
 
 				const averageQuaternion = getAverageQuaternion(quaternions)
 				markerQuaternionsMatrix[i][j] = averageQuaternion
@@ -198,12 +193,14 @@ const scan = () => {
 		for (let i = 0; i < markers.length; i++) {
 			for (let j = 0; j < markers.length; j++) {
 				if (i === j) continue
-				const confidence = Math.min(1, markerPositionsConfidenceMatrix[i][j])
-				const lineGeometry = indicatorLines[i][j].geometry, lineMaterial = indicatorLines[i][j].material
 				const relativePosition = averageMarkerPositionsMatrix[i][j]
 				if (relativePosition === null) continue
+				const confidence = markerPositionsConfidenceMatrix[i][j]
+				const lineGeometry = indicatorLines[i][j].geometry, lineMaterial = indicatorLines[i][j].material
 				const vertices = new Float32Array([0, 0, 0, relativePosition.x, relativePosition.y, relativePosition.z])
-				lineGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+				// lineGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+				lineGeometry.attributes.position.array = vertices
+				lineGeometry.attributes.position.needsUpdate = true
 				lineMaterial.color = new THREE.Color(1 - confidence, confidence, 0)
 			}
 		}
