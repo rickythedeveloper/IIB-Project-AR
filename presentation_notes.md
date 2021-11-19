@@ -16,30 +16,32 @@
 - Solution pt 2
 	- The difference between this and IKEA is that the chair can appear anywhere in your room, but we want the sim results to always appear in the right place
 	- We can use marker-based AR to ensure this!
-<!-- - Components
-	1. Calibration
-		- register the positions of the markers
-		- adjust the position of the simulation result
-		- only once
-	1. Data storage
-	1. Projection
-		- project the simulation result on the camera feed correctly
-	1. Exploration
-		- allow users to explore different kinds of data -->
-
-- How it started
+- Visualisation - how it started
 	- pic of cube on a marker
-- How it's going
-	- demo video
-- Challenges
-	- 
-- Tech Deep Dive
 	- AR.js to detect marker positions
 	- three.js: a JS library that makes it easy to draw 3D content on a webpage. Allows me to avoid most of WebGL.
+- Visualisation - how it's going (demo video)
+- Visualisation - assumptions / limitations
+	- given marker positions and orientations
+	- given object position and orientation
+- Scanning
+	- scan the markers 
+	- store the relative positions and orientations w.r.t. marker 0 (show marker 0)
+	- done only once by the researcher
+- Scanning (demo video)
+- Workflow
+	- Scanning - marker positions and orientations
+	- Calibration - object position and orientation
+		- explain what this would do
+	- Visualisation - visualise
 - What's next
-	- calibration
-	- save data
-	- option to hide data behind the model
+	- Calibration
+	- Use raycasting to hide data behind the model
+	- Admin...
+		- storing data
+		- make it into an actually usable website
+		- user interface for exploring different kinds of data (pressure, velocity etc)
+		- cope with different file formats for simulation results
 
 ## intro
 ## motivation
