@@ -1,7 +1,7 @@
 import { getMean, getMidValues, getVariance, initMatrix } from "./arrays.js"
 import { matrixMultiplyScalar, getColumn, outerProduct, matrixAdd } from "./vectors.js"
 import { createLine, createMarkerIndicator } from "./three.js";
-import { createBarcodeMarkerElement, createControlPanel } from "./elements.js";
+import { createBarcodeMarkerElement } from "./elements.js";
 import { getProcessedData } from "./convenience.js";
 import { createMoveDropdown, createSimulationResultObject, createMarkerIndicators } from "./scene_init.js";
 import Arena from "../Arena.js";
@@ -41,13 +41,14 @@ export const getAverageQuaternion = (quaternions, weights) => {
 	return new THREE.Quaternion(maxEigVectors[0], maxEigVectors[1], maxEigVectors[2], maxEigVectors[3])
 }
 
-export const scan = () => {
+export const scan = (markerNumbers, update, onComplete) => {
 	const scene = document.getElementById('scene')
 	// register which markers to use
 	const markers = []
 	const dominantMarkerIndex = 0
-	for (let i = 0; i < 6; i++) {
-		const markerElement = createBarcodeMarkerElement(i)
+	for (let i = 0; i < markerNumbers.length; i++) {
+		const markerNumber = markerNumbers[i]
+		const markerElement = createBarcodeMarkerElement(markerNumber)
 		scene.appendChild(markerElement)
 		const marker = markerElement.object3D
 		markers.push(marker)
@@ -65,8 +66,6 @@ export const scan = () => {
 			indicatorLines[i][j] = line
 		}
 	}
-
-	console.log(scene.children);
 
 	// container for the final positions and quaternions
 	const markerPositions = Array(markers.length).fill(null)
@@ -120,6 +119,7 @@ export const scan = () => {
 
 	const minMeasurements = 1000
 	const maxVariance = 0.05
+	let completed = false
 	const setValueInterval = setInterval(() => {
 		// decide whether to put the average into the relative position and quaternion matrices
 		for (let i = 0; i < markers.length; i++) {
@@ -162,8 +162,8 @@ export const scan = () => {
 		}
 
 		// if all markers accessible, calculate the marker positions and quaternions relative to the dominant marker
-		if (connectedMarkers.length === markers.length) {
-			console.log('All connected!');
+		if (connectedMarkers.length === markers.length && !completed) {
+			completed = true
 
 			for (const route of routes) {
 				console.log(route);
@@ -181,10 +181,7 @@ export const scan = () => {
 				markerQuaternions[route[1]] = q020
 			}
 
-			console.log(markerPositions);
-			console.log(markerQuaternions);
-			clearInterval(recordValueInterval)
-			clearInterval(setValueInterval)
+			onComplete(markerPositions, markerQuaternions)
 		}
 
 		// show confidence indicator lines between markers
@@ -201,19 +198,18 @@ export const scan = () => {
 				lineMaterial.color = new THREE.Color(1 - confidence, confidence, 0)
 			}
 		}
+
+		update(markerPositions, markerQuaternions)
 	}, 500)
+
+	return { recordValueInterval, setValueInterval, markers }
 }
 
-export const show = () => {
+export const show = (controlPanel, markerNumbers, markerPositions, markerQuaternions) => {
 	const scene = document.getElementById('scene')
-	const arena = new Arena(scene)
+	const arena = new Arena(scene, markerNumbers, markerPositions, markerQuaternions)
 	const markerIndicators = createMarkerIndicators(arena.markerPositions)
 	arena.addObjects(...markerIndicators)
-
-
-	// Add a 'control panel' div to put controls on
-	const { controlPanelWrapper, controlPanel } = createControlPanel()
-	document.body.appendChild(controlPanelWrapper)
 
 	const simulationResultWrapper = { object: null }
 	const moveDropdown = createMoveDropdown(simulationResultWrapper, arena)

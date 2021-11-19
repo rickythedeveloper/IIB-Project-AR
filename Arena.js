@@ -1,12 +1,14 @@
 import { createBarcodeMarkerElement } from "./utils/elements.js"
 
 export default class Arena {
-	constructor(scene) {
+	constructor(scene, markerNumbers, markerPositions, markerQuaternions) {
+		if (markerNumbers.length !== markerPositions.length || markerNumbers.length !== markerQuaternions.length) throw new Error('arrays with different lengths are given')
+
 		this.scene = scene
 
 		this.markers = []
-		this.markerPositions = []
-		this.markerQuaternions = []
+		this.markerPositions = markerPositions
+		this.markerQuaternions = markerQuaternions
 		this.usedMarkerIndex = 0
 
 		this.markerIndicators = []
@@ -14,7 +16,7 @@ export default class Arena {
 		this.objectPositions = []
 		this.objectQuaternions = []
 
-		this._addMarkers()
+		this._addMarkers(markerNumbers)
 
 		setInterval(this._mainLoop.bind(this), 100)
 	}
@@ -48,19 +50,13 @@ export default class Arena {
 		objects.forEach(object => this.addObject(object))
 	}
 
-	_addMarkers() {
-		for (let i = 0; i < 6; i++) {
-			const markerElement = createBarcodeMarkerElement(i)
+	_addMarkers(markerNumbers) {
+		for (let i = 0; i < markerNumbers.length; i++) {
+			const markerNumber = markerNumbers[i]
+			const markerElement = createBarcodeMarkerElement(markerNumber)
 			this.scene.appendChild(markerElement)
 			const marker = markerElement.object3D
 			this.markers.push(marker)
-			this.markerPositions.push(new THREE.Vector3(
-				(76 / 30) * (i % 2),
-				0,
-				(66 / 30) * (i - i % 2) / 2
-			))
-			const theta = Math.PI / 2 * (i % 4)
-			this.markerQuaternions.push(new THREE.Quaternion(0, Math.sin(theta / 2), 0, Math.cos(theta / 2)))
 		}
 	}
 
