@@ -69,14 +69,16 @@ export const createSimulationResultObject = (vertices, indices, colors) => {
 	return simulationResult
 }
 
-export const createMarkerIndicators = (markerPositions) => {
+export const createMarkerIndicators = (markerPositions, markerQuaternions) => {
 	const markerIndicators = []
 	for (let i = 0; i < markerPositions.length; i++) {
 		const markerIndicatorGeometry = new THREE.PlaneGeometry(1, 1)
 		const markerIndicatorMaterial = new THREE.MeshBasicMaterial({ opacity: 0.5, side: THREE.DoubleSide })
 		const markerIndicator = new THREE.Mesh(markerIndicatorGeometry, markerIndicatorMaterial)
 		markerIndicator.position.set(markerPositions[i].x, markerPositions[i].y, markerPositions[i].z)
-		markerIndicator.quaternion.set(Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4))
+		const correctionQuat = new THREE.Quaternion(Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4))
+		const indicatorQuat = correctionQuat.clone().premultiply(markerQuaternions[i])
+		markerIndicator.quaternion.set(indicatorQuat.x, indicatorQuat.y, indicatorQuat.z, indicatorQuat.w)
 		markerIndicators.push(markerIndicator)
 	}
 	return markerIndicators

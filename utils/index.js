@@ -208,7 +208,7 @@ export const scan = (markerNumbers, update, onComplete) => {
 export const show = (controlPanel, markerNumbers, markerPositions, markerQuaternions) => {
 	const scene = document.getElementById('scene')
 	const arena = new Arena(scene, markerNumbers, markerPositions, markerQuaternions)
-	const markerIndicators = createMarkerIndicators(arena.markerPositions)
+	const markerIndicators = createMarkerIndicators(arena.markerPositions, arena.markerQuaternions)
 	arena.addObjects(...markerIndicators)
 
 	const simulationResultWrapper = { object: null }
