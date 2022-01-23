@@ -1,37 +1,49 @@
-import { rotationQuaternion, createBufferObject } from "./utils/three.js";
-import { createSlider, createControlPanel, createOption, createButton } from "./utils/elements.js";
-import { getProcessedData } from "./utils/convenience.js";
-import { createMoveDropdown, createSimulationResultObject, createMarkerIndicators } from "./utils/scene_init.js";
-import Arena from "./Arena.js";
+import { scan, show } from "./utils/index.js";
+import { createControlPanel } from "./utils/elements.js";
 
+const MODES = {
+	SCAN: 'scan',
+	SHOW: 'show'
+};
 
-
-const scene = document.getElementById('scene')
-const arena = new Arena(scene)
-
-const markerIndicators = createMarkerIndicators(arena.markerPositions)
-arena.addObjects(...markerIndicators)
-
+let mode = MODES.SCAN
 
 // Add a 'control panel' div to put controls on
 const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
-const simulationResultWrapper = { object: null }
-const moveDropdown = createMoveDropdown(simulationResultWrapper, arena)
-controlPanel.appendChild(moveDropdown)
+const markerNumbers = [0, 1, 2, 3, 4, 5]
+let markers, markerPositions, markerQuaternions
+let recordValueInterval, setValueInterval
 
-const usedMarkerColor = 0x00ff00, visibleUnusedMarkerColor = 0xffff00, hiddenMarkerColor = 0xff0000
+const onScanUpdate = (pos, quats) => {
+	console.log('updated');
+	markerPositions = pos
+	markerQuaternions = quats
+}
 
-let simulationResult;
-getProcessedData().then(({ vertices, indices, colors }) => {
-	simulationResult = createSimulationResultObject(vertices, indices, colors)
-	simulationResultWrapper.object = simulationResult
-	arena.addObject(simulationResult)
-})
+const onScanComplete = () => {
+	console.log('completed');
+	clearInterval(recordValueInterval)
+	clearInterval(setValueInterval)
+	markers.forEach(marker => {
+		marker.clear()
+		marker.parent.remove(marker)
+	})
+	show(controlPanel, markerNumbers, markerPositions, markerQuaternions)
+}
 
-setInterval(() => {
-	for (let i = 0; i < arena.markers.length; i++) {
-		markerIndicators[i].material.color.set(arena.usedMarkerIndex === i ? usedMarkerColor : arena.markers[i].visible ? visibleUnusedMarkerColor : hiddenMarkerColor)
-	}
-}, 100);
+
+switch (mode) {
+	case MODES.SHOW:
+		show(controlPanel, markerNumbers, markerPositions, markerQuaternions)
+		break
+	case MODES.SCAN:
+		const { recordValueInterval: rvInterval, setValueInterval: svInterval, markers: mks } = scan(markerNumbers, onScanUpdate, onScanComplete)
+		recordValueInterval = rvInterval
+		setValueInterval = svInterval
+		markers = mks
+		break
+	default:
+		throw Error('Mode not selected')
+}

@@ -66,3 +66,19 @@ export const createBufferObject = (vertices, indices, colors) => {
 	const mesh = new THREE.Mesh(geometry, material)
 	return mesh
 }
+
+export const createMarkerIndicator = (color, opacity) => {
+	const geometry = new THREE.PlaneGeometry(1, 1)
+	const material = new THREE.MeshBasicMaterial({ color, opacity, side: THREE.DoubleSide })
+	const mesh = new THREE.Mesh(geometry, material)
+	mesh.quaternion.set(Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4))
+	return mesh
+}
+
+export const createLine = (color) => {
+	const geometry = new THREE.BufferGeometry()
+	geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(Array(6).fill(0)), 3))
+	const material = new THREE.LineBasicMaterial({ color })
+	const mesh = new THREE.Line(geometry, material)
+	return mesh
+}
