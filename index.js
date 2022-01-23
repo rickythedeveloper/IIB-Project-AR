@@ -12,7 +12,7 @@ let mode = MODES.SCAN
 const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
-const markerNumbers = [0, 1, 2, 3, 4, 5]
+const markerNumbers = [0, 1, 2, 3]
 let markers, markerPositions, markerQuaternions
 let recordValueInterval, setValueInterval
 
