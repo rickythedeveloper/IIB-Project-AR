@@ -2,7 +2,7 @@ import { convertRowsToVertices } from "./three.js"
 
 const getData = new Promise(async (resolve, reject) => {
 	let indices, vertices, data;
-	const indicesResponse = await fetch('data/indices.bin')
+	const indicesResponse = await fetch('../data/indices.bin')
 	const indicesBlob = await indicesResponse.blob()
 	const indicesReader = new FileReader()
 	indicesReader.onload = () => {
@@ -12,7 +12,7 @@ const getData = new Promise(async (resolve, reject) => {
 	indicesReader.onerror = reject
 	indicesReader.readAsArrayBuffer(indicesBlob)
 
-	const verticesResponse = await fetch('data/vertices.bin')
+	const verticesResponse = await fetch('../data/vertices.bin')
 	const verticesBlob = await verticesResponse.blob()
 	const verticesReader = new FileReader()
 	verticesReader.onload = () => {
