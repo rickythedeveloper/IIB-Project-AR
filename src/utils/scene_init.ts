@@ -1,7 +1,7 @@
 import { rotationQuaternion, createBufferObject } from "./three.js"
 import { createOption, createButton } from "./elements.js"
 import Arena from "src/Arena.js"
-import { ThreeObjectWrapper } from "./utils.js"
+import { ThreeObjectWrapper } from "./index.js"
 
 enum ChangeOption { rotx, roty, rotz, transx, transy, transz, scale }
 type ChangeOptionString = keyof typeof ChangeOption

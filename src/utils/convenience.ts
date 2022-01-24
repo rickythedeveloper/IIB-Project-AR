@@ -1,5 +1,3 @@
-import { convertRowsToVertices } from "./three.js"
-
 const getData = new Promise(async (resolve: (value: {indices: Uint32Array, vertices: Float32Array, data: Float32Array}) => void, reject) => {
 	let indices: Uint32Array, vertices: Float32Array, data: Float32Array;
 	const indicesResponse = await fetch('../data/indices.bin')
