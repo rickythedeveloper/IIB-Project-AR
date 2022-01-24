@@ -5,8 +5,13 @@ import { createBarcodeMarkerElement } from "./elements.js";
 import { getProcessedData } from "./convenience.js";
 import { createMoveDropdown, createSimulationResultObject, createMarkerIndicators } from "./scene_init.js";
 import Arena from "../Arena.js";
+import { ThreeObjectWrapper } from './utils.js'
 
-export const getMeanVector = (vectors) => {
+declare namespace math {
+	export function eigs (matrix: number[][]): { values: number[], vectors: number[][] }
+}
+
+export const getMeanVector = (vectors: THREE.Vector3[]) => {
 	const xs = vectors.map(v => v.x), ys = vectors.map(v => v.y), zs = vectors.map(v => v.z)
 	const meanAndVariance = [xs, ys, zs].map(values => {
 		const midValues = getMidValues(values, 0.8)
@@ -20,7 +25,7 @@ export const getMeanVector = (vectors) => {
 	}
 }
 
-export const getAverageQuaternion = (quaternions, weights) => {
+export const getAverageQuaternion = (quaternions: THREE.Quaternion[], weights: number[] | undefined = undefined) => {
 	if (weights === undefined) weights = Array(quaternions.length).fill(1)
 	if (quaternions.length !== weights.length) throw new Error('quaternions and weights do not have the same lengths')
 
@@ -41,15 +46,22 @@ export const getAverageQuaternion = (quaternions, weights) => {
 	return new THREE.Quaternion(maxEigVectors[0], maxEigVectors[1], maxEigVectors[2], maxEigVectors[3])
 }
 
-export const scan = (markerNumbers, update, onComplete) => {
+export const scan = (
+	markerNumbers: number[], 
+	update: (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => void, 
+	onComplete: (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => void
+) => {
 	const scene = document.getElementById('scene')
+	if (scene === null) throw new Error('scene element not found')
+
 	// register which markers to use
-	const markers = []
+	const markers: THREE.Object3D[] = []
 	const dominantMarkerIndex = 0
 	for (let i = 0; i < markerNumbers.length; i++) {
 		const markerNumber = markerNumbers[i]
 		const markerElement = createBarcodeMarkerElement(markerNumber)
 		scene.appendChild(markerElement)
+		// @ts-ignore
 		const marker = markerElement.object3D
 		markers.push(marker)
 	}
@@ -205,13 +217,14 @@ export const scan = (markerNumbers, update, onComplete) => {
 	return { recordValueInterval, setValueInterval, markers }
 }
 
-export const show = (controlPanel, markerNumbers, markerPositions, markerQuaternions) => {
+export const show = (controlPanel: HTMLElement, markerNumbers: number[], markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => {
 	const scene = document.getElementById('scene')
+	if (scene === null) throw new Error('scnee element not found')
 	const arena = new Arena(scene, markerNumbers, markerPositions, markerQuaternions)
 	const markerIndicators = createMarkerIndicators(arena.markerPositions, arena.markerQuaternions)
 	arena.addObjects(...markerIndicators)
 
-	const simulationResultWrapper = { object: null }
+	const simulationResultWrapper: ThreeObjectWrapper = { object: null }
 	const moveDropdown = createMoveDropdown(simulationResultWrapper, arena)
 	controlPanel.appendChild(moveDropdown)
 

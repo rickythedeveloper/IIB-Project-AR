@@ -13,10 +13,10 @@ const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
 const markerNumbers = [0, 1, 2, 3, 4, 5]
-let markers, markerPositions, markerQuaternions
-let recordValueInterval, setValueInterval
+let markers: THREE.Object3D[] = [], markerPositions: THREE.Vector3[] = [], markerQuaternions: THREE.Quaternion[] = []
+let recordValueInterval: number, setValueInterval: number
 
-const onScanUpdate = (pos, quats) => {
+const onScanUpdate = (pos: THREE.Vector3[], quats: THREE.Quaternion[]) => {
 	console.log('updated');
 	markerPositions = pos
 	markerQuaternions = quats
@@ -28,7 +28,7 @@ const onScanComplete = () => {
 	clearInterval(setValueInterval)
 	markers.forEach(marker => {
 		marker.clear()
-		marker.parent.remove(marker)
+		if (marker.parent !== null) marker.parent.remove(marker)
 	})
 	show(controlPanel, markerNumbers, markerPositions, markerQuaternions)
 }

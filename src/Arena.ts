@@ -1,18 +1,22 @@
 import { createBarcodeMarkerElement } from "./utils/elements.js"
 
 export default class Arena {
-	constructor(scene, markerNumbers, markerPositions, markerQuaternions) {
+	scene: HTMLElement
+	markers: THREE.Object3D[]
+	markerPositions: THREE.Vector3[]
+	markerQuaternions: THREE.Quaternion[]
+	usedMarkerIndex: number
+	objectPositions: THREE.Vector3[]
+	objectQuaternions: THREE.Quaternion[]
+
+	constructor(scene: HTMLElement, markerNumbers: number[], markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) {
 		if (markerNumbers.length !== markerPositions.length || markerNumbers.length !== markerQuaternions.length) throw new Error('arrays with different lengths are given')
 
 		this.scene = scene
-
 		this.markers = []
 		this.markerPositions = markerPositions
 		this.markerQuaternions = markerQuaternions
 		this.usedMarkerIndex = 0
-
-		this.markerIndicators = []
-
 		this.objectPositions = []
 		this.objectQuaternions = []
 
@@ -30,7 +34,7 @@ export default class Arena {
 	 * @param {*} position relative to the dominant marker
 	 * @param {*} quaternion relative to the dominant marker
 	 */
-	addObject(object) {
+	addObject(object: THREE.Object3D) {
 		// 0: dominant marker, 1: used marker, 2: object
 		const p010 = this.markerPositions[this.usedMarkerIndex].clone()
 		const q010 = this.markerQuaternions[this.usedMarkerIndex].clone()
@@ -38,6 +42,7 @@ export default class Arena {
 		const q020 = object.quaternion.clone()
 		const p121 = p020.clone().sub(p010).applyQuaternion(q010.clone().invert())
 		const q121 = q010.clone().invert().multiply(q020)
+		// @ts-ignore
 		object.indexInProject = this.objectPositions.length
 		this.objectPositions.push(object.position.clone())
 		this.objectQuaternions.push(object.quaternion.clone())
@@ -46,15 +51,16 @@ export default class Arena {
 		object.quaternion.set(q121.x, q121.y, q121.z, q121.w)
 	}
 
-	addObjects(...objects) {
+	addObjects(...objects: THREE.Object3D[]) {
 		objects.forEach(object => this.addObject(object))
 	}
 
-	_addMarkers(markerNumbers) {
+	_addMarkers(markerNumbers: number[]) {
 		for (let i = 0; i < markerNumbers.length; i++) {
 			const markerNumber = markerNumbers[i]
 			const markerElement = createBarcodeMarkerElement(markerNumber)
 			this.scene.appendChild(markerElement)
+			// @ts-ignore
 			const marker = markerElement.object3D
 			this.markers.push(marker)
 		}
