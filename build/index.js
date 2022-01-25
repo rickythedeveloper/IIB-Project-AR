@@ -43,6 +43,12 @@ function onResize() {
         arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
     }
 }
+// Following two lines of code needed to fix bug in AR.js.
+// Search for "Object.assign(THREEx.ArBaseControls.prototype, THREE.EventDispatcher.prototype);" 
+// and  "Object.assign(ARjs.Context.prototype, THREE.EventDispatcher.prototype);" in ar.js
+// You will see that they are not working correctly.
+THREEx.ArBaseControls.prototype.dispatchEvent = THREE.EventDispatcher.prototype.dispatchEvent;
+ARjs.Context.prototype.dispatchEvent = THREE.EventDispatcher.prototype.dispatchEvent;
 const arToolkitContext = new THREEx.ArToolkitContext({
     detectionMode: 'mono_and_matrix',
     matrixCodeType: '3x3_HAMMING63',
