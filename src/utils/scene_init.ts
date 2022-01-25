@@ -1,7 +1,12 @@
 import { rotationQuaternion, createBufferObject } from "./three.js"
 import { createOption, createButton } from "./elements.js"
+import Arena from "src/Arena.js"
+import { ThreeObjectWrapper } from "./index.js"
 
-export const createMoveDropdown = (objectWrapper, arena) => {
+enum ChangeOption { rotx, roty, rotz, transx, transy, transz, scale }
+type ChangeOptionString = keyof typeof ChangeOption
+
+export const createMoveDropdown = (objectWrapper: ThreeObjectWrapper, arena: Arena) => {
 	// Add rotation / scale control
 	const optionDropdown = document.createElement('select')
 	optionDropdown.appendChild(createOption('rotx', 'Rotate about X'))
@@ -11,33 +16,47 @@ export const createMoveDropdown = (objectWrapper, arena) => {
 	optionDropdown.appendChild(createOption('transy', 'Translate along Y'))
 	optionDropdown.appendChild(createOption('transz', 'Translate along Z'))
 	optionDropdown.appendChild(createOption('scale', 'Scale'))
-	let selectedOption = 'rotx'
-	optionDropdown.onchange = (e) => { selectedOption = e.target.value }
+	let selectedOption: ChangeOptionString = 'rotx'
+	optionDropdown.onchange = (e) => { if (e.target) { selectedOption = (e.target as HTMLSelectElement).value as ChangeOptionString } }
 
-	let changeIntervalObject
+	let changeIntervalObject: number | undefined
 	const changeInterval = 10, angleChange = changeInterval / 1000, scaleChange = 0.005, positionChange = changeInterval / 1000
 	const plusButton = createButton('+', () => { changeIntervalObject = createChangeInterval(1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, objectWrapper, arena) })
 	const minusButton = createButton('-', () => { changeIntervalObject = createChangeInterval(-1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, objectWrapper, arena) })
 
-	const createChangeInterval = (direction, option, intervalObject, interval, scaleChange, angleChange, positionChange, objectWrapper, arena) => {
+	
+	const createChangeInterval = (
+		direction: 1 | -1,
+		option: ChangeOptionString,
+		intervalObject: number | undefined, 
+		interval: number, 
+		scaleChange: number, 
+		angleChange: number, 
+		positionChange: number, 
+		objectWrapper: ThreeObjectWrapper, 
+		arena: Arena
+	) => {
 		if (intervalObject !== undefined) {
 			clearInterval(intervalObject)
 			return undefined
 		}
 
 		return setInterval(() => {
-			if (objectWrapper === undefined || objectWrapper === null) return
+			// if (objectWrapper === undefined || objectWrapper === null) return
+			if (objectWrapper.object === null) return
 
 			if (option === 'scale') {
 				objectWrapper.object.scale.addScalar(direction * scaleChange)
 			} else if (option.includes('rot')) {
 				const axis = option.slice(3)
+				// @ts-ignore
 				arena.objectQuaternions[objectWrapper.object.indexInProject].premultiply(rotationQuaternion(axis, direction * angleChange))
 			} else if (option.includes('trans')) {
 				const axis = option.slice(5)
 				const axisVector = new THREE.Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0)
+				// @ts-ignore
 				arena.objectPositions[objectWrapper.object.indexInProject].addScaledVector(axisVector, direction * positionChange)
-			} else throw new Exception('invalid change type')
+			} else throw new Error('invalid change type')
 		}, interval)
 	}
 
@@ -48,7 +67,7 @@ export const createMoveDropdown = (objectWrapper, arena) => {
 	return moveSection
 }
 
-export const createSimulationResultObject = (vertices, indices, colors) => {
+export const createSimulationResultObject = (vertices: Float32Array, indices: Uint32Array, colors: Float32Array) => {
 	const colorBufferSizePerTime = vertices.length
 	const nTimes = colors.length / colorBufferSizePerTime
 	if (!Number.isInteger(nTimes)) throw Error('totalTime is not an integer')
@@ -62,6 +81,7 @@ export const createSimulationResultObject = (vertices, indices, colors) => {
 	let time = 0;
 	setInterval(() => {
 		time = time < nTimes - 1 ? time + 1 : 0
+		// @ts-ignore
 		simulationResult.geometry.attributes.color.array = colors.slice(time * colorBufferSizePerTime, (time + 1) * colorBufferSizePerTime)
 		simulationResult.geometry.attributes.color.needsUpdate = true
 	}, 50)
@@ -69,7 +89,7 @@ export const createSimulationResultObject = (vertices, indices, colors) => {
 	return simulationResult
 }
 
-export const createMarkerIndicators = (markerPositions, markerQuaternions) => {
+export const createMarkerIndicators = (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => {
 	const markerIndicators = []
 	for (let i = 0; i < markerPositions.length; i++) {
 		const markerIndicatorGeometry = new THREE.PlaneGeometry(1, 1)

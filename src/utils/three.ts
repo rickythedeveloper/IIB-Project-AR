@@ -3,13 +3,13 @@
  * @param {number[][][]} rows Each point is a 3D array. Each row is an array of points.
  * @returns 
  */
-export const convertRowsToVertices = (rows) => {
-	const verticesArray = [];
+export const convertRowsToVertices = (rows: number[][][]) => {
+	const verticesArray: number[] = [];
 	for (let i = 0; i < rows.length - 1; i++) {
 		const row = rows[i]
 		const nextRow = rows[i + 1]
 
-		const verticesRow = []
+		const verticesRow: number[] = []
 		for (let j = 0; j < row.length - 1; j++) {
 			verticesRow.push(...row[j], ...row[j + 1], ...nextRow[j])
 			verticesRow.push(...row[j + 1], ...nextRow[j], ...nextRow[j + 1])
@@ -21,14 +21,17 @@ export const convertRowsToVertices = (rows) => {
 	return new Float32Array(verticesArray)
 }
 
-export const createArrow = (direction, length, colorHex) => new THREE.ArrowHelper(
+enum Axis { x, y, z }
+type AxisString = keyof typeof Axis
+
+export const createArrow = (direction: AxisString, length: number, colorHex: string) => new THREE.ArrowHelper(
 	new THREE.Vector3(direction === 'x' ? 1 : 0, direction === 'y' ? 1 : 0, direction === 'z' ? 1 : 0),
 	new THREE.Vector3(0, 0, 0),
 	length,
 	colorHex
 )
 
-export const rotationQuaternion = (direction, angle) => new THREE.Quaternion(
+export const rotationQuaternion = (direction: AxisString, angle: number) => new THREE.Quaternion(
 	direction == 'x' ? Math.sin(angle / 2) : 0,
 	direction == 'y' ? Math.sin(angle / 2) : 0,
 	direction == 'z' ? Math.sin(angle / 2) : 0,
@@ -51,7 +54,7 @@ const fragmentShader = `
 	}
 `
 
-export const createBufferObject = (vertices, indices, colors) => {
+export const createBufferObject = (vertices: Float32Array, indices: Uint32Array, colors: Float32Array) => {
 	const geometry = new THREE.BufferGeometry()
 	geometry.index = new THREE.BufferAttribute(indices, 1)
 	geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
@@ -67,7 +70,7 @@ export const createBufferObject = (vertices, indices, colors) => {
 	return mesh
 }
 
-export const createMarkerIndicator = (color, opacity) => {
+export const createMarkerIndicator = (color: number, opacity: number) => {
 	const geometry = new THREE.PlaneGeometry(1, 1)
 	const material = new THREE.MeshBasicMaterial({ color, opacity, side: THREE.DoubleSide })
 	const mesh = new THREE.Mesh(geometry, material)
@@ -75,7 +78,7 @@ export const createMarkerIndicator = (color, opacity) => {
 	return mesh
 }
 
-export const createLine = (color) => {
+export const createLine = (color: number) => {
 	const geometry = new THREE.BufferGeometry()
 	geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(Array(6).fill(0)), 3))
 	const material = new THREE.LineBasicMaterial({ color })

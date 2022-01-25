@@ -1,22 +1,20 @@
-import { convertRowsToVertices } from "./three.js"
-
-const getData = new Promise(async (resolve, reject) => {
-	let indices, vertices, data;
-	const indicesResponse = await fetch('data/indices.bin')
+const getData = new Promise(async (resolve: (value: {indices: Uint32Array, vertices: Float32Array, data: Float32Array}) => void, reject) => {
+	let indices: Uint32Array, vertices: Float32Array, data: Float32Array;
+	const indicesResponse = await fetch('./data/indices.bin')
 	const indicesBlob = await indicesResponse.blob()
 	const indicesReader = new FileReader()
 	indicesReader.onload = () => {
-		indices = new Uint32Array(indicesReader.result)
+		indices = new Uint32Array(indicesReader.result as ArrayBuffer)
 		if (indices && vertices && data) resolve({ indices, vertices, data })
 	}
 	indicesReader.onerror = reject
 	indicesReader.readAsArrayBuffer(indicesBlob)
 
-	const verticesResponse = await fetch('data/vertices.bin')
+	const verticesResponse = await fetch('./data/vertices.bin')
 	const verticesBlob = await verticesResponse.blob()
 	const verticesReader = new FileReader()
 	verticesReader.onload = () => {
-		vertices = new Float32Array(verticesReader.result)
+		vertices = new Float32Array(verticesReader.result as ArrayBuffer)
 		if (indices && vertices && data) resolve({ indices, vertices, data })
 	}
 	verticesReader.onerror = reject
@@ -26,7 +24,7 @@ const getData = new Promise(async (resolve, reject) => {
 	const dataBlob = await dataResponse.blob()
 	const dataReader = new FileReader()
 	dataReader.onload = () => {
-		data = new Float32Array(dataReader.result)
+		data = new Float32Array(dataReader.result as ArrayBuffer)
 		if (indices && vertices && data) resolve({ indices, vertices, data })
 	}
 	dataReader.onerror = reject
@@ -35,7 +33,7 @@ const getData = new Promise(async (resolve, reject) => {
 
 export const getProcessedData = async () => {
 	const { indices, vertices, data } = await getData
-	let minX, maxX, minY, maxY
+	let minX: number | undefined, maxX: number | undefined, minY: number | undefined, maxY: number | undefined
 	vertices.forEach((value, index) => {
 		if (index % 2 === 0) {
 			if (minX === undefined || minX > value) minX = value
@@ -45,11 +43,12 @@ export const getProcessedData = async () => {
 			if (maxY === undefined || maxY < value) maxY = value
 		}
 	})
+	if (minX === undefined || maxX === undefined || minY === undefined || maxY === undefined ) throw new Error('min / max values not found')
 	const normalisationConstant = Math.max(maxX - minX, maxY - minY)
-
 	const scale = 3
 	const vertices3D = new Float32Array(vertices.length / 2 * 3)
 	vertices.forEach((value, index) => {
+		if (minX === undefined || maxX === undefined || minY === undefined || maxY === undefined ) throw new Error('min / max values not found')
 		if (index % 2 === 0) {
 			vertices3D[index * 3 / 2] = ((value - minX) / normalisationConstant - 0.5) * scale // x
 			vertices3D[index * 3 / 2 + 1] = 0 // y
