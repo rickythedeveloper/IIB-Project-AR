@@ -1667,6 +1667,7 @@ THREEx.ArBaseControls = function (object3d) {
 
 THREEx.ArBaseControls.id = 0
 
+THREEx.ArBaseControls.prototype.dispatchEvent = THREE.EventDispatcher.prototype.dispatchEvent
 Object.assign(THREEx.ArBaseControls.prototype, THREE.EventDispatcher.prototype);
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2492,6 +2493,7 @@ ARjs.Context = THREEx.ArToolkitContext = function (parameters) {
 	}
 }
 
+ARjs.Context.prototype.dispatchEvent = THREE.EventDispatcher.prototype.dispatchEvent
 Object.assign(ARjs.Context.prototype, THREE.EventDispatcher.prototype);
 
 // default to github page
