@@ -42,9 +42,9 @@ const recordValues = (markers, markerPairMatrix) => {
         }
     }
 };
-const updateAverages = (markers, markerPairMatrix) => {
-    for (let i = 0; i < markers.length; i++) {
-        for (let j = 0; j < markers.length; j++) {
+const updateAverages = (numMarkers, markerPairMatrix) => {
+    for (let i = 0; i < numMarkers; i++) {
+        for (let j = 0; j < numMarkers; j++) {
             if (i === j)
                 continue;
             const positions = markerPairMatrix[i][j].recordedRelativePositions;
@@ -58,14 +58,14 @@ const updateAverages = (markers, markerPairMatrix) => {
         }
     }
 };
-const connectMarkers = (dominantMarkerIndex, markers, markerPairMatrix) => {
+const connectMarkers = (dominantMarkerIndex, numMarkers, markerPairMatrix) => {
     const connectedMarkers = [dominantMarkerIndex];
     const routes = [];
-    for (let i = 0; i < markers.length; i++) {
+    for (let i = 0; i < numMarkers; i++) {
         if (i === connectedMarkers.length)
             break;
         const startMarker = connectedMarkers[i];
-        for (let j = 0; j < markers.length; j++) {
+        for (let j = 0; j < numMarkers; j++) {
             if (connectedMarkers.includes(j))
                 continue;
             const endMarker = j;
@@ -138,13 +138,13 @@ const scan = (arSetup, markerNumbers, update = () => { }, onComplete = () => { }
     let completed = false;
     const setValueInterval = setInterval(() => {
         // update average relative postions and quaternions as well as confidence
-        updateAverages(markers, markerPairMatrix);
+        updateAverages(markers.length, markerPairMatrix);
         // check if all markers are accessible from the dominant marker
-        const { connectedMarkers, routes } = connectMarkers(dominantMarkerIndex, markers, markerPairMatrix);
+        const { connectedMarkers, routes } = connectMarkers(dominantMarkerIndex, markers.length, markerPairMatrix);
         // if all markers accessible, calculate the marker positions and quaternions relative to the dominant marker
         if (connectedMarkers.length === markers.length && !completed) {
             completed = true;
-            registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions); // TODO modify so the results go into markerPositions and markerQuaternions
+            registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions);
             onComplete(markerPositions, markerQuaternions);
         }
         // update confidence indicator lines between markers

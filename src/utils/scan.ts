@@ -60,9 +60,9 @@ const recordValues = (markers: THREE.Object3D[], markerPairMatrix: Matrix<Marker
 	}
 }
 
-const updateAverages = (markers: THREE.Object3D[], markerPairMatrix: Matrix<MarkerPairInfo>) => {
-	for (let i = 0; i < markers.length; i++) {
-		for (let j = 0; j < markers.length; j++) {
+const updateAverages = (numMarkers: number, markerPairMatrix: Matrix<MarkerPairInfo>) => {
+	for (let i = 0; i < numMarkers; i++) {
+		for (let j = 0; j < numMarkers; j++) {
 			if (i === j) continue
 			const positions = markerPairMatrix[i][j].recordedRelativePositions
 			const quaternions = markerPairMatrix[i][j].recordedRelativeQuaternions
@@ -79,7 +79,7 @@ const updateAverages = (markers: THREE.Object3D[], markerPairMatrix: Matrix<Mark
 type Route = [number, number]
 const connectMarkers = (
 	dominantMarkerIndex: number, 
-	markers: THREE.Object3D[], 
+	numMarkers: number, 
 	markerPairMatrix: Matrix<MarkerPairInfo>
 ): {
 	connectedMarkers: number[], 
@@ -87,10 +87,10 @@ const connectMarkers = (
 } => {
 	const connectedMarkers = [dominantMarkerIndex]
 	const routes: Route[] = []
-	for (let i = 0; i < markers.length; i++) {
+	for (let i = 0; i < numMarkers; i++) {
 		if (i === connectedMarkers.length) break
 		const startMarker = connectedMarkers[i]
-		for (let j = 0; j < markers.length; j++) {
+		for (let j = 0; j < numMarkers; j++) {
 			if (connectedMarkers.includes(j)) continue
 			const endMarker = j
 			if (markerPairMatrix[startMarker][endMarker].relativePositionConfidence !== 1) continue
@@ -181,15 +181,15 @@ const scan = (
 	let completed = false
 	const setValueInterval = setInterval(() => {
 		// update average relative postions and quaternions as well as confidence
-		updateAverages(markers, markerPairMatrix)
+		updateAverages(markers.length, markerPairMatrix)
 
 		// check if all markers are accessible from the dominant marker
-		const { connectedMarkers, routes } = connectMarkers(dominantMarkerIndex, markers, markerPairMatrix)
+		const { connectedMarkers, routes } = connectMarkers(dominantMarkerIndex, markers.length, markerPairMatrix)
 
 		// if all markers accessible, calculate the marker positions and quaternions relative to the dominant marker
 		if (connectedMarkers.length === markers.length && !completed) {
 			completed = true
-			registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions) // TODO modify so the results go into markerPositions and markerQuaternions
+			registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions)
 			onComplete(markerPositions as THREE.Vector3[], markerQuaternions as THREE.Quaternion[])
 		}
 
