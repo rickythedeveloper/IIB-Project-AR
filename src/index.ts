@@ -15,7 +15,7 @@ const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
 const arSetup = setupAR() 
-const markerNumbers = [0, 1, 2, 3, 4, 5]
+const markerNumbers = [0]
 let markers: THREE.Object3D[] = [], markerPositions: THREE.Vector3[] = [], markerQuaternions: THREE.Quaternion[] = []
 let recordValueInterval: number, setValueInterval: number
 
@@ -25,11 +25,11 @@ const onScanComplete = (pos: THREE.Vector3[], quats: THREE.Quaternion[]) => {
 	markerQuaternions = quats
 	clearInterval(recordValueInterval)
 	clearInterval(setValueInterval)
-	// markers.forEach(marker => {
-	// 	marker.clear()
-	// 	if (marker.parent !== null) marker.parent.remove(marker)
-	// })
-	// visualise(arSetup, controlPanel, markerNumbers, markerPositions, markerQuaternions)
+	markers.forEach(marker => {
+		marker.clear()
+		if (marker.parent !== null) marker.parent.remove(marker)
+	})
+	visualise(arSetup, controlPanel, markerNumbers, markerPositions, markerQuaternions)
 }
 
 switch (mode) {

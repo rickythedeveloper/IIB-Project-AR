@@ -125,7 +125,7 @@ const scan = (arSetup, markerNumbers, update = () => { }, onComplete = () => { }
     markers.forEach(marker => marker.add(createMarkerIndicator(0x0000ff, 0.5)));
     const indicatorLines = createMatrix([markers.length, markers.length], (i, j) => {
         const line = createLine(0xff0000);
-        // markers[i].add(line)
+        markers[i].add(line);
         return line;
     });
     // container for the final positions and quaternions

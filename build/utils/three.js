@@ -66,4 +66,23 @@ export const createLine = (color) => {
     const mesh = new THREE.Line(geometry, material);
     return mesh;
 };
+class Circle3D extends THREE.Curve {
+    constructor(radius) {
+        super();
+        this.radius = radius;
+    }
+    getPoint(t, optionalTarget = new THREE.Vector3()) {
+        const tx = 0;
+        const ty = this.radius * Math.sin(2 * Math.PI * t);
+        const tz = this.radius * Math.cos(2 * Math.PI * t);
+        return optionalTarget.set(tx, ty, tz);
+    }
+}
+export const createRing = (ringRadius, tubeRadius, nSegments, color) => {
+    const circle = new Circle3D(ringRadius);
+    const geometry = new THREE.TubeGeometry(circle, nSegments, tubeRadius, 8, true);
+    const material = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geometry, material);
+    return mesh;
+};
 //# sourceMappingURL=three.js.map

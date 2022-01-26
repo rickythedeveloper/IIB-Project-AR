@@ -166,7 +166,7 @@ const scan = (
 
 	const indicatorLines = createMatrix([markers.length, markers.length], (i, j) => {
 		const line = createLine(0xff0000)
-		// markers[i].add(line)
+		markers[i].add(line)
 		return line
 	})
 

@@ -22,7 +22,7 @@ export const convertRowsToVertices = (rows: number[][][]) => {
 }
 
 enum Axis { x, y, z }
-type AxisString = keyof typeof Axis
+export type AxisString = keyof typeof Axis
 
 export const createArrow = (direction: AxisString, length: number, colorHex: string) => new THREE.ArrowHelper(
 	new THREE.Vector3(direction === 'x' ? 1 : 0, direction === 'y' ? 1 : 0, direction === 'z' ? 1 : 0),
@@ -83,5 +83,26 @@ export const createLine = (color: number) => {
 	geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(Array(6).fill(0)), 3))
 	const material = new THREE.LineBasicMaterial({ color })
 	const mesh = new THREE.Line(geometry, material)
+	return mesh
+}
+
+class Circle3D extends THREE.Curve<THREE.Vector3> {
+	constructor(public radius: number) {
+		super()
+	}
+
+	getPoint(t: number, optionalTarget = new THREE.Vector3()) {
+		const tx = 0
+		const ty = this.radius * Math.sin(2 * Math.PI * t)
+		const tz = this.radius * Math.cos(2 * Math.PI * t)
+		return optionalTarget.set(tx, ty, tz)
+	}
+}
+
+export const createRing = (ringRadius: number, tubeRadius: number, nSegments: number, color: THREE.ColorRepresentation) => {
+	const circle = new Circle3D(ringRadius)
+	const geometry = new THREE.TubeGeometry(circle, nSegments, tubeRadius, 8, true)
+	const material = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide })
+	const mesh = new THREE.Mesh(geometry, material)
 	return mesh
 }
