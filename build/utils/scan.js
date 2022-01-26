@@ -1,6 +1,6 @@
-import { createBarcodeMarkerElement } from "./elements.js";
 import { createMarkerIndicator, createLine } from "./three.js";
 import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./arrays.js";
+import { createMarker } from "../setupAR.js";
 const zeroVector = new THREE.Vector3(0, 0, 0);
 const zeroQuaternion = new THREE.Quaternion(0, 0, 0, 1);
 const RECORD_INTERVAL = 20;
@@ -8,17 +8,6 @@ const UPDATE_INTERVAL = 500;
 const MAX_MARKER_DISTANCE = 100;
 const MIN_MEASUREMENTS = 1000;
 const MAX_VARIANCE = 0.05;
-const registerMarkers = (scene, markerNumbers) => {
-    const markers = [];
-    markerNumbers.forEach(markerNumber => {
-        const markerElement = createBarcodeMarkerElement(markerNumber);
-        scene.appendChild(markerElement);
-        // @ts-ignore
-        const marker = markerElement.object3D;
-        markers.push(marker);
-    });
-    return markers;
-};
 const calculateConfidence = (numMeasurements, variance) => Math.min(1, numMeasurements / MIN_MEASUREMENTS) *
     Math.min(1, MAX_VARIANCE / variance.x) *
     Math.min(1, MAX_VARIANCE / variance.y) *
@@ -120,12 +109,9 @@ const updateConfidenceIndicators = (numMarkers, markerPairMatrix, indicatorLines
         }
     }
 };
-const scan = (markerNumbers, update = () => { }, onComplete = () => { }) => {
-    const scene = document.getElementById('scene');
-    if (scene === null)
-        throw new Error('scene element not found');
-    // register which markers to use
-    const markers = registerMarkers(scene, markerNumbers);
+const scan = (arSetup, markerNumbers, update = () => { }, onComplete = () => { }) => {
+    const markers = markerNumbers.map(n => createMarker(n, arSetup));
+    markers.forEach(m => arSetup.camera.add(m));
     const dominantMarkerIndex = 0; // TODO relax assumption on the dominant marker
     // add marker indicators
     markers.forEach(marker => marker.add(createMarkerIndicator(0x0000ff, 0.5)));
@@ -158,7 +144,7 @@ const scan = (markerNumbers, update = () => { }, onComplete = () => { }) => {
         // if all markers accessible, calculate the marker positions and quaternions relative to the dominant marker
         if (connectedMarkers.length === markers.length && !completed) {
             completed = true;
-            registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions);
+            registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions); // TODO modify so the results go into markerPositions and markerQuaternions
             onComplete(markerPositions, markerQuaternions);
         }
         // update confidence indicator lines between markers

@@ -14,7 +14,7 @@ export const getMidValues = (values, proportion) => {
     const sortedValues = values.slice().sort((a, b) => a - b);
     const sideProportion = (1 - proportion) / 2;
     const startIndex = Math.floor(sortedValues.length * sideProportion);
-    const endIndex = Math.floor(sortedValues.length * (1 - sideProportion));
+    const endIndex = Math.ceil(sortedValues.length * (1 - sideProportion));
     return values.slice(startIndex, endIndex);
 };
 export const arrayIsFilled = (arr) => {

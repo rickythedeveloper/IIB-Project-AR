@@ -1,9 +1,9 @@
-import { createBarcodeMarkerElement } from "./utils/elements.js";
+import { createMarker } from "./setupAR.js";
 export default class Arena {
-    constructor(scene, markerNumbers, markerPositions, markerQuaternions) {
+    constructor(setup, markerNumbers, markerPositions, markerQuaternions) {
         if (markerNumbers.length !== markerPositions.length || markerNumbers.length !== markerQuaternions.length)
             throw new Error('arrays with different lengths are given');
-        this.scene = scene;
+        this.setup = setup;
         this.markers = [];
         this.markerPositions = markerPositions;
         this.markerQuaternions = markerQuaternions;
@@ -41,14 +41,9 @@ export default class Arena {
         objects.forEach(object => this.addObject(object));
     }
     _addMarkers(markerNumbers) {
-        for (let i = 0; i < markerNumbers.length; i++) {
-            const markerNumber = markerNumbers[i];
-            const markerElement = createBarcodeMarkerElement(markerNumber);
-            this.scene.appendChild(markerElement);
-            // @ts-ignore
-            const marker = markerElement.object3D;
-            this.markers.push(marker);
-        }
+        const markers = markerNumbers.map(n => createMarker(n, this.setup));
+        markers.forEach(m => this.setup.camera.add(m));
+        this.markers.push(...markers);
     }
     _mainLoop() {
         // determine the distances to the markers / work out the weight

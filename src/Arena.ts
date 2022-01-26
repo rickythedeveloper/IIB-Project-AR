@@ -1,7 +1,8 @@
+import { createMarker, Setup } from "./setupAR.js"
 import { createBarcodeMarkerElement } from "./utils/elements.js"
 
 export default class Arena {
-	scene: HTMLElement
+	setup: Setup
 	markers: THREE.Object3D[]
 	markerPositions: THREE.Vector3[]
 	markerQuaternions: THREE.Quaternion[]
@@ -9,10 +10,9 @@ export default class Arena {
 	objectPositions: THREE.Vector3[]
 	objectQuaternions: THREE.Quaternion[]
 
-	constructor(scene: HTMLElement, markerNumbers: number[], markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) {
+	constructor(setup: Setup, markerNumbers: number[], markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) {
 		if (markerNumbers.length !== markerPositions.length || markerNumbers.length !== markerQuaternions.length) throw new Error('arrays with different lengths are given')
-
-		this.scene = scene
+		this.setup = setup
 		this.markers = []
 		this.markerPositions = markerPositions
 		this.markerQuaternions = markerQuaternions
@@ -56,14 +56,9 @@ export default class Arena {
 	}
 
 	_addMarkers(markerNumbers: number[]) {
-		for (let i = 0; i < markerNumbers.length; i++) {
-			const markerNumber = markerNumbers[i]
-			const markerElement = createBarcodeMarkerElement(markerNumber)
-			this.scene.appendChild(markerElement)
-			// @ts-ignore
-			const marker = markerElement.object3D
-			this.markers.push(marker)
-		}
+		const markers = markerNumbers.map(n => createMarker(n, this.setup))
+		markers.forEach(m => this.setup.camera.add(m))
+		this.markers.push(...markers)
 	}
 
 	_mainLoop() {

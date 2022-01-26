@@ -2,6 +2,7 @@ import { createBarcodeMarkerElement } from "./elements.js"
 import { createMarkerIndicator, createLine } from "./three.js"
 import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./arrays.js"
 import { Matrix, Vector } from "./index.js"
+import { createMarker, Setup } from "../setupAR.js"
 
 const zeroVector = new THREE.Vector3(0, 0, 0)
 const zeroQuaternion = new THREE.Quaternion(0, 0, 0, 1)
@@ -21,18 +22,6 @@ interface MarkerPairInfo {
 interface Positioning {
 	position: THREE.Vector3
 	quaternion: THREE.Quaternion
-}
-
-const registerMarkers = (scene: HTMLElement, markerNumbers: number[]) => {
-	const markers: THREE.Object3D[] = []
-	markerNumbers.forEach(markerNumber => {
-		const markerElement = createBarcodeMarkerElement(markerNumber)
-		scene.appendChild(markerElement)
-		// @ts-ignore
-		const marker = markerElement.object3D
-		markers.push(marker)
-	})
-	return markers
 }
 
 const calculateConfidence = (numMeasurements: number, variance: {x: number, y: number, z: number}) => 
@@ -154,15 +143,13 @@ const updateConfidenceIndicators = (
 }
 
 const scan = (
+	arSetup: Setup,
 	markerNumbers: number[], 
 	update: (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => void = () => {},
 	onComplete: (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => void = () => {}
 ) => {
-	const scene = document.getElementById('scene')
-	if (scene === null) throw new Error('scene element not found')
-
-	// register which markers to use
-	const markers = registerMarkers(scene, markerNumbers)
+	const markers = markerNumbers.map(n => createMarker(n, arSetup))
+	markers.forEach(m => arSetup.camera.add(m))
 	const dominantMarkerIndex = 0 // TODO relax assumption on the dominant marker
 
 	// add marker indicators
@@ -202,7 +189,7 @@ const scan = (
 		// if all markers accessible, calculate the marker positions and quaternions relative to the dominant marker
 		if (connectedMarkers.length === markers.length && !completed) {
 			completed = true
-			registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions)
+			registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions) // TODO modify so the results go into markerPositions and markerQuaternions
 			onComplete(markerPositions as THREE.Vector3[], markerQuaternions as THREE.Quaternion[])
 		}
 

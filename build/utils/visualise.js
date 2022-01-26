@@ -3,11 +3,8 @@ import { getProcessedData } from "./convenience.js";
 import { createMarkerIndicators, createMoveDropdown, createSimulationResultObject } from "./scene_init.js";
 const USED_MARKER_COLOR = 0x00ff00, VISIBLE_UNUSED_MARKER_COLOR = 0xffff00, HIDDEN_MARKER_COLOR = 0xff0000;
 const MARKER_INDICATOR_UPDATE_INTERVAL = 100;
-const visualise = (controlPanel, markerNumbers, markerPositions, markerQuaternions) => {
-    const scene = document.getElementById('scene');
-    if (scene === null)
-        throw new Error('scnee element not found');
-    const arena = new Arena(scene, markerNumbers, markerPositions, markerQuaternions);
+const visualise = (setup, controlPanel, markerNumbers, markerPositions, markerQuaternions) => {
+    const arena = new Arena(setup, markerNumbers, markerPositions, markerQuaternions);
     const markerIndicators = createMarkerIndicators(arena.markerPositions, arena.markerQuaternions);
     arena.addObjects(...markerIndicators);
     const simulationResultWrapper = { object: null };

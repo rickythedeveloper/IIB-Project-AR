@@ -2,7 +2,7 @@ declare const THREEx: any
 declare const ARjs: any
 
 type OnRenderFunction = (deltaSec: number, nowSec: number) => void
-interface Setup {
+export interface Setup {
 	scene: THREE.Scene
 	camera: THREE.Camera
 	arToolkitContext: any
@@ -28,7 +28,7 @@ const createRenderer = () => {
 		alpha: true
 	});
 	renderer.setClearColor(new THREE.Color('lightgrey'), 0)
-	renderer.setSize( 640, 480 );
+	renderer.setSize( 2000, 1700 );
 	renderer.domElement.style.position = 'absolute'
 	renderer.domElement.style.top = '0px'
 	renderer.domElement.style.left = '0px'
