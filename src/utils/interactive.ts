@@ -4,33 +4,27 @@
 export class InteractiveObject {
 	target: THREE.Object3D
 	name: string
-	intersected: boolean
-	wasIntersected: boolean
-	distance: number
+	intersection: THREE.Intersection | null = null
+	lastIntersection: THREE.Intersection | null = null
 
   constructor(target: THREE.Object3D, name: string) {
     this.target = target;
     this.name = name;
-    this.intersected = false;
-		this.wasIntersected = false;
-    this.distance = 0;
   }
 }
 
 export class InteractiveEvent<K extends keyof HTMLElementEventMap> {
-	cancelBubble: boolean
+	cancelBubble: boolean = false
 	type: K
 	originalEvent: HTMLElementEventMap[K] | null
-
-	coords: THREE.Vector2 = new THREE.Vector2(0, 0)
-	distance: number = 0
-	intersected: boolean = false
+	mousePosition: THREE.Vector2 = new THREE.Vector2(0, 0)
+	intersection: THREE.Intersection | null = null
 	
   constructor(type: K, originalEvent: HTMLElementEventMap[K] | null = null) {
-    this.cancelBubble = false;
     this.type = type;
     this.originalEvent = originalEvent;
   }
+
   stopPropagation() {
     this.cancelBubble = true;
   }
@@ -91,85 +85,59 @@ export class InteractionManager {
   };
 
   add = (object: THREE.Object3D, childNames: string[] = []) => {
-    if (object) {
-      if (childNames.length > 0) {
-        childNames.forEach((name) => {
-          const o = object.getObjectByName(name);
-          if (o) {
-            const interactiveObject = new InteractiveObject(o, name);
-            this.interactiveObjects.push(interactiveObject);
-          }
-        });
-      } else {
-        const interactiveObject = new InteractiveObject(object, object.name);
-        this.interactiveObjects.push(interactiveObject);
-      }
-    }
+		if (childNames.length > 0) {
+			childNames.forEach((name) => {
+				const o = object.getObjectByName(name);
+				if (o) {
+					const interactiveObject = new InteractiveObject(o, name);
+					this.interactiveObjects.push(interactiveObject);
+				}
+			});
+		} else {
+			const interactiveObject = new InteractiveObject(object, object.name);
+			this.interactiveObjects.push(interactiveObject);
+		}
   };
 
   remove = (object: THREE.Object3D, childNames: string[] = []) => {
-    if (object) {
-      if (childNames.length > 0) {
-        const interactiveObjectsNew: InteractiveObject[] = [];
-        this.interactiveObjects.forEach((o) => {
-          if (!childNames.includes(o.name)) {
-            interactiveObjectsNew.push(o);
-          }
-        });
-        this.interactiveObjects = interactiveObjectsNew;
-      } else {
-        const interactiveObjectsNew: InteractiveObject[] = [];
-        this.interactiveObjects.forEach((o) => {
-          if (o.name !== object.name) {
-            interactiveObjectsNew.push(o);
-          }
-        });
-        this.interactiveObjects = interactiveObjectsNew;
-      }
-    }
+		if (childNames.length > 0) {
+			const interactiveObjectsNew: InteractiveObject[] = [];
+			this.interactiveObjects.forEach((o) => {
+				if (!childNames.includes(o.name)) {
+					interactiveObjectsNew.push(o);
+				}
+			});
+			this.interactiveObjects = interactiveObjectsNew;
+		} else {
+			const interactiveObjectsNew: InteractiveObject[] = [];
+			this.interactiveObjects.forEach((o) => {
+				if (o.name !== object.name) {
+					interactiveObjectsNew.push(o);
+				}
+			});
+			this.interactiveObjects = interactiveObjectsNew;
+		}
   };
 
   update = () => {
     this.raycaster.setFromCamera(this.mouse, this.camera);
 
-    this.interactiveObjects.forEach((object) => {
-      if (object.target) this.checkIntersection(object);
-    });
-
-    this.interactiveObjects.sort(function (a, b) {
-      return a.distance - b.distance;
-    });
+    this.interactiveObjects.forEach((object) => { this.checkIntersection(object); });
 
     const eventOut = new InteractiveEvent('mouseout');
     this.interactiveObjects.forEach((object) => {
-      if (!object.intersected && object.wasIntersected) {
-        this.dispatch(object, eventOut);
-      }
+      if (object.intersection === null && object.lastIntersection !== null) this.dispatch(object, eventOut);
     });
     const eventOver = new InteractiveEvent('mouseover');
     this.interactiveObjects.forEach((object) => {
-      if (object.intersected && !object.wasIntersected) {
-        this.dispatch(object, eventOver);
-      }
+      if (object.intersection !== null && object.lastIntersection === null) this.dispatch(object, eventOver);
     });
   };
 
   checkIntersection = (object: InteractiveObject) => {
     var intersects = this.raycaster.intersectObjects([object.target], true);
-    object.wasIntersected = object.intersected;
-
-    if (intersects.length > 0) {
-      let distance = intersects[0].distance;
-      intersects.forEach((i) => {
-        if (i.distance < distance) {
-          distance = i.distance;
-        }
-      });
-      object.intersected = true;
-      object.distance = distance;
-    } else {
-      object.intersected = false;
-    }
+		object.lastIntersection = object.intersection
+		object.intersection = intersects.length > 0 ? intersects[0] : null
   };
 
   onDocumentMouseMove = (mouseEvent: MouseEvent) => {
@@ -203,7 +171,7 @@ export class InteractionManager {
     const event = new InteractiveEvent('click', mouseEvent);
 
     this.interactiveObjects.forEach((object) => {
-      if (object.intersected) {
+      if (object.intersection !== null) {
         this.dispatch(object, event);
       }
     });
@@ -216,7 +184,7 @@ export class InteractionManager {
     const event = new InteractiveEvent('mousedown', mouseEvent);
 
     this.interactiveObjects.forEach((object) => {
-      if (object.intersected) {
+      if (object.intersection !== null) {
         this.dispatch(object, event);
       }
     });
@@ -232,7 +200,7 @@ export class InteractionManager {
     );
 
     this.interactiveObjects.forEach((object) => {
-      if (object.intersected) {
+      if (object.intersection !== null) {
         this.dispatch(object, event);
       }
     });
@@ -265,9 +233,8 @@ export class InteractionManager {
 
   dispatch = (object: InteractiveObject, event: InteractiveEvent<any>) => {
     if (object.target && !event.cancelBubble) {
-      event.coords = this.mouse;
-      event.distance = object.distance;
-      event.intersected = object.intersected;
+      event.mousePosition = this.mouse;
+      event.intersection = object.intersection;
       object.target.dispatchEvent(event);
     }
   };
