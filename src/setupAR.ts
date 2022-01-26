@@ -3,6 +3,7 @@ declare const ARjs: any
 
 type OnRenderFunction = (deltaSec: number, nowSec: number) => void
 export interface Setup {
+	renderer: THREE.WebGLRenderer
 	scene: THREE.Scene
 	camera: THREE.Camera
 	arToolkitContext: any
@@ -39,7 +40,7 @@ const setupAR = (): Setup => {
 	const renderer = createRenderer()
 	document.body.appendChild( renderer.domElement );
 	const scene	= new THREE.Scene();
-	const camera = new THREE.Camera();
+	const camera = new THREE.PerspectiveCamera();
 	scene.add(camera);
 	
 	
@@ -99,7 +100,7 @@ const setupAR = (): Setup => {
 	}
 	requestAnimationFrame(animate)
 
-	return { scene, camera, arToolkitContext, arToolkitSource, onRenderFunctions: externalOnRenderFunctions }
+	return { renderer, scene, camera, arToolkitContext, arToolkitSource, onRenderFunctions: externalOnRenderFunctions }
 }
 
 export default setupAR

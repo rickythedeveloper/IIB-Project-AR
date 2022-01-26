@@ -25,11 +25,11 @@ const onScanComplete = (pos: THREE.Vector3[], quats: THREE.Quaternion[]) => {
 	markerQuaternions = quats
 	clearInterval(recordValueInterval)
 	clearInterval(setValueInterval)
-	markers.forEach(marker => {
-		marker.clear()
-		if (marker.parent !== null) marker.parent.remove(marker)
-	})
-	visualise(arSetup, controlPanel, markerNumbers, markerPositions, markerQuaternions)
+	// markers.forEach(marker => {
+	// 	marker.clear()
+	// 	if (marker.parent !== null) marker.parent.remove(marker)
+	// })
+	// visualise(arSetup, controlPanel, markerNumbers, markerPositions, markerQuaternions)
 }
 
 switch (mode) {

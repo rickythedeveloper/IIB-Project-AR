@@ -1,6 +1,7 @@
 import { createMarkerIndicator, createLine } from "./three.js";
 import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./arrays.js";
 import { createMarker } from "../setupAR.js";
+import { InteractionManager } from "./interactive.js";
 const zeroVector = new THREE.Vector3(0, 0, 0);
 const zeroQuaternion = new THREE.Quaternion(0, 0, 0, 1);
 const RECORD_INTERVAL = 20;
@@ -113,11 +114,18 @@ const scan = (arSetup, markerNumbers, update = () => { }, onComplete = () => { }
     const markers = markerNumbers.map(n => createMarker(n, arSetup));
     markers.forEach(m => arSetup.camera.add(m));
     const dominantMarkerIndex = 0; // TODO relax assumption on the dominant marker
+    const interactionManager = new InteractionManager(arSetup.renderer, arSetup.camera, arSetup.renderer.domElement);
+    markers.forEach((m, index) => {
+        interactionManager.add(m);
+        m.addEventListener('click', e => {
+            console.log('click', index, e);
+        });
+    });
     // add marker indicators
     markers.forEach(marker => marker.add(createMarkerIndicator(0x0000ff, 0.5)));
     const indicatorLines = createMatrix([markers.length, markers.length], (i, j) => {
         const line = createLine(0xff0000);
-        markers[i].add(line);
+        // markers[i].add(line)
         return line;
     });
     // container for the final positions and quaternions

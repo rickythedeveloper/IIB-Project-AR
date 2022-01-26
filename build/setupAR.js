@@ -25,7 +25,7 @@ const setupAR = () => {
     const renderer = createRenderer();
     document.body.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
-    const camera = new THREE.Camera();
+    const camera = new THREE.PerspectiveCamera();
     scene.add(camera);
     // Following two lines of code needed to fix bug in AR.js.
     // Search for "Object.assign(THREEx.ArBaseControls.prototype, THREE.EventDispatcher.prototype);" 
@@ -78,7 +78,7 @@ const setupAR = () => {
         externalOnRenderFunctions.forEach(f => f(deltaSec, nowSec));
     };
     requestAnimationFrame(animate);
-    return { scene, camera, arToolkitContext, arToolkitSource, onRenderFunctions: externalOnRenderFunctions };
+    return { renderer, scene, camera, arToolkitContext, arToolkitSource, onRenderFunctions: externalOnRenderFunctions };
 };
 export default setupAR;
 //# sourceMappingURL=setupAR.js.map
