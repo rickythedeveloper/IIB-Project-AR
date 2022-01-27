@@ -153,14 +153,6 @@ const scan = (
 	markers.forEach(m => arSetup.camera.add(m))
 	const dominantMarkerIndex = 0 // TODO relax assumption on the dominant marker
 
-	const interactionManager = new InteractionManager(arSetup.renderer, arSetup.camera, arSetup.renderer.domElement)
-	markers.forEach((m, index) => {
-		interactionManager.add(m)
-		m.addEventListener('click', e => {
-			console.log('click', index, e);
-		})
-	})
-
 	// add marker indicators
 	markers.forEach(marker => marker.add(createMarkerIndicator(0x0000ff, 0.5)))
 

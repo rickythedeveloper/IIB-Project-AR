@@ -85,4 +85,25 @@ export const createRing = (ringRadius, tubeRadius, nSegments, color) => {
     const mesh = new THREE.Mesh(geometry, material);
     return mesh;
 };
+const ROTATION_RING_RADIUS = 0.3;
+const ROTATION_RING_TUBE_RADIUS = 0.05;
+const ROTATION_RING_N_SEGMENTS = 16;
+const createRotationRing = (axis) => {
+    const color = axis === 'x' ? 0xff0000 : axis === 'y' ? 0x00ff00 : 0x0000ff;
+    const ring = createRing(ROTATION_RING_RADIUS, ROTATION_RING_TUBE_RADIUS, ROTATION_RING_N_SEGMENTS, color);
+    const planeGeometry = new THREE.PlaneGeometry(5, 5);
+    const planeMaterial = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.quaternion.premultiply(new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)));
+    const ringPlaneContainer = new THREE.Group();
+    const offset = 0.7;
+    const positionOffset = new THREE.Vector3(axis === 'x' ? offset : 0, axis === 'y' ? offset : 0, axis === 'z' ? offset : 0);
+    ringPlaneContainer.position.set(positionOffset.x, positionOffset.y, positionOffset.z);
+    ringPlaneContainer.quaternion.premultiply(axis === 'x' ? new THREE.Quaternion(0, 0, 0, 1) :
+        axis === 'y' ? new THREE.Quaternion(0, 0, Math.sin(Math.PI / 4), Math.cos(Math.PI / 4)) :
+            new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)));
+    ringPlaneContainer.add(ring, plane);
+    return { ringPlaneContainer, ring, plane };
+};
+export const createRotationRings = () => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')];
 //# sourceMappingURL=three.js.map

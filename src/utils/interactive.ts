@@ -2,15 +2,7 @@
 // Modified and Typescript-adapted by Rintaro Kawagishi 26/01/2022
 
 export class InteractiveObject {
-	target: THREE.Object3D
-	name: string
-	intersection: THREE.Intersection | null = null
-	lastIntersection: THREE.Intersection | null = null
-
-  constructor(target: THREE.Object3D, name: string) {
-    this.target = target;
-    this.name = name;
-  }
+  constructor(public target: THREE.Object3D, public intersection: THREE.Intersection | null = null, public lastIntersection: THREE.Intersection | null = null) {}
 }
 
 export class InteractiveEvent<K extends keyof HTMLElementEventMap> {
@@ -19,6 +11,7 @@ export class InteractiveEvent<K extends keyof HTMLElementEventMap> {
 	originalEvent: HTMLElementEventMap[K] | null
 	mousePosition: THREE.Vector2 = new THREE.Vector2(0, 0)
 	intersection: THREE.Intersection | null = null
+  target: THREE.Object3D | null = null
 	
   constructor(type: K, originalEvent: HTMLElementEventMap[K] | null = null) {
     this.type = type;
@@ -53,15 +46,15 @@ export class InteractionManager {
 
     if (this.supportsPointerEvents) {
       domElement.ownerDocument.addEventListener('pointermove', this.onDocumentMouseMove);
-      domElement.addEventListener('pointerdown', this.onMouseDown);
-      domElement.addEventListener('pointerup', this.onMouseUp);
+      domElement.ownerDocument.addEventListener('pointerdown', this.onMouseDown);
+      domElement.ownerDocument.addEventListener('pointerup', this.onMouseUp);
     } else {
       domElement.ownerDocument.addEventListener('mousemove',this.onDocumentMouseMove);
-      domElement.addEventListener('mousedown', this.onMouseDown);
-      domElement.addEventListener('mouseup', this.onMouseUp);
-      domElement.addEventListener('touchstart', this.onTouchStart, { passive: true });
-      domElement.addEventListener('touchmove', this.onTouchMove, { passive: true });
-      domElement.addEventListener('touchend', this.onTouchEnd, { passive: true });
+      domElement.ownerDocument.addEventListener('mousedown', this.onMouseDown);
+      domElement.ownerDocument.addEventListener('mouseup', this.onMouseUp);
+      domElement.ownerDocument.addEventListener('touchstart', this.onTouchStart, { passive: true });
+      domElement.ownerDocument.addEventListener('touchmove', this.onTouchMove, { passive: true });
+      domElement.ownerDocument.addEventListener('touchend', this.onTouchEnd, { passive: true });
     }
 
     this.treatTouchEventsAsMouseEvents = true;
@@ -84,39 +77,13 @@ export class InteractionManager {
     }
   };
 
-  add = (object: THREE.Object3D, childNames: string[] = []) => {
-		if (childNames.length > 0) {
-			childNames.forEach((name) => {
-				const o = object.getObjectByName(name);
-				if (o) {
-					const interactiveObject = new InteractiveObject(o, name);
-					this.interactiveObjects.push(interactiveObject);
-				}
-			});
-		} else {
-			const interactiveObject = new InteractiveObject(object, object.name);
-			this.interactiveObjects.push(interactiveObject);
-		}
+  add = (object: THREE.Object3D) => {
+    const interactiveObject = new InteractiveObject(object);
+    this.interactiveObjects.push(interactiveObject);
   };
 
-  remove = (object: THREE.Object3D, childNames: string[] = []) => {
-		if (childNames.length > 0) {
-			const interactiveObjectsNew: InteractiveObject[] = [];
-			this.interactiveObjects.forEach((o) => {
-				if (!childNames.includes(o.name)) {
-					interactiveObjectsNew.push(o);
-				}
-			});
-			this.interactiveObjects = interactiveObjectsNew;
-		} else {
-			const interactiveObjectsNew: InteractiveObject[] = [];
-			this.interactiveObjects.forEach((o) => {
-				if (o.name !== object.name) {
-					interactiveObjectsNew.push(o);
-				}
-			});
-			this.interactiveObjects = interactiveObjectsNew;
-		}
+  remove = (object: THREE.Object3D) => {
+    this.interactiveObjects = this.interactiveObjects.filter(o => o.target.uuid !== object.uuid)
   };
 
   update = () => {
@@ -143,6 +110,8 @@ export class InteractionManager {
   onDocumentMouseMove = (mouseEvent: MouseEvent) => {
     // event.preventDefault();
     this.mapPositionToPoint(this.mouse, mouseEvent.clientX, mouseEvent.clientY);
+    this.update()
+    
     const event = new InteractiveEvent('mousemove', mouseEvent);
 
     this.interactiveObjects.forEach((object) => {
@@ -231,10 +200,11 @@ export class InteractionManager {
     });
   };
 
-  dispatch = (object: InteractiveObject, event: InteractiveEvent<any>) => {
+  dispatch = <T extends keyof HTMLElementEventMap>(object: InteractiveObject, event: InteractiveEvent<T>) => {
     if (object.target && !event.cancelBubble) {
       event.mousePosition = this.mouse;
       event.intersection = object.intersection;
+      event.target = object.target;
       object.target.dispatchEvent(event);
     }
   };
