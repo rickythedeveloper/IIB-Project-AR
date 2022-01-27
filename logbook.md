@@ -99,10 +99,19 @@ Used the sign of w to correct it.
 - connect scan and show functions together
 - we can now scan the markers and then show the simulation results without hard-coding the marker positions and quaternions!!!!
 
-## TODO
-- what native features can we use? (orientation, accelerometer, world tracking)
-- webar
-- entirely new stuff
-	 - get camera feed
-	 - detect a marker
-	 - setting a scene
+## 23/01
+- fix bug on marker indicators when markers aren't on the same plane
+- successfully tested the scanning process for a cuboid
+
+## 24/01
+- make typescript work
+- convert all `js` files to `ts` files
+
+## 25/01
+- big refactor
+- start on getting rid of aframe (#32)
+
+## 26/01
+- got rid of aframe
+- start working on interactivity
+- put a ring near a marker, havent implemented the rotation UI
