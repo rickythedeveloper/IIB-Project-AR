@@ -115,3 +115,6 @@ Used the sign of w to correct it.
 - got rid of aframe
 - start working on interactivity
 - put a ring near a marker, havent implemented the rotation UI
+
+## 27/01
+- implement the rotation UI for a test box
