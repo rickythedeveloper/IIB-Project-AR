@@ -3,7 +3,7 @@ import { getProcessedData } from "./convenience.js"
 import { createMarkerIndicators, createMoveDropdown, createSimulationResultObject } from "./scene_init.js"
 import { ThreeObjectWrapper } from "./index.js"
 import { Setup } from "../setupAR.js"
-import { createRotationRings } from "./three.js"
+import { createRotationRings, createTranslationArrows } from "./three.js"
 import { InteractionManager, InteractiveEvent } from "./interactive.js"
 import { atanAngle } from "./angle.js"
 
@@ -26,7 +26,9 @@ const visualise = (setup: Setup, controlPanel: HTMLElement, markerNumbers: numbe
 	const box = createTestBox()
 	const rings = createRotationRings()
 	rings.forEach(r => r.ringPlaneContainer.position.add(box.position))
-	arena.addObjects(...markerIndicators, box, ...rings.map(r => r.ringPlaneContainer))
+	const arrows = createTranslationArrows()
+	arrows.forEach(a => a.container.position.add(box.position))
+	arena.addObjects(...markerIndicators, box, ...rings.map(r => r.ringPlaneContainer), ...arrows.map(a => a.container))
 
 	const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement)
 	rings.forEach((r, index) => {

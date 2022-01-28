@@ -119,8 +119,10 @@ const ROTATION_RING_RADIUS = 0.5
 const ROTATION_RING_TUBE_RADIUS = 0.1
 const ROTATION_RING_N_SEGMENTS = 16
 
+const axisColor = (axis: AxisString) => axis === 'x' ? 0xff0000 : axis === 'y' ? 0x00ff00 : 0x0000ff
+
 const createRotationRing = (axis: AxisString): RingContainer => {
-	const color = axis === 'x' ? 0xff0000 : axis === 'y' ? 0x00ff00 : 0x0000ff
+	const color = axisColor(axis)
 
 	const ring = createRing(ROTATION_RING_RADIUS, ROTATION_RING_TUBE_RADIUS, ROTATION_RING_N_SEGMENTS, color)
 	
@@ -149,4 +151,49 @@ const createRotationRing = (axis: AxisString): RingContainer => {
 	return {ringPlaneContainer, ring, visiblePlane, invisiblePlane}
 }
 
-export const createRotationRings = (): RingContainer[] => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')]
+export const createRotationRings = (): [RingContainer, RingContainer, RingContainer] => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')]
+
+interface ArrowContainer {
+	container: THREE.Group
+	arrow: THREE.Object3D
+	invisiblePlane: THREE.Object3D
+}
+
+const createThickArrow = (radius: number, height: number, color: THREE.ColorRepresentation) => {
+	const cylinderHeight = height * 0.7
+	const cylinderGeometry = new THREE.CylinderGeometry( radius, radius, cylinderHeight, 32 );
+	const cylinderMaterial = new THREE.MeshStandardMaterial({color});
+	const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+	cylinder.position.set(0, cylinderHeight/2, 0)
+
+	const coneHeight = height - cylinderHeight
+	const coneRadius = radius * 1.5
+	const coneGeometry = new THREE.ConeGeometry(coneRadius, coneHeight, 32)
+	const coneMaterial = new THREE.MeshStandardMaterial({color})
+	const cone = new THREE.Mesh(coneGeometry, coneMaterial)
+	cone.position.set(0, cylinderHeight + coneHeight/2, 0)
+
+	const arrow = new THREE.Group()
+	arrow.add(cylinder, cone)
+	return arrow
+}
+
+const createTranslationArrow = (axis: AxisString): ArrowContainer => {
+	const color = axisColor(axis)
+	const arrow = createThickArrow(0.1, 1, color)
+	arrow.quaternion.premultiply(rotationQuaternion('z', -Math.PI/2))
+
+	const invisiblePlaneGeometry = new THREE.PlaneGeometry(3, 1)
+	const invisiblePlaneMaterial = new THREE.MeshBasicMaterial({transparent: true, opacity: 0, side: THREE.DoubleSide})
+	const invisiblePlane = new THREE.Mesh(invisiblePlaneGeometry, invisiblePlaneMaterial)
+
+	const container = new THREE.Group()
+	container.add(arrow, invisiblePlane)
+	container.quaternion.premultiply(axis === 'x' ? rotationQuaternion('x', 0) : axis === 'y' ? rotationQuaternion('z', Math.PI/2) : rotationQuaternion('y', -Math.PI/2))
+	const offset = 1.5
+	container.position.set(axis === 'x' ? offset : 0, axis === 'y' ? offset : 0, axis === 'z' ? offset : 0)
+
+	return {container, arrow, invisiblePlane}
+}
+
+export const createTranslationArrows = (): [ArrowContainer, ArrowContainer, ArrowContainer] => [createTranslationArrow('x'), createTranslationArrow('y'), createTranslationArrow('z')]

@@ -1,6 +1,6 @@
 import Arena from "../Arena.js";
 import { createMarkerIndicators, createMoveDropdown } from "./scene_init.js";
-import { createRotationRings } from "./three.js";
+import { createRotationRings, createTranslationArrows } from "./three.js";
 import { InteractionManager } from "./interactive.js";
 import { atanAngle } from "./angle.js";
 const USED_MARKER_COLOR = 0x00ff00, VISIBLE_UNUSED_MARKER_COLOR = 0xffff00, HIDDEN_MARKER_COLOR = 0xff0000;
@@ -19,7 +19,9 @@ const visualise = (setup, controlPanel, markerNumbers, markerPositions, markerQu
     const box = createTestBox();
     const rings = createRotationRings();
     rings.forEach(r => r.ringPlaneContainer.position.add(box.position));
-    arena.addObjects(...markerIndicators, box, ...rings.map(r => r.ringPlaneContainer));
+    const arrows = createTranslationArrows();
+    arrows.forEach(a => a.container.position.add(box.position));
+    arena.addObjects(...markerIndicators, box, ...rings.map(r => r.ringPlaneContainer), ...arrows.map(a => a.container));
     const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement);
     rings.forEach((r, index) => {
         interactionManager.add(r.ring);
