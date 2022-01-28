@@ -17,9 +17,7 @@ export default class Arena {
         return this.markers[this.usedMarkerIndex].children;
     }
     /**
-     * @param {*} object
-     * @param {*} position relative to the dominant marker
-     * @param {*} quaternion relative to the dominant marker
+     * object.position and object.quaternion should be in the frame of the dominant marker
      */
     addObject(object) {
         // 0: dominant marker, 1: used marker, 2: object
@@ -39,6 +37,36 @@ export default class Arena {
     }
     addObjects(...objects) {
         objects.forEach(object => this.addObject(object));
+    }
+    /**
+     * Convert a position from the camera coordinates to the frame of the dominant marker
+     */
+    positionFromCameraToDominant(position) {
+        let markerIndex = null;
+        for (let i = 0; i < this.markers.length; i++) {
+            if (this.markers[i].visible) {
+                markerIndex = i;
+                break;
+            }
+        }
+        if (markerIndex === null)
+            return null;
+        const marker = this.markers[markerIndex];
+        const worldPosition = new THREE.Vector3(), worldQuaternion = new THREE.Quaternion();
+        marker.getWorldPosition(worldPosition);
+        marker.getWorldQuaternion(worldQuaternion);
+        // 0: camera, 1: dominant marker: 2: visible marker
+        const q020 = worldQuaternion.clone();
+        const q121 = this.markerQuaternions[markerIndex].clone();
+        const q010 = q020.clone().multiply(q121.clone().invert());
+        const p020 = worldPosition.clone();
+        const p121 = this.markerPositions[markerIndex];
+        const p211 = p121.clone().multiplyScalar(-1);
+        const p010 = p020.clone().add(p211.clone().applyQuaternion(q010));
+        // 3: the position
+        const p030 = position.clone();
+        const p131 = p030.clone().sub(p010).applyQuaternion(q010.clone().invert());
+        return p131;
     }
     _addMarkers(markerNumbers) {
         const markers = markerNumbers.map(n => createMarker(n, this.setup));

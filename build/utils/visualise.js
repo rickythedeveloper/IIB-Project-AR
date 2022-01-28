@@ -2,6 +2,7 @@ import Arena from "../Arena.js";
 import { createMarkerIndicators, createMoveDropdown } from "./scene_init.js";
 import { createRotationRings } from "./three.js";
 import { InteractionManager } from "./interactive.js";
+import { atanAngle } from "./angle.js";
 const USED_MARKER_COLOR = 0x00ff00, VISIBLE_UNUSED_MARKER_COLOR = 0xffff00, HIDDEN_MARKER_COLOR = 0xff0000;
 const MARKER_INDICATOR_UPDATE_INTERVAL = 100;
 const createTestBox = () => {
@@ -22,18 +23,37 @@ const visualise = (setup, controlPanel, markerNumbers, markerPositions, markerQu
     const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement);
     rings.forEach((r, index) => {
         interactionManager.add(r.ring);
+        let lastIntersecPosition = null;
         const ringplanelistern = (e) => {
-            console.log(e.target, e.intersection);
+            const intersection = e.intersection;
+            if (!intersection)
+                return;
+            const intersectPosition = arena.positionFromCameraToDominant(intersection.point);
+            // @ts-ignore
+            const boxQuaternion = arena.objectQuaternions[box.indexInProject], boxPosition = arena.objectPositions[box.indexInProject];
+            if (intersectPosition && lastIntersecPosition) {
+                const intersectFromBox = intersectPosition.clone().sub(boxPosition);
+                const lastIntersectFromBox = lastIntersecPosition.clone().sub(boxPosition);
+                const theta = index === 0 ? atanAngle(intersectFromBox.y, intersectFromBox.z) - atanAngle(lastIntersectFromBox.y, lastIntersectFromBox.z) :
+                    index === 1 ? atanAngle(intersectFromBox.z, intersectFromBox.x) - atanAngle(lastIntersectFromBox.z, lastIntersectFromBox.x) :
+                        atanAngle(intersectFromBox.x, intersectFromBox.y) - atanAngle(lastIntersectFromBox.x, lastIntersectFromBox.y);
+                const sin = Math.sin(theta / 2), cos = Math.cos(theta / 2);
+                boxQuaternion.premultiply(new THREE.Quaternion(index === 0 ? sin : 0, index === 1 ? sin : 0, index === 2 ? sin : 0, cos));
+            }
+            lastIntersecPosition = intersectPosition;
         };
         r.ring.addEventListener('mousedown', (event) => {
             console.log(`started moving axis ${index}`);
             interactionManager.add(r.ringPlaneContainer);
             r.ringPlaneContainer.addEventListener('mousemove', ringplanelistern);
+            r.visiblePlane.visible = true;
         });
         r.ring.addEventListener('mouseup', event => {
             console.log(`ended moving axis ${index}`);
-            r.ringPlaneContainer.removeEventListener('mousemove', ringplanelistern);
             interactionManager.remove(r.ringPlaneContainer);
+            r.ringPlaneContainer.removeEventListener('mousemove', ringplanelistern);
+            r.visiblePlane.visible = false;
+            lastIntersecPosition = null;
         });
     });
     const simulationResultWrapper = { object: null };

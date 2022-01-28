@@ -15,7 +15,7 @@ const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
 const arSetup = setupAR() 
-const markerNumbers = [0]
+const markerNumbers = [0, 1]
 let markers: THREE.Object3D[] = [], markerPositions: THREE.Vector3[] = [], markerQuaternions: THREE.Quaternion[] = []
 let recordValueInterval: number, setValueInterval: number
 

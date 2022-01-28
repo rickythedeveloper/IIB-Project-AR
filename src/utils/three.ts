@@ -111,11 +111,12 @@ export const createRing = (ringRadius: number, tubeRadius: number, nSegments: nu
 interface RingContainer {
 	ringPlaneContainer: THREE.Group
 	ring: THREE.Object3D
-	plane: THREE.Object3D
+	visiblePlane: THREE.Object3D
+	invisiblePlane: THREE.Object3D
 }
 
-const ROTATION_RING_RADIUS = 0.3
-const ROTATION_RING_TUBE_RADIUS = 0.05
+const ROTATION_RING_RADIUS = 0.5
+const ROTATION_RING_TUBE_RADIUS = 0.1
 const ROTATION_RING_N_SEGMENTS = 16
 
 const createRotationRing = (axis: AxisString): RingContainer => {
@@ -123,13 +124,20 @@ const createRotationRing = (axis: AxisString): RingContainer => {
 
 	const ring = createRing(ROTATION_RING_RADIUS, ROTATION_RING_TUBE_RADIUS, ROTATION_RING_N_SEGMENTS, color)
 	
-	const planeGeometry = new THREE.PlaneGeometry(5, 5)
-	const planeMaterial = new THREE.MeshBasicMaterial({color: color, transparent: true, opacity: 0.1, side: THREE.DoubleSide})
-	const plane = new THREE.Mesh(planeGeometry, planeMaterial)
-	plane.quaternion.premultiply(new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)))
+	const invisiblePlaneGeometry = new THREE.PlaneGeometry(20, 20)
+	const invisiblePlaneMaterial = new THREE.MeshBasicMaterial({transparent: true, side: THREE.DoubleSide})
+	const invisiblePlane = new THREE.Mesh(invisiblePlaneGeometry, invisiblePlaneMaterial)
+	invisiblePlane.visible = false
+	invisiblePlane.quaternion.premultiply(new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)))
+
+	const visiblePlaneGeometry = new THREE.PlaneGeometry(3, 3)
+	const visiblePlaneMaterial = new THREE.MeshBasicMaterial({color: color, transparent: true, opacity: 0.3, side: THREE.DoubleSide})
+	const visiblePlane = new THREE.Mesh(visiblePlaneGeometry, visiblePlaneMaterial)
+	visiblePlane.visible = false
+	visiblePlane.quaternion.premultiply(new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)))
 		
 	const ringPlaneContainer = new THREE.Group()
-	const offset = 0.7
+	const offset = 1
 	const positionOffset = new THREE.Vector3(axis === 'x' ? offset : 0, axis === 'y' ? offset : 0, axis === 'z' ? offset : 0)
 	ringPlaneContainer.position.set(positionOffset.x, positionOffset.y, positionOffset.z)
 	ringPlaneContainer.quaternion.premultiply(
@@ -137,8 +145,8 @@ const createRotationRing = (axis: AxisString): RingContainer => {
 		axis === 'y' ? new THREE.Quaternion(0, 0, Math.sin(Math.PI / 4), Math.cos(Math.PI / 4)) :
 		new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4))
 	)
-	ringPlaneContainer.add(ring, plane)
-	return {ringPlaneContainer, ring, plane}
+	ringPlaneContainer.add(ring, invisiblePlane, visiblePlane)
+	return {ringPlaneContainer, ring, visiblePlane, invisiblePlane}
 }
 
 export const createRotationRings = (): RingContainer[] => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')]
