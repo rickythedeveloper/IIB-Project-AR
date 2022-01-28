@@ -157,6 +157,7 @@ interface ArrowContainer {
 	container: THREE.Group
 	arrow: THREE.Object3D
 	invisiblePlane: THREE.Object3D
+	visiblePlane: THREE.Object3D
 }
 
 const createThickArrow = (radius: number, height: number, color: THREE.ColorRepresentation) => {
@@ -183,17 +184,23 @@ const createTranslationArrow = (axis: AxisString): ArrowContainer => {
 	const arrow = createThickArrow(0.1, 1, color)
 	arrow.quaternion.premultiply(rotationQuaternion('z', -Math.PI/2))
 
-	const invisiblePlaneGeometry = new THREE.PlaneGeometry(3, 1)
-	const invisiblePlaneMaterial = new THREE.MeshBasicMaterial({transparent: true, opacity: 0, side: THREE.DoubleSide})
+	const invisiblePlaneGeometry = new THREE.PlaneGeometry(10, 10)
+	const invisiblePlaneMaterial = new THREE.MeshBasicMaterial({transparent: true, side: THREE.DoubleSide})
 	const invisiblePlane = new THREE.Mesh(invisiblePlaneGeometry, invisiblePlaneMaterial)
+	invisiblePlane.visible = false
+
+	const visiblePlaneGeometry = new THREE.PlaneGeometry(2, 1)
+	const visiblePlaneMaterial = new THREE.MeshBasicMaterial({transparent: true, opacity: 0.1, color, side: THREE.DoubleSide})
+	const visiblePlane = new THREE.Mesh(visiblePlaneGeometry, visiblePlaneMaterial)
+	visiblePlane.visible = false
 
 	const container = new THREE.Group()
-	container.add(arrow, invisiblePlane)
+	container.add(arrow, invisiblePlane, visiblePlane)
 	container.quaternion.premultiply(axis === 'x' ? rotationQuaternion('x', 0) : axis === 'y' ? rotationQuaternion('z', Math.PI/2) : rotationQuaternion('y', -Math.PI/2))
 	const offset = 1.5
 	container.position.set(axis === 'x' ? offset : 0, axis === 'y' ? offset : 0, axis === 'z' ? offset : 0)
 
-	return {container, arrow, invisiblePlane}
+	return {container, arrow, invisiblePlane, visiblePlane}
 }
 
 export const createTranslationArrows = (): [ArrowContainer, ArrowContainer, ArrowContainer] => [createTranslationArrow('x'), createTranslationArrow('y'), createTranslationArrow('z')]

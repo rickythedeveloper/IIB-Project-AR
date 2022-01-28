@@ -22,6 +22,7 @@ const visualise = (setup, controlPanel, markerNumbers, markerPositions, markerQu
     const arrows = createTranslationArrows();
     arrows.forEach(a => a.container.position.add(box.position));
     arena.addObjects(...markerIndicators, box, ...rings.map(r => r.ringPlaneContainer), ...arrows.map(a => a.container));
+    const boxControls = [...rings.map(r => r.ringPlaneContainer), ...arrows.map(a => a.container)];
     const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement);
     rings.forEach((r, index) => {
         interactionManager.add(r.ring);
@@ -56,6 +57,53 @@ const visualise = (setup, controlPanel, markerNumbers, markerPositions, markerQu
             r.ringPlaneContainer.removeEventListener('mousemove', ringplanelistern);
             r.visiblePlane.visible = false;
             lastIntersecPosition = null;
+        });
+    });
+    arrows.forEach((a, index) => {
+        interactionManager.add(a.arrow);
+        let lastValue = null;
+        const invisiblePlaneListener = (e) => {
+            const intersection = e.intersection;
+            console.log(intersection);
+            if (!intersection)
+                return;
+            const intersectPosition = arena.positionFromCameraToDominant(intersection.point);
+            if (intersectPosition === null)
+                return;
+            const newValue = index === 0 ? intersectPosition.x : index === 1 ? intersectPosition.y : intersectPosition.z;
+            if (lastValue) {
+                const delta = newValue - lastValue;
+                const deltaVector = new THREE.Vector3(index === 0 ? delta : 0, index === 1 ? delta : 0, index === 2 ? delta : 0);
+                // @ts-ignore
+                arena.objectPositions[box.indexInProject].add(deltaVector);
+                boxControls.forEach(bc => {
+                    // @ts-ignore
+                    arena.objectPositions[bc.indexInProject].add(deltaVector);
+                });
+            }
+            lastValue = newValue;
+        };
+        a.arrow.addEventListener('mousedown', () => {
+            const cameraPosition = arena.positionFromCameraToDominant(new THREE.Vector3(0, 0, 0));
+            if (cameraPosition === null)
+                return;
+            // @ts-ignore
+            const arrowContainerPosition = arena.objectPositions[arrows[index].container.indexInProject];
+            const relativeCameraPosition = cameraPosition.clone().sub(arrowContainerPosition);
+            const angle = Math.PI / 2 + (index === 0 ? atanAngle(relativeCameraPosition.y, relativeCameraPosition.z) :
+                index === 1 ? atanAngle(-relativeCameraPosition.x, relativeCameraPosition.z) :
+                    atanAngle(relativeCameraPosition.y, -relativeCameraPosition.x));
+            arrows[index].visiblePlane.visible = true;
+            arrows[index].visiblePlane.quaternion.set(Math.sin(angle / 2), 0, 0, Math.cos(angle / 2));
+            arrows[index].invisiblePlane.quaternion.set(Math.sin(angle / 2), 0, 0, Math.cos(angle / 2));
+            interactionManager.add(a.invisiblePlane);
+            a.invisiblePlane.addEventListener('mousemove', invisiblePlaneListener);
+        });
+        a.arrow.addEventListener('mouseup', () => {
+            arrows[index].visiblePlane.visible = false;
+            lastValue = null;
+            interactionManager.remove(a.invisiblePlane);
+            a.invisiblePlane.removeEventListener('mousemove', invisiblePlaneListener);
         });
     });
     const simulationResultWrapper = { object: null };
