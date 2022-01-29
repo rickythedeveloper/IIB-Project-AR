@@ -4,22 +4,19 @@ import { MarkerInfo } from "./utils/index.js"
 
 export default class Arena {
 	setup: Setup
-	markers: THREE.Object3D[]
+	markers: THREE.Object3D[] = []
 	markerPositions: THREE.Vector3[]
 	markerQuaternions: THREE.Quaternion[]
-	usedMarkerIndex: number
-	objectPositions: THREE.Vector3[]
-	objectQuaternions: THREE.Quaternion[]
+	usedMarkerIndex: number = 0
+	objectPositions: THREE.Vector3[] = []
+	objectQuaternions: THREE.Quaternion[] = []
+	objectIndices: {[objectUUID: string]: number} = {}
 
 	constructor(setup: Setup, markerInfos: MarkerInfo[]) {
 		const markerNumbers = markerInfos.map(m => m.number), markerPositions = markerInfos.map(m => m.position), markerQuaternions = markerInfos.map(m => m.quaternion)
 		this.setup = setup
-		this.markers = []
 		this.markerPositions = markerPositions
 		this.markerQuaternions = markerQuaternions
-		this.usedMarkerIndex = 0
-		this.objectPositions = []
-		this.objectQuaternions = []
 
 		this._addMarkers(markerNumbers)
 
@@ -41,8 +38,7 @@ export default class Arena {
 		const q020 = object.quaternion.clone()
 		const p121 = p020.clone().sub(p010).applyQuaternion(q010.clone().invert())
 		const q121 = q010.clone().invert().multiply(q020)
-		// @ts-ignore
-		object.indexInProject = this.objectPositions.length
+		this.objectIndices[object.uuid] = this.objectPositions.length
 		this.objectPositions.push(object.position.clone())
 		this.objectQuaternions.push(object.quaternion.clone())
 		this.markers[this.usedMarkerIndex].add(object)

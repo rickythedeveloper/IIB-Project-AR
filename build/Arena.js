@@ -2,14 +2,15 @@ import { createMarker } from "./setupAR.js";
 import { getAverageQuaternion } from "./utils/arrays.js";
 export default class Arena {
     constructor(setup, markerInfos) {
-        const markerNumbers = markerInfos.map(m => m.number), markerPositions = markerInfos.map(m => m.position), markerQuaternions = markerInfos.map(m => m.quaternion);
-        this.setup = setup;
         this.markers = [];
-        this.markerPositions = markerPositions;
-        this.markerQuaternions = markerQuaternions;
         this.usedMarkerIndex = 0;
         this.objectPositions = [];
         this.objectQuaternions = [];
+        this.objectIndices = {};
+        const markerNumbers = markerInfos.map(m => m.number), markerPositions = markerInfos.map(m => m.position), markerQuaternions = markerInfos.map(m => m.quaternion);
+        this.setup = setup;
+        this.markerPositions = markerPositions;
+        this.markerQuaternions = markerQuaternions;
         this._addMarkers(markerNumbers);
         setInterval(this._mainLoop.bind(this), 100);
     }
@@ -27,8 +28,7 @@ export default class Arena {
         const q020 = object.quaternion.clone();
         const p121 = p020.clone().sub(p010).applyQuaternion(q010.clone().invert());
         const q121 = q010.clone().invert().multiply(q020);
-        // @ts-ignore
-        object.indexInProject = this.objectPositions.length;
+        this.objectIndices[object.uuid] = this.objectPositions.length;
         this.objectPositions.push(object.position.clone());
         this.objectQuaternions.push(object.quaternion.clone());
         this.markers[this.usedMarkerIndex].add(object);

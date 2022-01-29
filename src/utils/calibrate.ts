@@ -132,8 +132,8 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: TH
 
 	setTimeout(() => {
 		calibratableObjects.forEach(o => {
-			// @ts-ignore
-			const position = arena.objectPositions[o.indexInProject], quaternion = arena.objectQuaternions[o.indexInProject]	
+			const objectIndex = arena.objectIndices[o.uuid]
+			const position = arena.objectPositions[objectIndex], quaternion = arena.objectQuaternions[objectIndex]	
 			o.position.set(position.x, position.y, position.z)
 			o.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w)
 		})
@@ -146,8 +146,13 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: TH
 		const objectControl = createObjectControlForObject(
 			simulationResult, 
 			interactionManager, 
-			// @ts-ignore
-			(object) => arena.objectPositions[object.indexInProject], (object) => arena.objectQuaternions[object.indexInProject], 
+			(object) => {
+				const objectIndex = arena.objectIndices[object.uuid]
+				return arena.objectPositions[objectIndex]
+			}, (object) => {
+				const objectIndex = arena.objectIndices[object.uuid]
+				return arena.objectQuaternions[objectIndex]
+			}, 
 			(worldCoords) => {
 				const position = arena.positionFromCameraToDominant(worldCoords)
 				if (position === null) throw new Error(`Could not convert position ${worldCoords} from camera frame to dominant marker frame`)
