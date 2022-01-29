@@ -1,4 +1,5 @@
 import { createMarker, Setup } from "./setupAR.js"
+import { getAverageQuaternion } from "./utils/arrays.js"
 import { MarkerInfo } from "./utils/index.js"
 
 export default class Arena {
@@ -148,25 +149,17 @@ export default class Arena {
 			}
 
 			let x = 0, y = 0, z = 0; // in world coordinates (camera frame)
-			let qx = 0, qy = 0, qz = 0, qw = 0; // camera frame
 			for (let w = 0; w < weights.length; w++) {
 				if (weights[w] === 0) continue
-
 				const p030 = arr_p030[w]
-				const q030 = arr_q030[w]
-
 				x += weights[w] * p030.x
 				y += weights[w] * p030.y
 				z += weights[w] * p030.z
-				qx += weights[w] * q030.x * Math.sign(q030.w)
-				qy += weights[w] * q030.y * Math.sign(q030.w)
-				qz += weights[w] * q030.z * Math.sign(q030.w)
-				qw += weights[w] * q030.w * Math.sign(q030.w)
 			}
 
 			// 4: nearest marker
 			const p030 = new THREE.Vector3(x, y, z)
-			const q030 = new THREE.Quaternion(qx, qy, qz, qw).normalize()
+			const q030 = getAverageQuaternion(arr_q030, weights)
 			const p040 = this.markers[nearestMarkerIndex].position
 			const q040 = this.markers[nearestMarkerIndex].quaternion
 

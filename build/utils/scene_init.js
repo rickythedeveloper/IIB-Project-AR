@@ -67,10 +67,7 @@ export const createSimulationResultObject = (vertices, indices, colors) => {
     if (!Number.isInteger(nTimes))
         throw Error('totalTime is not an integer');
     const simulationResult = createBufferObject(vertices, indices, colors.slice(0, colorBufferSizePerTime));
-    const simResultPosition = new THREE.Vector3(0.47, 0.5, -0.43);
     const simResultScale = 1.475;
-    simulationResult.position.set(simResultPosition.x, simResultPosition.y, simResultPosition.z);
-    simulationResult.quaternion.set(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4));
     simulationResult.scale.set(simResultScale, simResultScale, simResultScale);
     let time = 0;
     setInterval(() => {
