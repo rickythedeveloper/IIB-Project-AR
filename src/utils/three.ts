@@ -205,6 +205,13 @@ const createTranslationArrow = (axis: AxisString): TranslationArrow => {
 
 const createTranslationArrows = (): [TranslationArrow, TranslationArrow, TranslationArrow] => [createTranslationArrow('x'), createTranslationArrow('y'), createTranslationArrow('z')]
 
+const createOriginIndicator = (radius: number) => {
+	const geometry = new THREE.SphereGeometry(radius, 16, 16)
+	const material = new THREE.MeshStandardMaterial({color: 0xffffff})
+	const sphere = new THREE.Mesh(geometry, material)
+	return sphere
+}
+
 interface ObjectControl {
 	container: THREE.Group
 	rings: [RotationRing, RotationRing, RotationRing]
@@ -215,6 +222,6 @@ export const createObjectControl = (): ObjectControl => {
 	const rings = createRotationRings()
 	const arrows = createTranslationArrows()
 	const container = new THREE.Group()
-	container.add(...rings.map(r => r.container), ...arrows.map(a => a.container))
+	container.add(...rings.map(r => r.container), ...arrows.map(a => a.container), createOriginIndicator(0.1))
 	return {container, rings, arrows}
 }

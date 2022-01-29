@@ -149,11 +149,17 @@ const createTranslationArrow = (axis) => {
     return { container, arrow, invisiblePlane, visiblePlane };
 };
 const createTranslationArrows = () => [createTranslationArrow('x'), createTranslationArrow('y'), createTranslationArrow('z')];
+const createOriginIndicator = (radius) => {
+    const geometry = new THREE.SphereGeometry(radius, 16, 16);
+    const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const sphere = new THREE.Mesh(geometry, material);
+    return sphere;
+};
 export const createObjectControl = () => {
     const rings = createRotationRings();
     const arrows = createTranslationArrows();
     const container = new THREE.Group();
-    container.add(...rings.map(r => r.container), ...arrows.map(a => a.container));
+    container.add(...rings.map(r => r.container), ...arrows.map(a => a.container), createOriginIndicator(0.1));
     return { container, rings, arrows };
 };
 //# sourceMappingURL=three.js.map
