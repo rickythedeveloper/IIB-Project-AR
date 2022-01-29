@@ -20,6 +20,8 @@ const createObjectControlForObject = (
 	const rings = objectControl.rings
 	const arrows = objectControl.arrows
 
+	let controlIsBusy = false
+
 	const registerRing = (
 		r: RotationRing, 
 		axis: Axis, 
@@ -44,15 +46,18 @@ const createObjectControlForObject = (
 		}
 		interactionManager.add(r.ring)
 		r.ring.addEventListener('mousedown', (event) => {
+			if (controlIsBusy) return
 			interactionManager.add(r.invisiblePlane)
 			r.invisiblePlane.addEventListener('mousemove', rotationListener)
 			r.visiblePlane.visible = true
+			controlIsBusy = true
 		})
 		r.ring.addEventListener('mouseup', event => {
 			interactionManager.remove(r.invisiblePlane)
 			r.invisiblePlane.removeEventListener('mousemove', rotationListener)
 			r.visiblePlane.visible = false
 			lastIntersecPosition = null
+			controlIsBusy = false
 		})
 	}
 
@@ -74,6 +79,7 @@ const createObjectControlForObject = (
 		}
 		interactionManager.add(a.arrow)
 		a.arrow.addEventListener('mousedown', () => {
+			if (controlIsBusy) return
 			const cameraPosition = worldToRelevant(new THREE.Vector3(0, 0, 0))
 			if (cameraPosition === null) return
 			const objectPosition = getPositionToUpdate(object).clone()
@@ -89,12 +95,14 @@ const createObjectControlForObject = (
 			a.visiblePlane.visible = true
 			interactionManager.add(a.invisiblePlane)
 			a.invisiblePlane.addEventListener('mousemove', translationListener)
+			controlIsBusy = true
 		})
 		a.arrow.addEventListener('mouseup', () => {
 			a.visiblePlane.visible = false
 			interactionManager.remove(a.invisiblePlane)
 			a.invisiblePlane.removeEventListener('mousemove', translationListener)
 			lastValue = null
+			controlIsBusy = false
 		})
 	}
 

@@ -10,6 +10,7 @@ const createObjectControlForObject = (object, interactionManager, getPositionToU
     objectControl.container.position.add(object.position);
     const rings = objectControl.rings;
     const arrows = objectControl.arrows;
+    let controlIsBusy = false;
     const registerRing = (r, axis) => {
         let lastIntersecPosition = null;
         const rotationListener = (e) => {
@@ -31,15 +32,19 @@ const createObjectControlForObject = (object, interactionManager, getPositionToU
         };
         interactionManager.add(r.ring);
         r.ring.addEventListener('mousedown', (event) => {
+            if (controlIsBusy)
+                return;
             interactionManager.add(r.invisiblePlane);
             r.invisiblePlane.addEventListener('mousemove', rotationListener);
             r.visiblePlane.visible = true;
+            controlIsBusy = true;
         });
         r.ring.addEventListener('mouseup', event => {
             interactionManager.remove(r.invisiblePlane);
             r.invisiblePlane.removeEventListener('mousemove', rotationListener);
             r.visiblePlane.visible = false;
             lastIntersecPosition = null;
+            controlIsBusy = false;
         });
     };
     const registerArrow = (a, axis) => {
@@ -62,6 +67,8 @@ const createObjectControlForObject = (object, interactionManager, getPositionToU
         };
         interactionManager.add(a.arrow);
         a.arrow.addEventListener('mousedown', () => {
+            if (controlIsBusy)
+                return;
             const cameraPosition = worldToRelevant(new THREE.Vector3(0, 0, 0));
             if (cameraPosition === null)
                 return;
@@ -75,12 +82,14 @@ const createObjectControlForObject = (object, interactionManager, getPositionToU
             a.visiblePlane.visible = true;
             interactionManager.add(a.invisiblePlane);
             a.invisiblePlane.addEventListener('mousemove', translationListener);
+            controlIsBusy = true;
         });
         a.arrow.addEventListener('mouseup', () => {
             a.visiblePlane.visible = false;
             interactionManager.remove(a.invisiblePlane);
             a.invisiblePlane.removeEventListener('mousemove', translationListener);
             lastValue = null;
+            controlIsBusy = false;
         });
     };
     rings.forEach((r, index) => {
