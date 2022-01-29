@@ -1,9 +1,7 @@
-import { createBarcodeMarkerElement } from "./elements.js"
 import { createMarkerIndicator, createLine } from "./three.js"
 import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./arrays.js"
-import { Matrix, Vector } from "./index.js"
+import { Matrix, Vector, Positioning } from "./index.js"
 import { createMarker, Setup } from "../setupAR.js"
-import { InteractionManager } from "./interactive.js"
 
 const zeroVector = new THREE.Vector3(0, 0, 0)
 const zeroQuaternion = new THREE.Quaternion(0, 0, 0, 1)
@@ -20,10 +18,7 @@ interface MarkerPairInfo {
 	recordedRelativePositions: THREE.Vector3[]
 	recordedRelativeQuaternions: THREE.Quaternion[]
 }
-interface Positioning {
-	position: THREE.Vector3
-	quaternion: THREE.Quaternion
-}
+
 
 const calculateConfidence = (numMeasurements: number, variance: {x: number, y: number, z: number}) => 
 	Math.min(1, numMeasurements / MIN_MEASUREMENTS) *

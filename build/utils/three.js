@@ -102,15 +102,15 @@ const createRotationRing = (axis) => {
     const visiblePlane = new THREE.Mesh(visiblePlaneGeometry, visiblePlaneMaterial);
     visiblePlane.visible = false;
     visiblePlane.quaternion.premultiply(new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)));
-    const ringPlaneContainer = new THREE.Group();
+    const container = new THREE.Group();
     const offset = 1;
     const positionOffset = new THREE.Vector3(axis === 'x' ? offset : 0, axis === 'y' ? offset : 0, axis === 'z' ? offset : 0);
-    ringPlaneContainer.position.set(positionOffset.x, positionOffset.y, positionOffset.z);
-    ringPlaneContainer.quaternion.premultiply(axis === 'x' ? new THREE.Quaternion(0, 0, 0, 1) :
+    container.position.set(positionOffset.x, positionOffset.y, positionOffset.z);
+    container.quaternion.premultiply(axis === 'x' ? new THREE.Quaternion(0, 0, 0, 1) :
         axis === 'y' ? new THREE.Quaternion(0, 0, Math.sin(Math.PI / 4), Math.cos(Math.PI / 4)) :
             new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)));
-    ringPlaneContainer.add(ring, invisiblePlane, visiblePlane);
-    return { ringPlaneContainer, ring, visiblePlane, invisiblePlane };
+    container.add(ring, invisiblePlane, visiblePlane);
+    return { container, ring, visiblePlane, invisiblePlane };
 };
 export const createRotationRings = () => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')];
 const createThickArrow = (radius, height, color) => {

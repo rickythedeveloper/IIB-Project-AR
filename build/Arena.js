@@ -1,8 +1,7 @@
 import { createMarker } from "./setupAR.js";
 export default class Arena {
-    constructor(setup, markerNumbers, markerPositions, markerQuaternions) {
-        if (markerNumbers.length !== markerPositions.length || markerNumbers.length !== markerQuaternions.length)
-            throw new Error('arrays with different lengths are given');
+    constructor(setup, markerInfos) {
+        const markerNumbers = markerInfos.map(m => m.number), markerPositions = markerInfos.map(m => m.position), markerQuaternions = markerInfos.map(m => m.quaternion);
         this.setup = setup;
         this.markers = [];
         this.markerPositions = markerPositions;
@@ -37,6 +36,11 @@ export default class Arena {
     }
     addObjects(...objects) {
         objects.forEach(object => this.addObject(object));
+    }
+    clean() {
+        this.setup.scene.children.forEach(child => { if (child.uuid !== this.setup.camera.uuid)
+            this.setup.scene.remove(child); });
+        this.setup.camera.clear();
     }
     /**
      * Convert a position from the camera coordinates to the frame of the dominant marker

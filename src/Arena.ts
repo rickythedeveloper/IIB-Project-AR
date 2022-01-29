@@ -1,5 +1,5 @@
 import { createMarker, Setup } from "./setupAR.js"
-import { createBarcodeMarkerElement } from "./utils/elements.js"
+import { MarkerInfo } from "./utils/index.js"
 
 export default class Arena {
 	setup: Setup
@@ -10,8 +10,8 @@ export default class Arena {
 	objectPositions: THREE.Vector3[]
 	objectQuaternions: THREE.Quaternion[]
 
-	constructor(setup: Setup, markerNumbers: number[], markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) {
-		if (markerNumbers.length !== markerPositions.length || markerNumbers.length !== markerQuaternions.length) throw new Error('arrays with different lengths are given')
+	constructor(setup: Setup, markerInfos: MarkerInfo[]) {
+		const markerNumbers = markerInfos.map(m => m.number), markerPositions = markerInfos.map(m => m.position), markerQuaternions = markerInfos.map(m => m.quaternion)
 		this.setup = setup
 		this.markers = []
 		this.markerPositions = markerPositions
@@ -51,6 +51,11 @@ export default class Arena {
 
 	addObjects(...objects: THREE.Object3D[]) {
 		objects.forEach(object => this.addObject(object))
+	}
+
+	clean() {
+		this.setup.scene.children.forEach(child => { if (child.uuid !== this.setup.camera.uuid) this.setup.scene.remove(child) })
+		this.setup.camera.clear()
 	}
 
 	/**
