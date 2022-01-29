@@ -1,9 +1,9 @@
-import { createBarcodeMarkerElement } from "./utils/elements.js";
+import { createMarker } from "./setupAR.js";
+import { getAverageQuaternion } from "./utils/arrays.js";
 export default class Arena {
-    constructor(scene, markerNumbers, markerPositions, markerQuaternions) {
-        if (markerNumbers.length !== markerPositions.length || markerNumbers.length !== markerQuaternions.length)
-            throw new Error('arrays with different lengths are given');
-        this.scene = scene;
+    constructor(setup, markerInfos) {
+        const markerNumbers = markerInfos.map(m => m.number), markerPositions = markerInfos.map(m => m.position), markerQuaternions = markerInfos.map(m => m.quaternion);
+        this.setup = setup;
         this.markers = [];
         this.markerPositions = markerPositions;
         this.markerQuaternions = markerQuaternions;
@@ -17,9 +17,7 @@ export default class Arena {
         return this.markers[this.usedMarkerIndex].children;
     }
     /**
-     * @param {*} object
-     * @param {*} position relative to the dominant marker
-     * @param {*} quaternion relative to the dominant marker
+     * object.position and object.quaternion should be in the frame of the dominant marker
      */
     addObject(object) {
         // 0: dominant marker, 1: used marker, 2: object
@@ -40,15 +38,45 @@ export default class Arena {
     addObjects(...objects) {
         objects.forEach(object => this.addObject(object));
     }
-    _addMarkers(markerNumbers) {
-        for (let i = 0; i < markerNumbers.length; i++) {
-            const markerNumber = markerNumbers[i];
-            const markerElement = createBarcodeMarkerElement(markerNumber);
-            this.scene.appendChild(markerElement);
-            // @ts-ignore
-            const marker = markerElement.object3D;
-            this.markers.push(marker);
+    clean() {
+        this.setup.scene.children.forEach(child => { if (child.uuid !== this.setup.camera.uuid)
+            this.setup.scene.remove(child); });
+        this.setup.camera.clear();
+    }
+    /**
+     * Convert a position from the camera coordinates to the frame of the dominant marker
+     */
+    positionFromCameraToDominant(position) {
+        let markerIndex = null;
+        for (let i = 0; i < this.markers.length; i++) {
+            if (this.markers[i].visible) {
+                markerIndex = i;
+                break;
+            }
         }
+        if (markerIndex === null)
+            return null;
+        const marker = this.markers[markerIndex];
+        const worldPosition = new THREE.Vector3(), worldQuaternion = new THREE.Quaternion();
+        marker.getWorldPosition(worldPosition);
+        marker.getWorldQuaternion(worldQuaternion);
+        // 0: camera, 1: dominant marker: 2: visible marker
+        const q020 = worldQuaternion.clone();
+        const q121 = this.markerQuaternions[markerIndex].clone();
+        const q010 = q020.clone().multiply(q121.clone().invert());
+        const p020 = worldPosition.clone();
+        const p121 = this.markerPositions[markerIndex];
+        const p211 = p121.clone().multiplyScalar(-1);
+        const p010 = p020.clone().add(p211.clone().applyQuaternion(q010));
+        // 3: the position
+        const p030 = position.clone();
+        const p131 = p030.clone().sub(p010).applyQuaternion(q010.clone().invert());
+        return p131;
+    }
+    _addMarkers(markerNumbers) {
+        const markers = markerNumbers.map(n => createMarker(n, this.setup));
+        markers.forEach(m => this.setup.camera.add(m));
+        this.markers.push(...markers);
     }
     _mainLoop() {
         // determine the distances to the markers / work out the weight
@@ -99,23 +127,17 @@ export default class Arena {
                 weights[w] /= weightSum;
             }
             let x = 0, y = 0, z = 0; // in world coordinates (camera frame)
-            let qx = 0, qy = 0, qz = 0, qw = 0; // camera frame
             for (let w = 0; w < weights.length; w++) {
                 if (weights[w] === 0)
                     continue;
                 const p030 = arr_p030[w];
-                const q030 = arr_q030[w];
                 x += weights[w] * p030.x;
                 y += weights[w] * p030.y;
                 z += weights[w] * p030.z;
-                qx += weights[w] * q030.x * Math.sign(q030.w);
-                qy += weights[w] * q030.y * Math.sign(q030.w);
-                qz += weights[w] * q030.z * Math.sign(q030.w);
-                qw += weights[w] * q030.w * Math.sign(q030.w);
             }
             // 4: nearest marker
             const p030 = new THREE.Vector3(x, y, z);
-            const q030 = new THREE.Quaternion(qx, qy, qz, qw).normalize();
+            const q030 = getAverageQuaternion(arr_q030, weights);
             const p040 = this.markers[nearestMarkerIndex].position;
             const q040 = this.markers[nearestMarkerIndex].quaternion;
             const p434 = p030.clone().sub(p040).applyQuaternion(q040.clone().invert());

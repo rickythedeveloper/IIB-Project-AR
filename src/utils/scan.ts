@@ -1,7 +1,7 @@
-import { createBarcodeMarkerElement } from "./elements.js"
 import { createMarkerIndicator, createLine } from "./three.js"
 import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./arrays.js"
-import { Matrix, Vector } from "./index.js"
+import { Matrix, Vector, Positioning } from "./index.js"
+import { createMarker, Setup } from "../setupAR.js"
 
 const zeroVector = new THREE.Vector3(0, 0, 0)
 const zeroQuaternion = new THREE.Quaternion(0, 0, 0, 1)
@@ -18,22 +18,7 @@ interface MarkerPairInfo {
 	recordedRelativePositions: THREE.Vector3[]
 	recordedRelativeQuaternions: THREE.Quaternion[]
 }
-interface Positioning {
-	position: THREE.Vector3
-	quaternion: THREE.Quaternion
-}
 
-const registerMarkers = (scene: HTMLElement, markerNumbers: number[]) => {
-	const markers: THREE.Object3D[] = []
-	markerNumbers.forEach(markerNumber => {
-		const markerElement = createBarcodeMarkerElement(markerNumber)
-		scene.appendChild(markerElement)
-		// @ts-ignore
-		const marker = markerElement.object3D
-		markers.push(marker)
-	})
-	return markers
-}
 
 const calculateConfidence = (numMeasurements: number, variance: {x: number, y: number, z: number}) => 
 	Math.min(1, numMeasurements / MIN_MEASUREMENTS) *
@@ -71,9 +56,9 @@ const recordValues = (markers: THREE.Object3D[], markerPairMatrix: Matrix<Marker
 	}
 }
 
-const updateAverages = (markers: THREE.Object3D[], markerPairMatrix: Matrix<MarkerPairInfo>) => {
-	for (let i = 0; i < markers.length; i++) {
-		for (let j = 0; j < markers.length; j++) {
+const updateAverages = (numMarkers: number, markerPairMatrix: Matrix<MarkerPairInfo>) => {
+	for (let i = 0; i < numMarkers; i++) {
+		for (let j = 0; j < numMarkers; j++) {
 			if (i === j) continue
 			const positions = markerPairMatrix[i][j].recordedRelativePositions
 			const quaternions = markerPairMatrix[i][j].recordedRelativeQuaternions
@@ -90,7 +75,7 @@ const updateAverages = (markers: THREE.Object3D[], markerPairMatrix: Matrix<Mark
 type Route = [number, number]
 const connectMarkers = (
 	dominantMarkerIndex: number, 
-	markers: THREE.Object3D[], 
+	numMarkers: number, 
 	markerPairMatrix: Matrix<MarkerPairInfo>
 ): {
 	connectedMarkers: number[], 
@@ -98,10 +83,10 @@ const connectMarkers = (
 } => {
 	const connectedMarkers = [dominantMarkerIndex]
 	const routes: Route[] = []
-	for (let i = 0; i < markers.length; i++) {
+	for (let i = 0; i < numMarkers; i++) {
 		if (i === connectedMarkers.length) break
 		const startMarker = connectedMarkers[i]
-		for (let j = 0; j < markers.length; j++) {
+		for (let j = 0; j < numMarkers; j++) {
 			if (connectedMarkers.includes(j)) continue
 			const endMarker = j
 			if (markerPairMatrix[startMarker][endMarker].relativePositionConfidence !== 1) continue
@@ -154,15 +139,13 @@ const updateConfidenceIndicators = (
 }
 
 const scan = (
+	arSetup: Setup,
 	markerNumbers: number[], 
 	update: (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => void = () => {},
 	onComplete: (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => void = () => {}
 ) => {
-	const scene = document.getElementById('scene')
-	if (scene === null) throw new Error('scene element not found')
-
-	// register which markers to use
-	const markers = registerMarkers(scene, markerNumbers)
+	const markers = markerNumbers.map(n => createMarker(n, arSetup))
+	markers.forEach(m => arSetup.camera.add(m))
 	const dominantMarkerIndex = 0 // TODO relax assumption on the dominant marker
 
 	// add marker indicators
@@ -194,10 +177,10 @@ const scan = (
 	let completed = false
 	const setValueInterval = setInterval(() => {
 		// update average relative postions and quaternions as well as confidence
-		updateAverages(markers, markerPairMatrix)
+		updateAverages(markers.length, markerPairMatrix)
 
 		// check if all markers are accessible from the dominant marker
-		const { connectedMarkers, routes } = connectMarkers(dominantMarkerIndex, markers, markerPairMatrix)
+		const { connectedMarkers, routes } = connectMarkers(dominantMarkerIndex, markers.length, markerPairMatrix)
 
 		// if all markers accessible, calculate the marker positions and quaternions relative to the dominant marker
 		if (connectedMarkers.length === markers.length && !completed) {

@@ -1,28 +1,14 @@
 import Arena from "../Arena.js"
-import { getProcessedData } from "./convenience.js"
-import { createMarkerIndicators, createMoveDropdown, createSimulationResultObject } from "./scene_init.js"
-import { ThreeObjectWrapper } from "./index.js"
+import { createMarkerIndicators } from "./scene_init.js"
+import { Setup } from "../setupAR.js"
+import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, USED_MARKER_COLOR, VISIBLE_UNUSED_MARKER_COLOR } from "./constants.js"
+import { MarkerInfo } from "./index.js"
 
-const USED_MARKER_COLOR = 0x00ff00, VISIBLE_UNUSED_MARKER_COLOR = 0xffff00, HIDDEN_MARKER_COLOR = 0xff0000
-const MARKER_INDICATOR_UPDATE_INTERVAL = 100
-
-const visualise = (controlPanel: HTMLElement, markerNumbers: number[], markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => {
-	const scene = document.getElementById('scene')
-	if (scene === null) throw new Error('scnee element not found')
-	const arena = new Arena(scene, markerNumbers, markerPositions, markerQuaternions)
+const visualise = (setup: Setup, markerInfos: MarkerInfo[], objects: THREE.Object3D[]) => {
+	setup.scene.add(new THREE.PointLight())
+	const arena = new Arena(setup, markerInfos)
 	const markerIndicators = createMarkerIndicators(arena.markerPositions, arena.markerQuaternions)
-	arena.addObjects(...markerIndicators)
-
-	const simulationResultWrapper: ThreeObjectWrapper = { object: null }
-	const moveDropdown = createMoveDropdown(simulationResultWrapper, arena)
-	controlPanel.appendChild(moveDropdown)
-
-	let simulationResult;
-	getProcessedData().then(({ vertices, indices, colors }) => {
-		simulationResult = createSimulationResultObject(vertices, indices, colors)
-		simulationResultWrapper.object = simulationResult
-		arena.addObject(simulationResult)
-	})
+	arena.addObjects(...markerIndicators, ...objects)
 
 	setInterval(() => {
 		for (let i = 0; i < arena.markers.length; i++) {
