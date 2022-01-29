@@ -21,7 +21,7 @@ export const convertRowsToVertices = (rows: number[][][]) => {
 	return new Float32Array(verticesArray)
 }
 
-enum Axis { x, y, z }
+export enum Axis { x, y, z }
 type AxisString = keyof typeof Axis
 
 export const createArrow = (direction: AxisString, length: number, colorHex: string) => new THREE.ArrowHelper(
@@ -108,7 +108,7 @@ export const createRing = (ringRadius: number, tubeRadius: number, nSegments: nu
 }
 
 
-interface RingContainer {
+export interface RotationRing {
 	container: THREE.Group
 	ring: THREE.Object3D
 	visiblePlane: THREE.Object3D
@@ -121,7 +121,7 @@ const ROTATION_RING_N_SEGMENTS = 16
 
 const axisColor = (axis: AxisString) => axis === 'x' ? 0xff0000 : axis === 'y' ? 0x00ff00 : 0x0000ff
 
-const createRotationRing = (axis: AxisString): RingContainer => {
+const createRotationRing = (axis: AxisString): RotationRing => {
 	const color = axisColor(axis)
 
 	const ring = createRing(ROTATION_RING_RADIUS, ROTATION_RING_TUBE_RADIUS, ROTATION_RING_N_SEGMENTS, color)
@@ -151,9 +151,9 @@ const createRotationRing = (axis: AxisString): RingContainer => {
 	return {container, ring, visiblePlane, invisiblePlane}
 }
 
-export const createRotationRings = (): [RingContainer, RingContainer, RingContainer] => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')]
+const createRotationRings = (): [RotationRing, RotationRing, RotationRing] => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')]
 
-interface ArrowContainer {
+export interface TranslationArrow {
 	container: THREE.Group
 	arrow: THREE.Object3D
 	invisiblePlane: THREE.Object3D
@@ -179,7 +179,7 @@ const createThickArrow = (radius: number, height: number, color: THREE.ColorRepr
 	return arrow
 }
 
-const createTranslationArrow = (axis: AxisString): ArrowContainer => {
+const createTranslationArrow = (axis: AxisString): TranslationArrow => {
 	const color = axisColor(axis)
 	const arrow = createThickArrow(0.1, 1, color)
 	arrow.quaternion.premultiply(rotationQuaternion('z', -Math.PI/2))
@@ -203,4 +203,18 @@ const createTranslationArrow = (axis: AxisString): ArrowContainer => {
 	return {container, arrow, invisiblePlane, visiblePlane}
 }
 
-export const createTranslationArrows = (): [ArrowContainer, ArrowContainer, ArrowContainer] => [createTranslationArrow('x'), createTranslationArrow('y'), createTranslationArrow('z')]
+const createTranslationArrows = (): [TranslationArrow, TranslationArrow, TranslationArrow] => [createTranslationArrow('x'), createTranslationArrow('y'), createTranslationArrow('z')]
+
+interface ObjectControl {
+	container: THREE.Group
+	rings: [RotationRing, RotationRing, RotationRing]
+	arrows: [TranslationArrow, TranslationArrow, TranslationArrow]
+}
+
+export const createObjectControl = (): ObjectControl => {
+	const rings = createRotationRings()
+	const arrows = createTranslationArrows()
+	const container = new THREE.Group()
+	container.add(...rings.map(r => r.container), ...arrows.map(a => a.container))
+	return {container, rings, arrows}
+}

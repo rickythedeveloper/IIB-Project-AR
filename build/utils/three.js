@@ -17,7 +17,7 @@ export const convertRowsToVertices = (rows) => {
     }
     return new Float32Array(verticesArray);
 };
-var Axis;
+export var Axis;
 (function (Axis) {
     Axis[Axis["x"] = 0] = "x";
     Axis[Axis["y"] = 1] = "y";
@@ -112,7 +112,7 @@ const createRotationRing = (axis) => {
     container.add(ring, invisiblePlane, visiblePlane);
     return { container, ring, visiblePlane, invisiblePlane };
 };
-export const createRotationRings = () => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')];
+const createRotationRings = () => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')];
 const createThickArrow = (radius, height, color) => {
     const cylinderHeight = height * 0.7;
     const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, cylinderHeight, 32);
@@ -148,5 +148,12 @@ const createTranslationArrow = (axis) => {
     container.position.set(axis === 'x' ? offset : 0, axis === 'y' ? offset : 0, axis === 'z' ? offset : 0);
     return { container, arrow, invisiblePlane, visiblePlane };
 };
-export const createTranslationArrows = () => [createTranslationArrow('x'), createTranslationArrow('y'), createTranslationArrow('z')];
+const createTranslationArrows = () => [createTranslationArrow('x'), createTranslationArrow('y'), createTranslationArrow('z')];
+export const createObjectControl = () => {
+    const rings = createRotationRings();
+    const arrows = createTranslationArrows();
+    const container = new THREE.Group();
+    container.add(...rings.map(r => r.container), ...arrows.map(a => a.container));
+    return { container, rings, arrows };
+};
 //# sourceMappingURL=three.js.map
