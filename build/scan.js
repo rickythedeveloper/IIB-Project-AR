@@ -1,6 +1,6 @@
-import { createMarkerIndicator, createLine } from "./three.js";
-import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./arrays.js";
-import { createMarker } from "../setupAR.js";
+import { createMarkerIndicator, createLine } from "./utils/three.js";
+import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./utils/arrays.js";
+import { createMarker } from "./utils/setupAR.js";
 const zeroVector = new THREE.Vector3(0, 0, 0);
 const zeroQuaternion = new THREE.Quaternion(0, 0, 0, 1);
 const RECORD_INTERVAL = 20;

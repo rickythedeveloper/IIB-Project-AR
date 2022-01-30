@@ -1,6 +1,6 @@
 import { createMarker, Setup } from "./setupAR.js"
-import { getAverageQuaternion } from "./utils/arrays.js"
-import { MarkerInfo } from "./utils/index.js"
+import { getAverageQuaternion } from "./arrays.js"
+import { MarkerInfo } from "./index.js"
 
 interface ArenaObject {
 	object: THREE.Object3D

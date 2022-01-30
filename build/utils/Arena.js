@@ -1,5 +1,5 @@
 import { createMarker } from "./setupAR.js";
-import { getAverageQuaternion } from "./utils/arrays.js";
+import { getAverageQuaternion } from "./arrays.js";
 export default class Arena {
     constructor(setup, markerInfos) {
         this.markers = [];

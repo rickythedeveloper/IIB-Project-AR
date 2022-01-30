@@ -1,10 +1,10 @@
-import Arena from "../Arena.js";
-import { getProcessedData } from "./convenience.js";
-import { createMarkerIndicators, createSimulationResultObject } from "./scene_init.js";
-import { Axis, createObjectControl } from "./three.js";
-import { InteractionManager } from "./interactive.js";
-import { atanAngle } from "./angle.js";
-import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./constants.js";
+import Arena from "./utils/Arena.js";
+import { getProcessedData } from "./utils/convenience.js";
+import { createMarkerIndicators, createSimulationResultObject } from "./utils/scene_init.js";
+import { Axis, createObjectControl } from "./utils/three.js";
+import { InteractionManager } from "./utils/interactive.js";
+import { atanAngle } from "./utils/angle.js";
+import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./utils/constants.js";
 const createObjectControlForObject = (object, interactionManager, getPositionToUpdate, getQuaternionToUpdate, worldToRelevant) => {
     const objectControl = createObjectControl();
     objectControl.container.position.add(object.position);

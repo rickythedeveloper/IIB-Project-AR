@@ -1,8 +1,8 @@
-import setupAR from "./setupAR.js";
-import visualise from "./utils/visualise.js";
+import setupAR from "./utils/setupAR.js";
+import visualise from "./visualise.js";
 import { createControlPanel } from "./utils/elements.js";
-import scan from "./utils/scan.js";
-import calibrate from "./utils/calibrate.js";
+import scan from "./scan.js";
+import calibrate from "./calibrate.js";
 import { MarkerInfo } from "./utils/index.js";
 
 const MODES = {

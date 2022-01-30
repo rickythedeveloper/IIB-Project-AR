@@ -1,12 +1,12 @@
-import Arena from "../Arena.js"
-import { getProcessedData } from "./convenience.js"
-import { createMarkerIndicators, createSimulationResultObject } from "./scene_init.js"
-import { Setup } from "../setupAR.js"
-import { Axis, createObjectControl, RotationRing, TranslationArrow } from "./three.js"
-import { InteractionManager } from "./interactive.js"
-import { atanAngle } from "./angle.js"
-import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./constants.js"
-import { MarkerInfo } from "./index.js"
+import Arena from "./utils/Arena.js"
+import { getProcessedData } from "./utils/convenience.js"
+import { createMarkerIndicators, createSimulationResultObject } from "./utils/scene_init.js"
+import { Setup } from "./utils/setupAR.js"
+import { Axis, createObjectControl, RotationRing, TranslationArrow } from "./utils/three.js"
+import { InteractionManager } from "./utils/interactive.js"
+import { atanAngle } from "./utils/angle.js"
+import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./utils/constants.js"
+import { MarkerInfo } from "./utils/index.js"
 
 const createObjectControlForObject = (
 	object: THREE.Object3D, 

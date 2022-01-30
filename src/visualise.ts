@@ -1,8 +1,8 @@
-import Arena from "../Arena.js"
-import { createMarkerIndicators } from "./scene_init.js"
-import { Setup } from "../setupAR.js"
-import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./constants.js"
-import { MarkerInfo } from "./index.js"
+import Arena from "./utils/Arena.js"
+import { createMarkerIndicators } from "./utils/scene_init.js"
+import { Setup } from "./utils/setupAR.js"
+import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./utils/constants.js"
+import { MarkerInfo } from "./utils/index.js"
 
 const visualise = (setup: Setup, markerInfos: MarkerInfo[], objects: THREE.Object3D[]) => {
 	setup.scene.add(new THREE.PointLight())
