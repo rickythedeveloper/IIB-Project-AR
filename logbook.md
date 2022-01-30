@@ -118,3 +118,11 @@ Used the sign of w to correct it.
 
 ## 27/01
 - implement the rotation UI for a test box
+
+## 28/01
+- implement translation arrows
+
+## 29/01
+- various small improvements to the control UI
+- merge into master
+- put every object on its own closest marker to increase stability
