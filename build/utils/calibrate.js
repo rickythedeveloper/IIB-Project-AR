@@ -4,7 +4,7 @@ import { createMarkerIndicators, createSimulationResultObject } from "./scene_in
 import { Axis, createObjectControl } from "./three.js";
 import { InteractionManager } from "./interactive.js";
 import { atanAngle } from "./angle.js";
-import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, USED_MARKER_COLOR, VISIBLE_UNUSED_MARKER_COLOR } from "./constants.js";
+import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./constants.js";
 const createObjectControlForObject = (object, interactionManager, getPositionToUpdate, getQuaternionToUpdate, worldToRelevant) => {
     const objectControl = createObjectControl();
     objectControl.container.position.add(object.position);
@@ -113,21 +113,21 @@ const calibrate = (setup, markers, onComplete) => {
     setTimeout(() => {
         calibratableObjects.forEach(o => {
             const objectIndex = arena.objectIndices[o.uuid];
-            const position = arena.objectPositions[objectIndex], quaternion = arena.objectQuaternions[objectIndex];
+            const position = arena.arenaObjects[objectIndex].positionInArena, quaternion = arena.arenaObjects[objectIndex].quaternionInArena;
             o.position.set(position.x, position.y, position.z);
             o.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
         });
         arena.clean();
         onComplete(calibratableObjects);
-    }, 50000);
+    }, 10000);
     getProcessedData().then(({ vertices, indices, colors }) => {
         const simulationResult = createSimulationResultObject(vertices, indices, colors);
         const objectControl = createObjectControlForObject(simulationResult, interactionManager, (object) => {
             const objectIndex = arena.objectIndices[object.uuid];
-            return arena.objectPositions[objectIndex];
+            return arena.arenaObjects[objectIndex].positionInArena;
         }, (object) => {
             const objectIndex = arena.objectIndices[object.uuid];
-            return arena.objectQuaternions[objectIndex];
+            return arena.arenaObjects[objectIndex].quaternionInArena;
         }, (worldCoords) => {
             const position = arena.positionFromCameraToDominant(worldCoords);
             if (position === null)
@@ -139,9 +139,8 @@ const calibrate = (setup, markers, onComplete) => {
     });
     setInterval(() => {
         for (let i = 0; i < arena.markers.length; i++) {
-            markerIndicators[i].material.color.set(arena.usedMarkerIndex === i ? USED_MARKER_COLOR :
-                arena.markers[i].visible ? VISIBLE_UNUSED_MARKER_COLOR :
-                    HIDDEN_MARKER_COLOR);
+            markerIndicators[i].material.color.set(arena.markers[i].visible ? VISIBLE_MARKER_COLOR :
+                HIDDEN_MARKER_COLOR);
         }
     }, MARKER_INDICATOR_UPDATE_INTERVAL);
 };

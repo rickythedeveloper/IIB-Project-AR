@@ -43,12 +43,12 @@ export const createMoveDropdown = (objectWrapper, arena) => {
             }
             else if (option.includes('rot')) {
                 const axis = option.slice(3);
-                arena.objectQuaternions[objectIndex].premultiply(rotationQuaternion(axis, direction * angleChange));
+                arena.arenaObjects[objectIndex].quaternionInArena.premultiply(rotationQuaternion(axis, direction * angleChange));
             }
             else if (option.includes('trans')) {
                 const axis = option.slice(5);
                 const axisVector = new THREE.Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0);
-                arena.objectPositions[objectIndex].addScaledVector(axisVector, direction * positionChange);
+                arena.arenaObjects[objectIndex].positionInArena.addScaledVector(axisVector, direction * positionChange);
             }
             else
                 throw new Error('invalid change type');

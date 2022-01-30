@@ -17,7 +17,7 @@ const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
 const arSetup = setupAR() 
-const markerNumbers = [0, 1]
+const markerNumbers = [0, 1, 2, 3, 4, 5]
 let markers: THREE.Object3D[] = []
 let recordValueInterval: number, setValueInterval: number
 
@@ -45,8 +45,7 @@ const onScanComplete = (pos: THREE.Vector3[], quats: THREE.Quaternion[]) => {
 
 const onCalibrateComplete = (objects: THREE.Object3D[]) => {
 	console.log('calibration complete!');
-	console.log(arSetup.scene)
-	visualise(arSetup, markerInfos, objects)
+	visualise(arSetup, markerInfos, objects.map(o => o.clone()))
 }
 
 switch (mode) {

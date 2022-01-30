@@ -5,7 +5,7 @@ import { Setup } from "../setupAR.js"
 import { Axis, createObjectControl, RotationRing, TranslationArrow } from "./three.js"
 import { InteractionManager } from "./interactive.js"
 import { atanAngle } from "./angle.js"
-import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, USED_MARKER_COLOR, VISIBLE_UNUSED_MARKER_COLOR } from "./constants.js"
+import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./constants.js"
 import { MarkerInfo } from "./index.js"
 
 const createObjectControlForObject = (
@@ -133,13 +133,13 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: TH
 	setTimeout(() => {
 		calibratableObjects.forEach(o => {
 			const objectIndex = arena.objectIndices[o.uuid]
-			const position = arena.objectPositions[objectIndex], quaternion = arena.objectQuaternions[objectIndex]	
+			const position = arena.arenaObjects[objectIndex].positionInArena, quaternion = arena.arenaObjects[objectIndex].quaternionInArena
 			o.position.set(position.x, position.y, position.z)
 			o.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w)
 		})
 		arena.clean()
 		onComplete(calibratableObjects)
-	}, 50000)
+	}, 10000)
 
 	getProcessedData().then(({ vertices, indices, colors }) => {
 		const simulationResult = createSimulationResultObject(vertices, indices, colors)
@@ -148,10 +148,10 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: TH
 			interactionManager, 
 			(object) => {
 				const objectIndex = arena.objectIndices[object.uuid]
-				return arena.objectPositions[objectIndex]
+				return arena.arenaObjects[objectIndex].positionInArena
 			}, (object) => {
 				const objectIndex = arena.objectIndices[object.uuid]
-				return arena.objectQuaternions[objectIndex]
+				return arena.arenaObjects[objectIndex].quaternionInArena
 			}, 
 			(worldCoords) => {
 				const position = arena.positionFromCameraToDominant(worldCoords)
@@ -166,8 +166,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: TH
 	setInterval(() => {
 		for (let i = 0; i < arena.markers.length; i++) {
 			markerIndicators[i].material.color.set(
-				arena.usedMarkerIndex === i ? USED_MARKER_COLOR : 
-				arena.markers[i].visible ? VISIBLE_UNUSED_MARKER_COLOR : 
+				arena.markers[i].visible ? VISIBLE_MARKER_COLOR : 
 				HIDDEN_MARKER_COLOR
 			)
 		}
