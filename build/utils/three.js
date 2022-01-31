@@ -85,13 +85,20 @@ export const createRing = (ringRadius, tubeRadius, nSegments, color) => {
     const mesh = new THREE.Mesh(geometry, material);
     return mesh;
 };
-const ROTATION_RING_RADIUS = 0.5;
+const ROTATION_RING_RADIUS = 0.7;
 const ROTATION_RING_TUBE_RADIUS = 0.1;
 const ROTATION_RING_N_SEGMENTS = 16;
 const axisColor = (axis) => axis === 'x' ? 0xff0000 : axis === 'y' ? 0x00ff00 : 0x0000ff;
 const createRotationRing = (axis) => {
     const color = axisColor(axis);
     const ring = createRing(ROTATION_RING_RADIUS, ROTATION_RING_TUBE_RADIUS, ROTATION_RING_N_SEGMENTS, color);
+    const cylinderRadius = ROTATION_RING_RADIUS * 1.3;
+    const cylinderHeight = ROTATION_RING_TUBE_RADIUS * 1.3;
+    const detectionGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight);
+    const detectionMaterial = new THREE.MeshBasicMaterial({ transparent: true });
+    const detectionCylinder = new THREE.Mesh(detectionGeometry, detectionMaterial);
+    detectionCylinder.visible = false;
+    detectionCylinder.quaternion.premultiply(rotationQuaternion('z', Math.PI / 2));
     const invisiblePlaneGeometry = new THREE.PlaneGeometry(20, 20);
     const invisiblePlaneMaterial = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
     const invisiblePlane = new THREE.Mesh(invisiblePlaneGeometry, invisiblePlaneMaterial);
@@ -109,18 +116,19 @@ const createRotationRing = (axis) => {
     container.quaternion.premultiply(axis === 'x' ? new THREE.Quaternion(0, 0, 0, 1) :
         axis === 'y' ? new THREE.Quaternion(0, 0, Math.sin(Math.PI / 4), Math.cos(Math.PI / 4)) :
             new THREE.Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)));
-    container.add(ring, invisiblePlane, visiblePlane);
-    return { container, ring, visiblePlane, invisiblePlane };
+    container.add(ring, detectionCylinder, invisiblePlane, visiblePlane);
+    return { container, ring, ringDetectionCylinder: detectionCylinder, visiblePlane, invisiblePlane };
 };
 const createRotationRings = () => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')];
 const createThickArrow = (radius, height, color) => {
     const cylinderHeight = height * 0.7;
-    const cylinderGeometry = new THREE.CylinderGeometry(radius, radius, cylinderHeight, 32);
+    const cylinderRadius = radius / 1.5;
+    const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
     const cylinderMaterial = new THREE.MeshStandardMaterial({ color });
     const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
     cylinder.position.set(0, cylinderHeight / 2, 0);
     const coneHeight = height - cylinderHeight;
-    const coneRadius = radius * 1.5;
+    const coneRadius = radius;
     const coneGeometry = new THREE.ConeGeometry(coneRadius, coneHeight, 32);
     const coneMaterial = new THREE.MeshStandardMaterial({ color });
     const cone = new THREE.Mesh(coneGeometry, coneMaterial);
@@ -130,23 +138,32 @@ const createThickArrow = (radius, height, color) => {
     return arrow;
 };
 const createTranslationArrow = (axis) => {
+    const arrowRadius = 0.2, arrowLength = 1.5;
     const color = axisColor(axis);
-    const arrow = createThickArrow(0.1, 1, color);
+    const arrow = createThickArrow(arrowRadius, arrowLength, color);
     arrow.quaternion.premultiply(rotationQuaternion('z', -Math.PI / 2));
+    const detectionBoxSize = arrowRadius * 2 * 1.3;
+    const detectionBoxLength = arrowLength * 1.1;
+    const detectionBoxGeometry = new THREE.BoxGeometry(detectionBoxLength, detectionBoxSize, detectionBoxSize);
+    const detectionBoxMaterial = new THREE.MeshBasicMaterial({ transparent: true });
+    const detectionBox = new THREE.Mesh(detectionBoxGeometry, detectionBoxMaterial);
+    detectionBox.visible = false;
+    detectionBox.position.set(arrowLength / 2, 0, 0);
     const invisiblePlaneGeometry = new THREE.PlaneGeometry(10, 10);
     const invisiblePlaneMaterial = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide });
     const invisiblePlane = new THREE.Mesh(invisiblePlaneGeometry, invisiblePlaneMaterial);
     invisiblePlane.visible = false;
-    const visiblePlaneGeometry = new THREE.PlaneGeometry(2, 1);
+    const visiblePlaneGeometry = new THREE.PlaneGeometry(arrowLength * 1.5, arrowRadius * 2 * 1.5);
     const visiblePlaneMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.1, color, side: THREE.DoubleSide });
     const visiblePlane = new THREE.Mesh(visiblePlaneGeometry, visiblePlaneMaterial);
     visiblePlane.visible = false;
+    visiblePlane.position.set(arrowLength / 2, 0, 0);
     const container = new THREE.Group();
-    container.add(arrow, invisiblePlane, visiblePlane);
+    container.add(arrow, detectionBox, invisiblePlane, visiblePlane);
     container.quaternion.premultiply(axis === 'x' ? rotationQuaternion('x', 0) : axis === 'y' ? rotationQuaternion('z', Math.PI / 2) : rotationQuaternion('y', -Math.PI / 2));
     const offset = 1.5;
     container.position.set(axis === 'x' ? offset : 0, axis === 'y' ? offset : 0, axis === 'z' ? offset : 0);
-    return { container, arrow, invisiblePlane, visiblePlane };
+    return { container, arrow, arrowDetectionBox: detectionBox, invisiblePlane, visiblePlane };
 };
 const createTranslationArrows = () => [createTranslationArrow('x'), createTranslationArrow('y'), createTranslationArrow('z')];
 const createOriginIndicator = (radius) => {

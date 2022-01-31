@@ -30,17 +30,18 @@ const createObjectControlForObject = (object, interactionManager, getPositionToU
             }
             lastIntersecPosition = intersectPosition;
         };
-        interactionManager.add(r.ring);
-        r.ring.addEventListener('mousedown', (event) => {
+        interactionManager.add(r.ringDetectionCylinder, 'mousedown');
+        interactionManager.add(r.ringDetectionCylinder, 'mouseup', false);
+        r.ringDetectionCylinder.addEventListener('mousedown', (event) => {
             if (controlIsBusy)
                 return;
-            interactionManager.add(r.invisiblePlane);
+            interactionManager.add(r.invisiblePlane, 'mousemove');
             r.invisiblePlane.addEventListener('mousemove', rotationListener);
             r.visiblePlane.visible = true;
             controlIsBusy = true;
         });
-        r.ring.addEventListener('mouseup', event => {
-            interactionManager.remove(r.invisiblePlane);
+        r.ringDetectionCylinder.addEventListener('mouseup', event => {
+            interactionManager.remove(r.invisiblePlane, 'mousemove');
             r.invisiblePlane.removeEventListener('mousemove', rotationListener);
             r.visiblePlane.visible = false;
             lastIntersecPosition = null;
@@ -65,8 +66,9 @@ const createObjectControlForObject = (object, interactionManager, getPositionToU
             }
             lastValue = newValue;
         };
-        interactionManager.add(a.arrow);
-        a.arrow.addEventListener('mousedown', () => {
+        interactionManager.add(a.arrowDetectionBox, 'mousedown');
+        interactionManager.add(a.arrowDetectionBox, 'mouseup', false);
+        a.arrowDetectionBox.addEventListener('mousedown', () => {
             if (controlIsBusy)
                 return;
             const cameraPosition = worldToRelevant(new THREE.Vector3(0, 0, 0));
@@ -80,13 +82,13 @@ const createObjectControlForObject = (object, interactionManager, getPositionToU
             a.visiblePlane.quaternion.set(Math.sin(angle / 2), 0, 0, Math.cos(angle / 2));
             a.invisiblePlane.quaternion.set(Math.sin(angle / 2), 0, 0, Math.cos(angle / 2));
             a.visiblePlane.visible = true;
-            interactionManager.add(a.invisiblePlane);
+            interactionManager.add(a.invisiblePlane, 'mousemove');
             a.invisiblePlane.addEventListener('mousemove', translationListener);
             controlIsBusy = true;
         });
-        a.arrow.addEventListener('mouseup', () => {
+        a.arrowDetectionBox.addEventListener('mouseup', () => {
             a.visiblePlane.visible = false;
-            interactionManager.remove(a.invisiblePlane);
+            interactionManager.remove(a.invisiblePlane, 'mousemove');
             a.invisiblePlane.removeEventListener('mousemove', translationListener);
             lastValue = null;
             controlIsBusy = false;
@@ -119,7 +121,7 @@ const calibrate = (setup, markers, onComplete) => {
         });
         arena.clean();
         onComplete(calibratableObjects);
-    }, 10000);
+    }, 20000);
     getProcessedData().then(({ vertices, indices, colors }) => {
         const simulationResult = createSimulationResultObject(vertices, indices, colors);
         const objectControl = createObjectControlForObject(simulationResult, interactionManager, (object) => {

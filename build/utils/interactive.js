@@ -1,27 +1,12 @@
 // Originally sourced from from https://github.com/markuslerner/THREE.Interactive
-// Modified and Typescript-adapted by Rintaro Kawagishi 26/01/2022
-export class InteractiveObject {
-    constructor(target, intersection = null, lastIntersection = null) {
-        this.target = target;
-        this.intersection = intersection;
-        this.lastIntersection = lastIntersection;
-    }
-}
-export class InteractiveEvent {
-    constructor(type, originalEvent = null) {
-        this.cancelBubble = false;
-        this.mousePosition = new THREE.Vector2(0, 0);
-        this.intersection = null;
-        this.target = null;
-        this.type = type;
-        this.originalEvent = originalEvent;
-    }
-    stopPropagation() {
-        this.cancelBubble = true;
-    }
-}
+// Modified and Typescript-adapted by Rintaro Kawagishi
 export class InteractionManager {
     constructor(renderer, camera, domElement) {
+        this.mousePosition = new THREE.Vector2(-1, 1); // top left default position
+        this.supportsPointerEvents = !!window.PointerEvent;
+        this.interactiveObjects = [];
+        this.raycaster = new THREE.Raycaster();
+        this.treatTouchEventsAsMouseEvents = true;
         this.dispose = () => {
             this.domElement.removeEventListener('click', this.onMouseClick);
             if (this.supportsPointerEvents) {
@@ -38,102 +23,55 @@ export class InteractionManager {
                 this.domElement.removeEventListener('touchend', this.onTouchEnd);
             }
         };
-        this.add = (object) => {
-            const interactiveObject = new InteractiveObject(object);
-            this.interactiveObjects.push(interactiveObject);
+        this.add = (object, type, requiresIntersection = true) => {
+            this.interactiveObjects.push({ target: object, type, requiresIntersection });
         };
-        this.remove = (object) => {
-            this.interactiveObjects = this.interactiveObjects.filter(o => o.target.uuid !== object.uuid);
+        this.remove = (object, type) => {
+            this.interactiveObjects = this.interactiveObjects.filter(o => o.target.uuid !== object.uuid || o.type !== type);
         };
-        this.update = () => {
-            this.raycaster.setFromCamera(this.mouse, this.camera);
-            this.interactiveObjects.forEach((object) => { this.checkIntersection(object); });
-            const eventOut = new InteractiveEvent('mouseout');
-            this.interactiveObjects.forEach((object) => {
-                if (object.intersection === null && object.lastIntersection !== null)
-                    this.dispatch(object, eventOut);
-            });
-            const eventOver = new InteractiveEvent('mouseover');
-            this.interactiveObjects.forEach((object) => {
-                if (object.intersection !== null && object.lastIntersection === null)
-                    this.dispatch(object, eventOver);
-            });
-        };
-        this.checkIntersection = (object) => {
-            var intersects = this.raycaster.intersectObjects([object.target], true);
-            object.lastIntersection = object.intersection;
-            object.intersection = intersects.length > 0 ? intersects[0] : null;
+        this.dispatchForEvent = (type, htmlElementEvent, x, y) => {
+            this.mapPositionToPoint(this.mousePosition, x, y);
+            this.raycaster.setFromCamera(this.mousePosition, this.camera);
+            for (let i = 0; i < this.interactiveObjects.length; i++) {
+                const interactiveObject = this.interactiveObjects[i];
+                if (interactiveObject.type !== type)
+                    continue;
+                const intersects = this.raycaster.intersectObject(interactiveObject.target);
+                const intersect = intersects.length > 0 ? intersects[0] : null;
+                if (interactiveObject.requiresIntersection && intersect === null)
+                    continue;
+                else {
+                    const event = {
+                        type: type,
+                        target: interactiveObject.target,
+                        htmlElementEvent: htmlElementEvent,
+                        position: this.mousePosition,
+                        intersection: intersect
+                    };
+                    event.target.dispatchEvent(event);
+                }
+            }
         };
         this.onDocumentMouseMove = (mouseEvent) => {
-            // event.preventDefault();
-            this.mapPositionToPoint(this.mouse, mouseEvent.clientX, mouseEvent.clientY);
-            this.update();
-            const event = new InteractiveEvent('mousemove', mouseEvent);
-            this.interactiveObjects.forEach((object) => {
-                this.dispatch(object, event);
-            });
+            this.dispatchForEvent('mousemove', mouseEvent, mouseEvent.clientX, mouseEvent.clientY);
         };
         this.onTouchMove = (touchEvent) => {
-            // event.preventDefault();
-            this.mapPositionToPoint(this.mouse, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
-            const event = new InteractiveEvent(this.treatTouchEventsAsMouseEvents ? 'mousemove' : 'touchmove', touchEvent);
-            this.interactiveObjects.forEach((object) => {
-                this.dispatch(object, event);
-            });
+            this.dispatchForEvent('touchmove', touchEvent, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
         };
         this.onMouseClick = (mouseEvent) => {
-            this.mapPositionToPoint(this.mouse, mouseEvent.clientX, mouseEvent.clientY);
-            this.update();
-            const event = new InteractiveEvent('click', mouseEvent);
-            this.interactiveObjects.forEach((object) => {
-                if (object.intersection !== null) {
-                    this.dispatch(object, event);
-                }
-            });
+            this.dispatchForEvent('click', mouseEvent, mouseEvent.clientX, mouseEvent.clientY);
         };
         this.onMouseDown = (mouseEvent) => {
-            this.mapPositionToPoint(this.mouse, mouseEvent.clientX, mouseEvent.clientY);
-            this.update();
-            const event = new InteractiveEvent('mousedown', mouseEvent);
-            this.interactiveObjects.forEach((object) => {
-                if (object.intersection !== null) {
-                    this.dispatch(object, event);
-                }
-            });
+            this.dispatchForEvent('mousedown', mouseEvent, mouseEvent.clientX, mouseEvent.clientY);
         };
         this.onTouchStart = (touchEvent) => {
-            this.mapPositionToPoint(this.mouse, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
-            this.update();
-            const event = new InteractiveEvent(this.treatTouchEventsAsMouseEvents ? 'mousedown' : 'touchstart', touchEvent);
-            this.interactiveObjects.forEach((object) => {
-                if (object.intersection !== null) {
-                    this.dispatch(object, event);
-                }
-            });
+            this.dispatchForEvent('touchstart', touchEvent, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
         };
         this.onMouseUp = (mouseEvent) => {
-            this.mapPositionToPoint(this.mouse, mouseEvent.clientX, mouseEvent.clientY);
-            this.update();
-            const event = new InteractiveEvent('mouseup', mouseEvent);
-            this.interactiveObjects.forEach((object) => {
-                this.dispatch(object, event);
-            });
+            this.dispatchForEvent('mouseup', mouseEvent, mouseEvent.clientX, mouseEvent.clientY);
         };
         this.onTouchEnd = (touchEvent) => {
-            this.mapPositionToPoint(this.mouse, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
-            this.update();
-            const event = new InteractiveEvent(this.treatTouchEventsAsMouseEvents ? 'mouseup' : 'touchend', touchEvent);
-            this.interactiveObjects.forEach((object) => {
-                this.dispatch(object, event);
-            });
-        };
-        this.dispatch = (object, event) => {
-            if (object.target && !event.cancelBubble) {
-                event.mousePosition = this.mouse;
-                event.intersection = object.intersection;
-                event.target = object.target;
-                object.target.dispatchEvent(event);
-            }
+            this.dispatchForEvent('touchend', touchEvent, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
         };
         this.mapPositionToPoint = (point, x, y) => {
             let rect;
@@ -157,10 +95,6 @@ export class InteractionManager {
         this.renderer = renderer;
         this.camera = camera;
         this.domElement = domElement;
-        this.mouse = new THREE.Vector2(-1, 1); // top left default position
-        this.supportsPointerEvents = !!window.PointerEvent;
-        this.interactiveObjects = [];
-        this.raycaster = new THREE.Raycaster();
         domElement.ownerDocument.addEventListener('click', this.onMouseClick);
         if (this.supportsPointerEvents) {
             domElement.ownerDocument.addEventListener('pointermove', this.onDocumentMouseMove);
@@ -175,7 +109,6 @@ export class InteractionManager {
             domElement.ownerDocument.addEventListener('touchmove', this.onTouchMove, { passive: true });
             domElement.ownerDocument.addEventListener('touchend', this.onTouchEnd, { passive: true });
         }
-        this.treatTouchEventsAsMouseEvents = true;
     }
 }
 //# sourceMappingURL=interactive.js.map
