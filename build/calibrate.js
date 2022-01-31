@@ -102,6 +102,10 @@ const createObjectControlForObject = (object, interactionManager, getPositionToU
         const axis = index === 0 ? Axis.x : index === 1 ? Axis.y : Axis.z;
         registerArrow(a, axis);
     });
+    interactionManager.add(object, 'pinch');
+    object.addEventListener('pinch', (e) => {
+        object.scale.multiplyScalar(e.deltaScale);
+    });
     return objectControl;
 };
 const calibrate = (setup, markers, onComplete) => {
@@ -121,7 +125,7 @@ const calibrate = (setup, markers, onComplete) => {
         });
         arena.clean();
         onComplete(calibratableObjects);
-    }, 20000);
+    }, 30000);
     getProcessedData().then(({ vertices, indices, colors }) => {
         const simulationResult = createSimulationResultObject(vertices, indices, colors);
         const objectControl = createObjectControlForObject(simulationResult, interactionManager, (object) => {

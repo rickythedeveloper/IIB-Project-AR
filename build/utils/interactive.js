@@ -7,6 +7,7 @@ export class InteractionManager {
         this.interactiveObjects = [];
         this.raycaster = new THREE.Raycaster();
         this.treatTouchEventsAsMouseEvents = true;
+        this.lastTouches = {};
         this.dispose = () => {
             this.domElement.removeEventListener('click', this.onMouseClick);
             if (this.supportsPointerEvents) {
@@ -52,8 +53,27 @@ export class InteractionManager {
                 }
             }
         };
+        this.dispatchPinch = (pointerEvent) => {
+            const lastDistance = this.pinchDistance;
+            this.lastTouches[pointerEvent.pointerId] = pointerEvent;
+            const newDistance = this.pinchDistance;
+            if (lastDistance === null || newDistance === null)
+                return;
+            for (let i = 0; i < this.interactiveObjects.length; i++) {
+                const interactiveObject = this.interactiveObjects[i];
+                if (interactiveObject.type !== 'pinch')
+                    continue;
+                const pinchEvent = {
+                    type: 'pinch',
+                    target: interactiveObject.target,
+                    deltaScale: newDistance / lastDistance
+                };
+                pinchEvent.target.dispatchEvent(pinchEvent);
+            }
+        };
         this.onDocumentMouseMove = (mouseEvent) => {
             this.dispatchForEvent('mousemove', mouseEvent, mouseEvent.clientX, mouseEvent.clientY);
+            this.dispatchPinch(mouseEvent);
         };
         this.onTouchMove = (touchEvent) => {
             this.dispatchForEvent('touchmove', touchEvent, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
@@ -63,12 +83,14 @@ export class InteractionManager {
         };
         this.onMouseDown = (mouseEvent) => {
             this.dispatchForEvent('mousedown', mouseEvent, mouseEvent.clientX, mouseEvent.clientY);
+            this.dispatchPinch(mouseEvent);
         };
         this.onTouchStart = (touchEvent) => {
             this.dispatchForEvent('touchstart', touchEvent, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
         };
         this.onMouseUp = (mouseEvent) => {
             this.dispatchForEvent('mouseup', mouseEvent, mouseEvent.clientX, mouseEvent.clientY);
+            delete this.lastTouches[mouseEvent.pointerId];
         };
         this.onTouchEnd = (touchEvent) => {
             this.dispatchForEvent('touchend', touchEvent, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY);
@@ -109,6 +131,17 @@ export class InteractionManager {
             domElement.ownerDocument.addEventListener('touchmove', this.onTouchMove, { passive: true });
             domElement.ownerDocument.addEventListener('touchend', this.onTouchEnd, { passive: true });
         }
+    }
+    get pinchDistance() {
+        if (Object.keys(this.lastTouches).length !== 2)
+            return null;
+        const points = [];
+        for (const pointerId in this.lastTouches) {
+            const pointerEvent = this.lastTouches[pointerId];
+            points.push([pointerEvent.clientX, pointerEvent.clientY]);
+        }
+        const distance = Math.sqrt((points[0][0] - points[1][0]) ** 2 + (points[0][1] - points[1][1]) ** 2);
+        return distance;
     }
 }
 //# sourceMappingURL=interactive.js.map

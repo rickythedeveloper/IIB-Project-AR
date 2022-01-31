@@ -3,11 +3,17 @@
 
 interface InteractiveObject {
   target: THREE.Object3D
-  type: keyof HTMLElementEventMap
+  type: keyof HTMLElementEventMap | 'pinch'
   requiresIntersection: boolean
 }
 
-interface InteractiveEvent2<K extends keyof HTMLElementEventMap> extends THREE.Event {
+export interface PinchEvent extends THREE.Event {
+  type: 'pinch'
+  target: THREE.Object3D
+  deltaScale: number
+}
+
+export interface InteractiveEvent2<K extends keyof HTMLElementEventMap> extends THREE.Event {
   type: K
   target: THREE.Object3D
   htmlElementEvent: HTMLElementEventMap[K] | null
@@ -24,6 +30,7 @@ export class InteractionManager {
 	interactiveObjects: InteractiveObject[] = []
 	raycaster: THREE.Raycaster = new THREE.Raycaster()
 	treatTouchEventsAsMouseEvents: boolean = true
+  lastTouches: {[pointerId: number]: PointerEvent} = {}
 
   constructor(renderer: THREE.WebGLRenderer, camera: THREE.Camera, domElement: HTMLCanvasElement) {
     this.renderer = renderer;
@@ -63,7 +70,7 @@ export class InteractionManager {
     }
   };
 
-  add = (object: THREE.Object3D, type: keyof HTMLElementEventMap, requiresIntersection: boolean = true) => {
+  add = (object: THREE.Object3D, type: keyof HTMLElementEventMap | 'pinch', requiresIntersection: boolean = true) => {
     this.interactiveObjects.push({target: object, type, requiresIntersection})
   }
 
@@ -93,8 +100,37 @@ export class InteractionManager {
     }
   }
 
+  get pinchDistance(): number | null {
+    if (Object.keys(this.lastTouches).length !== 2) return null
+    const points: [number, number][] = []
+    for (const pointerId in this.lastTouches) {
+      const pointerEvent = this.lastTouches[pointerId]
+      points.push([pointerEvent.clientX, pointerEvent.clientY])
+    }
+    const distance = Math.sqrt((points[0][0] - points[1][0]) ** 2 + (points[0][1] - points[1][1]) ** 2)
+    return distance
+  }
+
+  dispatchPinch = (pointerEvent: PointerEvent) => {
+    const lastDistance = this.pinchDistance
+    this.lastTouches[pointerEvent.pointerId] = pointerEvent
+    const newDistance = this.pinchDistance
+    if (lastDistance === null || newDistance === null) return
+    for (let i = 0; i < this.interactiveObjects.length; i++) {
+      const interactiveObject = this.interactiveObjects[i]
+      if (interactiveObject.type !== 'pinch') continue 
+      const pinchEvent: PinchEvent = {
+        type: 'pinch',
+        target: interactiveObject.target,
+        deltaScale: newDistance / lastDistance
+      }
+      pinchEvent.target.dispatchEvent(pinchEvent)
+    }
+  }
+
   onDocumentMouseMove = (mouseEvent: MouseEvent) => {
     this.dispatchForEvent('mousemove', mouseEvent, mouseEvent.clientX, mouseEvent.clientY)
+    this.dispatchPinch(mouseEvent as PointerEvent)
   };
 
   onTouchMove = (touchEvent: TouchEvent) => {
@@ -107,6 +143,7 @@ export class InteractionManager {
 
   onMouseDown = (mouseEvent: MouseEvent) => {
     this.dispatchForEvent('mousedown', mouseEvent, mouseEvent.clientX, mouseEvent.clientY)
+    this.dispatchPinch(mouseEvent as PointerEvent)
   };
 
   onTouchStart = (touchEvent: TouchEvent) => {
@@ -115,6 +152,7 @@ export class InteractionManager {
 
   onMouseUp = (mouseEvent: MouseEvent) => {
     this.dispatchForEvent('mouseup', mouseEvent, mouseEvent.clientX, mouseEvent.clientY)
+    delete this.lastTouches[(mouseEvent as PointerEvent).pointerId]
   };
 
   onTouchEnd = (touchEvent: TouchEvent) => {
