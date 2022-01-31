@@ -33,10 +33,10 @@ const vertexShader = `
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
 `;
-const fragmentShader = `
+const fragmentShader = (opacity) => `
 	varying vec3 v_color;
 	void main() {
-		gl_FragColor = vec4(v_color, 0.5);
+		gl_FragColor = vec4(v_color, ${opacity});
 	}
 `;
 export const createBufferObject = (vertices, indices, colors) => {
@@ -46,7 +46,8 @@ export const createBufferObject = (vertices, indices, colors) => {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     const material = new THREE.ShaderMaterial({
         vertexShader,
-        fragmentShader,
+        fragmentShader: fragmentShader(0.8),
+        transparent: true,
         side: THREE.DoubleSide
     });
     const mesh = new THREE.Mesh(geometry, material);
@@ -81,7 +82,7 @@ class Circle3D extends THREE.Curve {
 export const createRing = (ringRadius, tubeRadius, nSegments, color) => {
     const circle = new Circle3D(ringRadius);
     const geometry = new THREE.TubeGeometry(circle, nSegments, tubeRadius, 8, true);
-    const material = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide });
+    const material = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.7, color, side: THREE.DoubleSide });
     const mesh = new THREE.Mesh(geometry, material);
     return mesh;
 };
@@ -121,16 +122,17 @@ const createRotationRing = (axis) => {
 };
 const createRotationRings = () => [createRotationRing('x'), createRotationRing('y'), createRotationRing('z')];
 const createThickArrow = (radius, height, color) => {
+    const opacity = 0.7;
     const cylinderHeight = height * 0.7;
     const cylinderRadius = radius / 1.5;
     const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
-    const cylinderMaterial = new THREE.MeshStandardMaterial({ color });
+    const cylinderMaterial = new THREE.MeshStandardMaterial({ transparent: true, opacity, color });
     const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
     cylinder.position.set(0, cylinderHeight / 2, 0);
     const coneHeight = height - cylinderHeight;
     const coneRadius = radius;
     const coneGeometry = new THREE.ConeGeometry(coneRadius, coneHeight, 32);
-    const coneMaterial = new THREE.MeshStandardMaterial({ color });
+    const coneMaterial = new THREE.MeshStandardMaterial({ transparent: true, opacity, color });
     const cone = new THREE.Mesh(coneGeometry, coneMaterial);
     cone.position.set(0, cylinderHeight + coneHeight / 2, 0);
     const arrow = new THREE.Group();

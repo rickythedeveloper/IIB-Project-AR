@@ -47,10 +47,10 @@ const vertexShader = `
 	}
 `
 
-const fragmentShader = `
+const fragmentShader = (opacity: number): string => `
 	varying vec3 v_color;
 	void main() {
-		gl_FragColor = vec4(v_color, 0.5);
+		gl_FragColor = vec4(v_color, ${opacity});
 	}
 `
 
@@ -62,7 +62,8 @@ export const createBufferObject = (vertices: Float32Array, indices: Uint32Array,
 
 	const material = new THREE.ShaderMaterial({
 		vertexShader,
-		fragmentShader,
+		fragmentShader: fragmentShader(0.8),
+		transparent: true,
 		side: THREE.DoubleSide
 	})
 
@@ -102,7 +103,7 @@ class Circle3D extends THREE.Curve<THREE.Vector3> {
 export const createRing = (ringRadius: number, tubeRadius: number, nSegments: number, color: THREE.ColorRepresentation) => {
 	const circle = new Circle3D(ringRadius)
 	const geometry = new THREE.TubeGeometry(circle, nSegments, tubeRadius, 8, true)
-	const material = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide })
+	const material = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.7, color, side: THREE.DoubleSide })
 	const mesh = new THREE.Mesh(geometry, material)
 	return mesh
 }
@@ -171,17 +172,18 @@ export interface TranslationArrow {
 }
 
 const createThickArrow = (radius: number, height: number, color: THREE.ColorRepresentation) => {
+	const opacity = 0.7
 	const cylinderHeight = height * 0.7
 	const cylinderRadius = radius / 1.5
 	const cylinderGeometry = new THREE.CylinderGeometry( cylinderRadius, cylinderRadius, cylinderHeight, 32 );
-	const cylinderMaterial = new THREE.MeshStandardMaterial({color});
+	const cylinderMaterial = new THREE.MeshStandardMaterial({ transparent: true, opacity, color });
 	const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
 	cylinder.position.set(0, cylinderHeight/2, 0)
 
 	const coneHeight = height - cylinderHeight
 	const coneRadius = radius
 	const coneGeometry = new THREE.ConeGeometry(coneRadius, coneHeight, 32)
-	const coneMaterial = new THREE.MeshStandardMaterial({color})
+	const coneMaterial = new THREE.MeshStandardMaterial({ transparent: true, opacity, color })
 	const cone = new THREE.Mesh(coneGeometry, coneMaterial)
 	cone.position.set(0, cylinderHeight + coneHeight/2, 0)
 
@@ -199,18 +201,18 @@ const createTranslationArrow = (axis: AxisString): TranslationArrow => {
 	const detectionBoxSize = arrowRadius * 2 * 1.3
 	const detectionBoxLength = arrowLength * 1.1
 	const detectionBoxGeometry = new THREE.BoxGeometry(detectionBoxLength, detectionBoxSize, detectionBoxSize)
-	const detectionBoxMaterial = new THREE.MeshBasicMaterial({transparent: true})
+	const detectionBoxMaterial = new THREE.MeshBasicMaterial({ transparent: true })
 	const detectionBox = new THREE.Mesh(detectionBoxGeometry, detectionBoxMaterial)
 	detectionBox.visible = false
 	detectionBox.position.set(arrowLength/2, 0, 0)
 
 	const invisiblePlaneGeometry = new THREE.PlaneGeometry(10, 10)
-	const invisiblePlaneMaterial = new THREE.MeshBasicMaterial({transparent: true, side: THREE.DoubleSide})
+	const invisiblePlaneMaterial = new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide })
 	const invisiblePlane = new THREE.Mesh(invisiblePlaneGeometry, invisiblePlaneMaterial)
 	invisiblePlane.visible = false
 
 	const visiblePlaneGeometry = new THREE.PlaneGeometry(arrowLength * 1.5, arrowRadius * 2 * 1.5)
-	const visiblePlaneMaterial = new THREE.MeshBasicMaterial({transparent: true, opacity: 0.1, color, side: THREE.DoubleSide})
+	const visiblePlaneMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.1, color, side: THREE.DoubleSide })
 	const visiblePlane = new THREE.Mesh(visiblePlaneGeometry, visiblePlaneMaterial)
 	visiblePlane.visible = false
 	visiblePlane.position.set(arrowLength/2, 0, 0)

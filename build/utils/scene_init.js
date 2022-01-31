@@ -81,7 +81,7 @@ export const createMarkerIndicators = (markerPositions, markerQuaternions) => {
     const markerIndicators = [];
     for (let i = 0; i < markerPositions.length; i++) {
         const markerIndicatorGeometry = new THREE.PlaneGeometry(1, 1);
-        const markerIndicatorMaterial = new THREE.MeshBasicMaterial({ opacity: 0.5, side: THREE.DoubleSide });
+        const markerIndicatorMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.5, side: THREE.DoubleSide });
         const markerIndicator = new THREE.Mesh(markerIndicatorGeometry, markerIndicatorMaterial);
         markerIndicator.position.set(markerPositions[i].x, markerPositions[i].y, markerPositions[i].z);
         const correctionQuat = new THREE.Quaternion(Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4));
