@@ -1,4 +1,5 @@
-import { Object3D, Vector3, Quaternion, PointLight } from 'three'
+import { Object3D, Vector3, Quaternion, PointLight, Mesh, MeshLambertMaterial } from 'three'
+import { VTKLoader } from 'three/examples/jsm/loaders/VTKLoader.js'
 import Arena from "./utils/Arena"
 import { getProcessedData } from "./utils/convenience"
 import { createMarkerIndicators, createSimulationResultObject } from "./utils/scene_init"
@@ -149,16 +150,16 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 		onComplete(calibratableObjects)
 	}, 30000)
 
-	getProcessedData().then(({ vertices, indices, colors }) => {
-		const simulationResult = createSimulationResultObject(vertices, indices, colors)
+	const addCalibratableObject = (object: Object3D) => {
 		const objectControl = createObjectControlForObject(
-			simulationResult, 
+			object, 
 			interactionManager, 
-			(object) => {
-				const objectIndex = arena.objectIndices[object.uuid]
+			(o) => {
+				const objectIndex = arena.objectIndices[o.uuid]
 				return arena.arenaObjects[objectIndex].positionInArena
-			}, (object) => {
-				const objectIndex = arena.objectIndices[object.uuid]
+			}, 
+			(o) => {
+				const objectIndex = arena.objectIndices[o.uuid]
 				return arena.arenaObjects[objectIndex].quaternionInArena
 			},
 			(worldCoords) => {
@@ -167,9 +168,25 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 				return position
 			}
 		)
-		arena.addObjects(simulationResult, objectControl.container)
-		calibratableObjects.push(simulationResult)
-	})
+		arena.addObjects(object, objectControl.container)
+		calibratableObjects.push(object)
+	}
+
+	const loader = new VTKLoader();
+	loader.load( 'data/bunny.vtk', function ( geometry ) {
+		geometry.center();
+		geometry.computeVertexNormals();
+		const material = new MeshLambertMaterial( { color: 0xffffff } );
+		const mesh = new Mesh( geometry, material );
+		mesh.position.set(0, 1, 0);
+		mesh.scale.multiplyScalar(3);
+		addCalibratableObject(mesh)
+	});
+
+	// getProcessedData().then(({ vertices, indices, colors }) => {
+	// 	const simulationResult = createSimulationResultObject(vertices, indices, colors)
+	// 	addCalibratableObject(simulationResult)
+	// })
 
 	setInterval(() => {
 		for (let i = 0; i < arena.markers.length; i++) {
