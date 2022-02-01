@@ -1,38 +1,39 @@
-// Originally sourced from from https://github.com/markuslerner/THREE.Interactive
+// Originally sourced from from https://github.com/markuslerner/Interactive
 // Modified and Typescript-adapted by Rintaro Kawagishi
+import { Object3D, Vector2, Intersection, WebGLRenderer, Camera, Raycaster, Event as THREEEvent } from 'three';
 
 interface InteractiveObject {
-  target: THREE.Object3D
+  target: Object3D
   type: keyof HTMLElementEventMap | 'pinch'
   requiresIntersection: boolean
 }
 
-export interface PinchEvent extends THREE.Event {
+export interface PinchEvent extends THREEEvent {
   type: 'pinch'
-  target: THREE.Object3D
+  target: Object3D
   deltaScale: number
 }
 
-export interface InteractiveEvent2<K extends keyof HTMLElementEventMap> extends THREE.Event {
+export interface InteractiveEvent2<K extends keyof HTMLElementEventMap> extends THREEEvent {
   type: K
-  target: THREE.Object3D
+  target: Object3D
   htmlElementEvent: HTMLElementEventMap[K] | null
-  position: THREE.Vector2 // mouse / pointer position
-  intersection: THREE.Intersection | null
+  position: Vector2 // mouse / pointer position
+  intersection: Intersection | null
 }
 
 export class InteractionManager {
-	renderer: THREE.WebGLRenderer
-	camera: THREE.Camera
+	renderer: WebGLRenderer
+	camera: Camera
 	domElement: HTMLCanvasElement
-	mousePosition: THREE.Vector2 = new THREE.Vector2(-1, 1); // top left default position
+	mousePosition: Vector2 = new Vector2(-1, 1); // top left default position
 	supportsPointerEvents: boolean = !!window.PointerEvent
 	interactiveObjects: InteractiveObject[] = []
-	raycaster: THREE.Raycaster = new THREE.Raycaster()
+	raycaster: Raycaster = new Raycaster()
 	treatTouchEventsAsMouseEvents: boolean = true
   lastTouches: {[pointerId: number]: PointerEvent} = {}
 
-  constructor(renderer: THREE.WebGLRenderer, camera: THREE.Camera, domElement: HTMLCanvasElement) {
+  constructor(renderer: WebGLRenderer, camera: Camera, domElement: HTMLCanvasElement) {
     this.renderer = renderer;
     this.camera = camera;
     this.domElement = domElement;
@@ -70,11 +71,11 @@ export class InteractionManager {
     }
   };
 
-  add = (object: THREE.Object3D, type: keyof HTMLElementEventMap | 'pinch', requiresIntersection: boolean = true) => {
+  add = (object: Object3D, type: keyof HTMLElementEventMap | 'pinch', requiresIntersection: boolean = true) => {
     this.interactiveObjects.push({target: object, type, requiresIntersection})
   }
 
-  remove = (object: THREE.Object3D, type: keyof HTMLElementEventMap) => {
+  remove = (object: Object3D, type: keyof HTMLElementEventMap) => {
     this.interactiveObjects = this.interactiveObjects.filter(o => o.target.uuid !== object.uuid || o.type !== type)
   };
 
@@ -159,7 +160,7 @@ export class InteractionManager {
     this.dispatchForEvent('touchend', touchEvent, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY)
   };
 
-  mapPositionToPoint = (point: THREE.Vector2, x: number, y: number) => {
+  mapPositionToPoint = (point: Vector2, x: number, y: number) => {
     let rect;
 
     // IE 11 fix

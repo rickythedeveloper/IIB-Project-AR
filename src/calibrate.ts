@@ -1,19 +1,20 @@
-import Arena from "./utils/Arena.js"
-import { getProcessedData } from "./utils/convenience.js"
-import { createMarkerIndicators, createSimulationResultObject } from "./utils/scene_init.js"
-import { Setup } from "./utils/setupAR.js"
-import { Axis, createObjectControl, RotationRing, TranslationArrow } from "./utils/three.js"
-import { InteractionManager, InteractiveEvent2, PinchEvent } from "./utils/interactive.js"
-import { atanAngle } from "./utils/angle.js"
-import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./utils/constants.js"
-import { MarkerInfo, ThreeObjectWrapper } from "./utils/index.js"
+import { Object3D, Vector3, Quaternion, PointLight } from 'three'
+import Arena from "./utils/Arena"
+import { getProcessedData } from "./utils/convenience"
+import { createMarkerIndicators, createSimulationResultObject } from "./utils/scene_init"
+import { Setup } from "./utils/setupAR"
+import { Axis, createObjectControl, RotationRing, TranslationArrow } from "./utils/three"
+import { InteractionManager, InteractiveEvent2, PinchEvent } from "./utils/interactive"
+import { atanAngle } from "./utils/angle"
+import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./utils/constants"
+import { MarkerInfo, ThreeObjectWrapper } from "./utils/index"
 
 const createObjectControlForObject = (
-	object: THREE.Object3D, 
+	object: Object3D, 
 	interactionManager: InteractionManager, 
-	getPositionToUpdate: (object: THREE.Object3D) => THREE.Vector3, 
-	getQuaternionToUpdate: (object: THREE.Object3D) => THREE.Quaternion, 
-	worldToRelevant: (worldCoords: THREE.Vector3) => THREE.Vector3
+	getPositionToUpdate: (object: Object3D) => Vector3, 
+	getQuaternionToUpdate: (object: Object3D) => Quaternion, 
+	worldToRelevant: (worldCoords: Vector3) => Vector3
 ) => {
 	const objectControl = createObjectControl()
 	objectControl.container.position.add(object.position)
@@ -26,7 +27,7 @@ const createObjectControlForObject = (
 		r: RotationRing, 
 		axis: Axis, 
 	) => {
-		let lastIntersecPosition: THREE.Vector3 | null = null
+		let lastIntersecPosition: Vector3 | null = null
 		const rotationListener = (e: InteractiveEvent2<'mousemove'>) => {
 			const intersection = e.intersection
 			if (!intersection) return
@@ -40,7 +41,7 @@ const createObjectControlForObject = (
 					axis === Axis.y ? atanAngle(intersectFromObject.z, intersectFromObject.x) - atanAngle(lastIntersectFromObject.z, lastIntersectFromObject.x) :
 					atanAngle(intersectFromObject.x, intersectFromObject.y) - atanAngle(lastIntersectFromObject.x, lastIntersectFromObject.y)
 				const sin = Math.sin(theta/2), cos = Math.cos(theta/2)
-				objectQuaternion.premultiply(new THREE.Quaternion(axis === Axis.x ? sin : 0, axis === Axis.y ? sin : 0, axis === Axis.z ? sin : 0, cos))
+				objectQuaternion.premultiply(new Quaternion(axis === Axis.x ? sin : 0, axis === Axis.y ? sin : 0, axis === Axis.z ? sin : 0, cos))
 			}
 			lastIntersecPosition = intersectPosition
 		}
@@ -49,13 +50,13 @@ const createObjectControlForObject = (
 		r.ringDetectionCylinder.addEventListener('mousedown', (event) => {
 			if (controlIsBusy) return
 			interactionManager.add(r.invisiblePlane, 'mousemove');
-			(r.invisiblePlane as THREE.Object3D<InteractiveEvent2<'mousemove'>>).addEventListener('mousemove', rotationListener)
+			(r.invisiblePlane as Object3D<InteractiveEvent2<'mousemove'>>).addEventListener('mousemove', rotationListener)
 			r.visiblePlane.visible = true
 			controlIsBusy = true
 		})
 		r.ringDetectionCylinder.addEventListener('mouseup', event => {
 			interactionManager.remove(r.invisiblePlane, 'mousemove');
-			(r.invisiblePlane as THREE.Object3D<InteractiveEvent2<'mousemove'>>).removeEventListener('mousemove', rotationListener)
+			(r.invisiblePlane as Object3D<InteractiveEvent2<'mousemove'>>).removeEventListener('mousemove', rotationListener)
 			r.visiblePlane.visible = false
 			lastIntersecPosition = null
 			controlIsBusy = false
@@ -72,7 +73,7 @@ const createObjectControlForObject = (
 			const newValue = axis === Axis.x ? intersectPosition.x : axis === Axis.y ? intersectPosition.y : intersectPosition.z
 			if (lastValue) {
 				const delta = newValue - lastValue
-				const deltaVector = new THREE.Vector3(axis === Axis.x ? delta : 0, axis === Axis.y ? delta : 0, axis === Axis.z ? delta : 0)
+				const deltaVector = new Vector3(axis === Axis.x ? delta : 0, axis === Axis.y ? delta : 0, axis === Axis.z ? delta : 0)
 				getPositionToUpdate(object).add(deltaVector)
 				getPositionToUpdate(objectControl.container).add(deltaVector)
 			}
@@ -82,7 +83,7 @@ const createObjectControlForObject = (
 		interactionManager.add(a.arrowDetectionBox, 'mouseup', false)
 		a.arrowDetectionBox.addEventListener('mousedown', () => {
 			if (controlIsBusy) return
-			const cameraPosition = worldToRelevant(new THREE.Vector3(0, 0, 0))
+			const cameraPosition = worldToRelevant(new Vector3(0, 0, 0))
 			if (cameraPosition === null) return
 			const objectPosition = getPositionToUpdate(object).clone()
 			const relativeCameraPosition = cameraPosition.clone().sub(objectPosition)
@@ -96,13 +97,13 @@ const createObjectControlForObject = (
 			
 			a.visiblePlane.visible = true
 			interactionManager.add(a.invisiblePlane, 'mousemove');
-			(a.invisiblePlane as THREE.Object3D<InteractiveEvent2<'mousemove'>>).addEventListener('mousemove', translationListener)
+			(a.invisiblePlane as Object3D<InteractiveEvent2<'mousemove'>>).addEventListener('mousemove', translationListener)
 			controlIsBusy = true
 		})
 		a.arrowDetectionBox.addEventListener('mouseup', () => {
 			a.visiblePlane.visible = false
 			interactionManager.remove(a.invisiblePlane, 'mousemove');
-			(a.invisiblePlane as THREE.Object3D<InteractiveEvent2<'mousemove'>>).removeEventListener('mousemove', translationListener)
+			(a.invisiblePlane as Object3D<InteractiveEvent2<'mousemove'>>).removeEventListener('mousemove', translationListener)
 			lastValue = null
 			controlIsBusy = false
 		})
@@ -119,22 +120,22 @@ const createObjectControlForObject = (
 	})
 
 	interactionManager.add(object, 'pinch');
-	(object as THREE.Object3D<PinchEvent>).addEventListener('pinch', (e: PinchEvent) => {
+	(object as Object3D<PinchEvent>).addEventListener('pinch', (e: PinchEvent) => {
 		object.scale.multiplyScalar(e.deltaScale)
 	})
 
 	return objectControl
 }
 
-const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: THREE.Object3D[]) => void) => {
+const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void) => {
 	// add light at the camera
-	setup.scene.add(new THREE.PointLight())
+	setup.scene.add(new PointLight())
 
 	const arena = new Arena(setup, markers)
 	const markerIndicators = createMarkerIndicators(arena.markerPositions, arena.markerQuaternions)
 	arena.addObjects(...markerIndicators)
 
-	const calibratableObjects: THREE.Object3D[] = []
+	const calibratableObjects: Object3D[] = []
 	const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement)
 
 	setTimeout(() => {

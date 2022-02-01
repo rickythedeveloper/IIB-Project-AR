@@ -1,18 +1,19 @@
-import { createMarker, Setup } from "./setupAR.js"
-import { getAverageQuaternion } from "./arrays.js"
-import { MarkerInfo } from "./index.js"
+import { createMarker, Setup } from "./setupAR"
+import { getAverageQuaternion } from "./arrays"
+import { MarkerInfo } from "./index"
+import { Object3D, Vector3, Quaternion } from "three"
 
 interface ArenaObject {
-	object: THREE.Object3D
-	positionInArena: THREE.Vector3
-	quaternionInArena: THREE.Quaternion
+	object: Object3D
+	positionInArena: Vector3
+	quaternionInArena: Quaternion
 }
 
 export default class Arena {
 	setup: Setup
-	markers: THREE.Object3D[] = []
-	markerPositions: THREE.Vector3[]
-	markerQuaternions: THREE.Quaternion[]
+	markers: Object3D[] = []
+	markerPositions: Vector3[]
+	markerQuaternions: Quaternion[]
 	objectIndices: {[objectUUID: string]: number} = {}
 	arenaObjects: ArenaObject[] = []
 
@@ -31,7 +32,7 @@ export default class Arena {
 		return this.markerPositions.filter((_, index) => this.markers[index].visible)
 	}
 
-	findClosestVisibleMarkerIndex(position: THREE.Vector3) {
+	findClosestVisibleMarkerIndex(position: Vector3) {
 		let minD: number | null = null, minDIndex: number | null = null
 		for (let i = 0; i < this.markers.length; i++) {
 			if (!this.markers[i].visible) continue
@@ -47,7 +48,7 @@ export default class Arena {
 	/**
 	 * object.position and object.quaternion should be in the frame of the dominant marker
 	 */
-	addObject(object: THREE.Object3D) {
+	addObject(object: Object3D) {
 		this.objectIndices[object.uuid] = this.arenaObjects.length
 		const arenaObject = {
 			object,
@@ -57,7 +58,7 @@ export default class Arena {
 		this.arenaObjects.push(arenaObject)
 	}
 
-	addObjects(...objects: THREE.Object3D[]) {
+	addObjects(...objects: Object3D[]) {
 		objects.forEach(object => this.addObject(object))
 	}
 
@@ -70,7 +71,7 @@ export default class Arena {
 	/**
 	 * Convert a position from the camera coordinates to the frame of the dominant marker
 	 */
-	positionFromCameraToDominant(position: THREE.Vector3) {
+	positionFromCameraToDominant(position: Vector3) {
 		let markerIndex: number | null = null
 		for (let i = 0; i < this.markers.length; i++) {
 			if (this.markers[i].visible) {
@@ -81,7 +82,7 @@ export default class Arena {
 		if (markerIndex === null) return null
 
 		const marker = this.markers[markerIndex]
-		const worldPosition = new THREE.Vector3(), worldQuaternion = new THREE.Quaternion()
+		const worldPosition = new Vector3(), worldQuaternion = new Quaternion()
 		marker.getWorldPosition(worldPosition)
 		marker.getWorldQuaternion(worldQuaternion)
 
@@ -157,7 +158,7 @@ export default class Arena {
 			}
 			
 			// average
-			const p030 = new THREE.Vector3(x, y, z)
+			const p030 = new Vector3(x, y, z)
 			const q030 = getAverageQuaternion(arr_q030, weights)
 
 			// 4: nearest marker

@@ -1,5 +1,6 @@
-import { Matrix, Vector } from "./index.js"
-import { getColumn, matrixAdd, matrixMultiplyScalar, outerProduct } from "./vectors.js"
+import { Vector3, Quaternion } from "three"
+import { Matrix, Vector } from "./index"
+import { getColumn, matrixAdd, matrixMultiplyScalar, outerProduct } from "./vectors"
 
 export const getMean = (values: number[]): number => {
 	if (values.length === 0) throw new Error('The values array has to have a length greater than 0')
@@ -70,7 +71,7 @@ export const createVector = <T>(length: number, value: (i: number) => T) => {
 	return vector
 }
 
-export const getMeanVector = (vectors: THREE.Vector3[]) => {
+export const getMeanVector = (vectors: Vector3[]) => {
 	const xs = vectors.map(v => v.x), ys = vectors.map(v => v.y), zs = vectors.map(v => v.z)
 	const meanAndVariance = [xs, ys, zs].map(values => {
 		const midValues = getMidValues(values, 0.8)
@@ -80,7 +81,7 @@ export const getMeanVector = (vectors: THREE.Vector3[]) => {
 	})
 	const variances = meanAndVariance.map(x => x.variance)
 	return {
-		vector: new THREE.Vector3(meanAndVariance[0].mean, meanAndVariance[1].mean, meanAndVariance[2].mean),
+		vector: new Vector3(meanAndVariance[0].mean, meanAndVariance[1].mean, meanAndVariance[2].mean),
 		variances: {x: variances[0], y: variances[1], z: variances[2]}
 	}
 }
@@ -89,7 +90,7 @@ declare namespace math {
 	export function eigs (matrix: number[][]): { values: number[], vectors: number[][] }
 }
 
-export const getAverageQuaternion = (quaternions: THREE.Quaternion[], weights: number[] | undefined = undefined) => {
+export const getAverageQuaternion = (quaternions: Quaternion[], weights: number[] | undefined = undefined) => {
 	if (weights === undefined) weights = Array(quaternions.length).fill(1)
 	if (quaternions.length !== weights.length) throw new Error('quaternions and weights do not have the same lengths')
 
@@ -107,5 +108,5 @@ export const getAverageQuaternion = (quaternions: THREE.Quaternion[], weights: n
 
 	const { values: eigValues, vectors: eigVectors } = math.eigs(M)
 	const maxEigVectors = getColumn(eigVectors, eigValues.length - 1)
-	return new THREE.Quaternion(maxEigVectors[0], maxEigVectors[1], maxEigVectors[2], maxEigVectors[3])
+	return new Quaternion(maxEigVectors[0], maxEigVectors[1], maxEigVectors[2], maxEigVectors[3])
 }

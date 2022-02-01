@@ -1,19 +1,19 @@
-declare const THREEx: any
-declare const ARjs: any
+import { ArToolkitSource, ArToolkitContext, ArMarkerControls } from '@ar-js-org/ar.js/three.js/build/ar-threex.js'
+import { WebGLRenderer, Scene, Camera, Group, Color, PerspectiveCamera } from 'three'
 
 type OnRenderFunction = (deltaSec: number, nowSec: number) => void
 export interface Setup {
-	renderer: THREE.WebGLRenderer
-	scene: THREE.Scene
-	camera: THREE.Camera
+	renderer: WebGLRenderer
+	scene: Scene
+	camera: Camera
 	arToolkitContext: any
 	arToolkitSource: any
 	onRenderFunctions: OnRenderFunction[]
 }
 
 export const createMarker = (num: number, setup: Setup) => {
-	const marker = new THREE.Group()
-	new THREEx.ArMarkerControls(setup.arToolkitContext, marker, {
+	const marker = new Group()
+	new ArMarkerControls(setup.arToolkitContext, marker, {
 		type : 'barcode',
 		barcodeValue: num,
 		minConfidence: 1,
@@ -24,11 +24,11 @@ export const createMarker = (num: number, setup: Setup) => {
 }
 
 const createRenderer = () => {
-	const renderer	= new THREE.WebGLRenderer({
+	const renderer	= new WebGLRenderer({
 		antialias: true,
 		alpha: true
 	});
-	renderer.setClearColor(new THREE.Color('lightgrey'), 0)
+	renderer.setClearColor(new Color('lightgrey'), 0)
 	renderer.setSize( 2000, 1700 );
 	renderer.domElement.style.position = 'absolute'
 	renderer.domElement.style.top = '0px'
@@ -39,21 +39,22 @@ const createRenderer = () => {
 const setupAR = (): Setup => {
 	const renderer = createRenderer()
 	document.body.appendChild( renderer.domElement );
-	const scene	= new THREE.Scene();
-	const camera = new THREE.PerspectiveCamera();
+	const scene	= new Scene();
+	const camera = new PerspectiveCamera();
 	scene.add(camera);
 	
 	
 	// Following two lines of code needed to fix bug in AR.js.
-	// Search for "Object.assign(THREEx.ArBaseControls.prototype, THREE.EventDispatcher.prototype);" 
-	// and  "Object.assign(ARjs.Context.prototype, THREE.EventDispatcher.prototype);" in ar.js
+	// Search for "Object.assign(THREEx.ArBaseControls.prototype, EventDispatcher.prototype);" 
+	// and  "Object.assign(ARjs.Context.prototype, EventDispatcher.prototype);" in ar.js
 	// You will see that they are not working correctly.
-	THREEx.ArBaseControls.prototype.dispatchEvent = THREE.EventDispatcher.prototype.dispatchEvent
-	ARjs.Context.prototype.dispatchEvent = THREE.EventDispatcher.prototype.dispatchEvent
-	const arToolkitSource = new THREEx.ArToolkitSource({
+	// ArBaseControls.prototype.dispatchEvent = EventDispatcher.prototype.dispatchEvent
+	// ARjs.Context.prototype.dispatchEvent = EventDispatcher.prototype.dispatchEvent
+
+	const arToolkitSource = new ArToolkitSource({
 		sourceType : 'webcam',
 	})
-	const arToolkitContext = new THREEx.ArToolkitContext({
+	const arToolkitContext = new ArToolkitContext({
 		detectionMode: 'mono_and_matrix',
 		matrixCodeType: '3x3_HAMMING63',
 	})
