@@ -77,15 +77,15 @@ const createObjectControlForObject = (
 			lastIntersecPosition = intersectPosition
 		}
 		interactionManager.add(r.ringDetectionCylinder, 'mousedown')
-		interactionManager.add(r.ringDetectionCylinder, 'mouseup', false)
-		r.ringDetectionCylinder.addEventListener('mousedown', (event) => {
+		interactionManager.add(r.ringDetectionCylinder, 'mouseup', false);
+		(r.ringDetectionCylinder as Object3D<InteractiveEvent2<'mousedown'>>).addEventListener('mousedown', (event) => {
 			if (controlIsBusy) return
 			interactionManager.add(r.invisiblePlane, 'mousemove');
 			(r.invisiblePlane as Object3D<InteractiveEvent2<'mousemove'>>).addEventListener('mousemove', rotationListener)
 			r.visiblePlane.visible = true
 			controlIsBusy = true
-		})
-		r.ringDetectionCylinder.addEventListener('mouseup', event => {
+		});
+		(r.ringDetectionCylinder as Object3D<InteractiveEvent2<'mouseup'>>).addEventListener('mouseup', event => {
 			interactionManager.remove(r.invisiblePlane, 'mousemove');
 			(r.invisiblePlane as Object3D<InteractiveEvent2<'mousemove'>>).removeEventListener('mousemove', rotationListener)
 			r.visiblePlane.visible = false
@@ -151,7 +151,7 @@ const createObjectControlForObject = (
 	})
 
 	interactionManager.add(object, 'pinch');
-	(object as unknown as Object3D<PinchEvent>).addEventListener('pinch', (e: PinchEvent) => {
+	(object as Object3D as Object3D<PinchEvent>).addEventListener('pinch', (e: PinchEvent) => {
 		object.scale.multiplyScalar(e.deltaScale)
 		updateControlPosition(object, objectControl)
 	})

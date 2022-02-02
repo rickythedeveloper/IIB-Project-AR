@@ -82,22 +82,42 @@ export class InteractionManager {
   dispatchForEvent = (type: keyof HTMLElementEventMap, htmlElementEvent: MouseEvent | TouchEvent, x: number, y: number) => {
     this.mapPositionToPoint(this.mousePosition, x, y);
     this.raycaster.setFromCamera(this.mousePosition, this.camera)
+
+    const objectsToConsider: InteractiveObject[] = []
     for (let i = 0; i < this.interactiveObjects.length; i++) {
       const interactiveObject = this.interactiveObjects[i]
-      if (interactiveObject.type !== type) continue 
-      const intersects = this.raycaster.intersectObject(interactiveObject.target)
-      const intersect = intersects.length > 0 ? intersects[0] : null
-      if (interactiveObject.requiresIntersection && intersect === null) continue
-      else {
-        const event: InteractiveEvent2<typeof type> = {
-          type: type,
-          target: interactiveObject.target,
-          htmlElementEvent: htmlElementEvent,
-          position: this.mousePosition,
-          intersection: intersect
-        }
-        event.target.dispatchEvent(event)
+      if (interactiveObject.type === type) objectsToConsider.push(interactiveObject)
+    }
+
+    // dispatch event for all intersection in the order of proximity
+    const intersects = this.raycaster.intersectObjects(objectsToConsider.map(o => o.target))
+    const notifiedObjectIDs: string[] = []
+    for (let i = 0; i < intersects.length; i++) {
+      const intersect = intersects[i]
+      const event: InteractiveEvent2<typeof type> = {
+        type: type,
+        target: intersect.object,
+        htmlElementEvent: htmlElementEvent,
+        position: this.mousePosition,
+        intersection: intersect
       }
+      notifiedObjectIDs.push(event.target.uuid)
+      event.target.dispatchEvent(event)
+    }
+
+    // check objects that do not require intersection
+    for (let i = 0; i < objectsToConsider.length; i++) {
+      const interactiveObject = objectsToConsider[i]
+      if (notifiedObjectIDs.includes(interactiveObject.target.uuid)) continue
+      if (interactiveObject.requiresIntersection) continue
+      const event: InteractiveEvent2<typeof type> = {
+        type: type,
+        target: interactiveObject.target,
+        htmlElementEvent: htmlElementEvent,
+        position: this.mousePosition,
+        intersection: null
+      }
+      event.target.dispatchEvent(event)
     }
   }
 
