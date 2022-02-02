@@ -119,8 +119,8 @@ export interface RotationRing {
 	invisiblePlane: Object3D
 }
 
-const ROTATION_RING_RADIUS = 0.7
-const ROTATION_RING_TUBE_RADIUS = 0.1
+const ROTATION_RING_RADIUS = 0.4
+const ROTATION_RING_TUBE_RADIUS = 0.05
 const ROTATION_RING_N_SEGMENTS = 16
 
 const axisColor = (axis: AxisString) => axis === 'x' ? 0xff0000 : axis === 'y' ? 0x00ff00 : 0x0000ff
@@ -130,8 +130,8 @@ const createRotationRing = (axis: AxisString): RotationRing => {
 
 	const ring = createRing(ROTATION_RING_RADIUS, ROTATION_RING_TUBE_RADIUS, ROTATION_RING_N_SEGMENTS, color)
 
-	const cylinderRadius = ROTATION_RING_RADIUS * 1.3
-	const cylinderHeight = ROTATION_RING_TUBE_RADIUS * 1.3
+	const cylinderRadius = ROTATION_RING_RADIUS * 1.2
+	const cylinderHeight = ROTATION_RING_TUBE_RADIUS * 1.2
 	const detectionGeometry = new CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight)
 	const detectionMaterial = new MeshBasicMaterial({transparent: true})
 	const detectionCylinder = new Mesh(detectionGeometry, detectionMaterial)
@@ -151,9 +151,6 @@ const createRotationRing = (axis: AxisString): RotationRing => {
 	visiblePlane.quaternion.premultiply(new Quaternion(0, Math.sin(Math.PI / 4), 0, Math.cos(Math.PI / 4)))
 		
 	const container = new Group()
-	const offset = 1
-	const positionOffset = new Vector3(axis === 'x' ? offset : 0, axis === 'y' ? offset : 0, axis === 'z' ? offset : 0)
-	container.position.set(positionOffset.x, positionOffset.y, positionOffset.z)
 	container.quaternion.premultiply(
 		axis === 'x' ? new Quaternion(0, 0, 0, 1) :
 		axis === 'y' ? new Quaternion(0, 0, Math.sin(Math.PI / 4), Math.cos(Math.PI / 4)) :
@@ -195,7 +192,7 @@ const createThickArrow = (radius: number, height: number, color: ColorRepresenta
 }
 
 const createTranslationArrow = (axis: AxisString): TranslationArrow => {
-	const arrowRadius = 0.2, arrowLength = 1.5
+	const arrowRadius = 0.1, arrowLength = 1
 	const color = axisColor(axis)
 	const arrow = createThickArrow(arrowRadius, arrowLength, color)
 	arrow.quaternion.premultiply(rotationQuaternion('z', -Math.PI/2))
@@ -222,8 +219,6 @@ const createTranslationArrow = (axis: AxisString): TranslationArrow => {
 	const container = new Group()
 	container.add(arrow, detectionBox, invisiblePlane, visiblePlane)
 	container.quaternion.premultiply(axis === 'x' ? rotationQuaternion('x', 0) : axis === 'y' ? rotationQuaternion('z', Math.PI/2) : rotationQuaternion('y', -Math.PI/2))
-	const offset = 1.5
-	container.position.set(axis === 'x' ? offset : 0, axis === 'y' ? offset : 0, axis === 'z' ? offset : 0)
 
 	return {container, arrow, arrowDetectionBox: detectionBox, invisiblePlane, visiblePlane}
 }
@@ -237,7 +232,7 @@ const createOriginIndicator = (radius: number) => {
 	return sphere
 }
 
-interface ObjectControl {
+export interface ObjectControl {
 	container: Group
 	rings: [RotationRing, RotationRing, RotationRing]
 	arrows: [TranslationArrow, TranslationArrow, TranslationArrow]

@@ -4,14 +4,43 @@ import Arena from "./utils/Arena"
 import { getProcessedData } from "./utils/convenience"
 import { createMarkerIndicators, createSimulationResultObject } from "./utils/scene_init"
 import { Setup } from "./utils/setupAR"
-import { Axis, createObjectControl, RotationRing, TranslationArrow } from "./utils/three"
+import { Axis, createObjectControl, ObjectControl, RotationRing, TranslationArrow } from "./utils/three"
 import { InteractionManager, InteractiveEvent2, PinchEvent } from "./utils/interactive"
 import { atanAngle } from "./utils/angle"
 import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./utils/constants"
 import { MarkerInfo, ThreeObjectWrapper } from "./utils/index"
 
+const updateControlPosition = (object: Mesh, objectControl: ObjectControl) => {
+	const rings = objectControl.rings
+	const arrows = objectControl.arrows
+	object.geometry.computeBoundingSphere()
+	const boundingSphere = object.geometry.boundingSphere
+	if (boundingSphere) {
+		const radiusMultiplierRing = 1.2, radiusMultiplierArrow = 1.5
+		const center = boundingSphere.center, radius =  boundingSphere.radius * object.scale.x // assumes same scale in each dimension
+		rings[0].container.position.set(center.x + radius * radiusMultiplierRing, center.y, center.z)
+		rings[1].container.position.set(center.x, center.y + radius * radiusMultiplierRing, center.z)
+		rings[2].container.position.set(center.x, center.y, center.z + radius * radiusMultiplierRing)
+		arrows[0].container.position.set(center.x + radius * radiusMultiplierArrow, center.y, center.z)
+		arrows[1].container.position.set(center.x, center.y + radius * radiusMultiplierArrow, center.z)
+		arrows[2].container.position.set(center.x, center.y, center.z + radius * radiusMultiplierArrow)
+
+		rings.forEach(r => r.container.scale.setScalar(radius * 2)) // control can be made to fit an object of radius of 0.5
+		arrows.forEach(a => a.container.scale.setScalar(radius * 2))
+	} else {
+		const ringOffset = 1, arrowOffset = 1.5
+		rings[0].container.position.set(ringOffset, 0, 0)
+		rings[1].container.position.set(0, ringOffset, 0)
+		rings[2].container.position.set(0, 0, ringOffset)
+		arrows[0].container.position.set(arrowOffset, 0, 0)
+		arrows[1].container.position.set(0, arrowOffset, 0)
+		arrows[2].container.position.set(0, 0, arrowOffset)
+	}
+
+}
+
 const createObjectControlForObject = (
-	object: Object3D, 
+	object: Mesh, 
 	interactionManager: InteractionManager, 
 	getPositionToUpdate: (object: Object3D) => Vector3, 
 	getQuaternionToUpdate: (object: Object3D) => Quaternion, 
@@ -21,6 +50,7 @@ const createObjectControlForObject = (
 	objectControl.container.position.add(object.position)
 	const rings = objectControl.rings
 	const arrows = objectControl.arrows
+	updateControlPosition(object, objectControl)
 
 	let controlIsBusy = false
 
@@ -121,8 +151,9 @@ const createObjectControlForObject = (
 	})
 
 	interactionManager.add(object, 'pinch');
-	(object as Object3D<PinchEvent>).addEventListener('pinch', (e: PinchEvent) => {
+	(object as unknown as Object3D<PinchEvent>).addEventListener('pinch', (e: PinchEvent) => {
 		object.scale.multiplyScalar(e.deltaScale)
+		updateControlPosition(object, objectControl)
 	})
 
 	return objectControl
@@ -150,7 +181,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 		onComplete(calibratableObjects)
 	}, 30000)
 
-	const addCalibratableObject = (object: Object3D) => {
+	const addCalibratableObject = (object: Mesh) => {
 		const objectControl = createObjectControlForObject(
 			object, 
 			interactionManager, 
