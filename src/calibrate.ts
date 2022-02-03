@@ -159,7 +159,36 @@ const createObjectControlForObject = (
 	return objectControl
 }
 
-const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void) => {
+const createFileUpload = (onComplete: (object: Mesh) => void) => {
+	const input = document.createElement('input')
+	input.type = 'file'
+	input.onchange = (e) => {
+		if (input.files === null) return
+		const aa = input.files[0]
+		console.log(aa.name);
+		
+		const reader = new FileReader()
+		reader.onload = () => {
+			const url = reader.result as string
+
+			const loader = new VTKLoader();
+			loader.load(url, (geometry) => {
+				geometry.center();
+				geometry.computeVertexNormals();
+				const material = new MeshLambertMaterial( { color: 0xffffff } );
+				const mesh = new Mesh( geometry, material );
+				mesh.position.set(0, 1, 0);
+				mesh.scale.multiplyScalar(3);
+				onComplete(mesh)
+			});
+		}
+		reader.readAsDataURL(aa)
+		
+	}
+	return input
+}
+
+const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void, controlPanel: HTMLDivElement) => {
 	// add light at the camera
 	setup.scene.add(new PointLight())
 
@@ -169,6 +198,8 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 
 	const calibratableObjects: Object3D[] = []
 	const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement)
+	
+	controlPanel.appendChild(createFileUpload((object) => addCalibratableObject(object)))
 
 	setTimeout(() => {
 		calibratableObjects.forEach(o => {
@@ -202,17 +233,6 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 		arena.addObjects(object, objectControl.container)
 		calibratableObjects.push(object)
 	}
-
-	const loader = new VTKLoader();
-	loader.load( 'data/bunny.vtk', function ( geometry ) {
-		geometry.center();
-		geometry.computeVertexNormals();
-		const material = new MeshLambertMaterial( { color: 0xffffff } );
-		const mesh = new Mesh( geometry, material );
-		mesh.position.set(0, 1, 0);
-		mesh.scale.multiplyScalar(3);
-		addCalibratableObject(mesh)
-	});
 
 	// getProcessedData().then(({ vertices, indices, colors }) => {
 	// 	const simulationResult = createSimulationResultObject(vertices, indices, colors)

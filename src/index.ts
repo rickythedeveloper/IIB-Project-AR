@@ -41,7 +41,7 @@ const onScanComplete = (pos: Vector3[], quats: Quaternion[]) => {
 			quaternion: quats[i]
 		})
 	}
-	calibrate(arSetup, markerInfos, onCalibrateComplete)
+	calibrate(arSetup, markerInfos, onCalibrateComplete, controlPanel)
 }
 
 const onCalibrateComplete = (objects: Object3D[]) => {
