@@ -1,4 +1,4 @@
-import { rotationQuaternion, createBufferObject } from "./three"
+import { rotationQuaternion, createBufferObject, Axis } from "./three"
 import { createOption, createButton } from "./elements"
 import Arena from "./Arena"
 import { ThreeObjectWrapper } from "./index"
@@ -51,7 +51,8 @@ export const createMoveDropdown = (objectWrapper: ThreeObjectWrapper, arena: Are
 			if (option === 'scale') {
 				objectWrapper.object.scale.addScalar(direction * scaleChange)
 			} else if (option.includes('rot')) {
-				const axis = option.slice(3) as 'x' | 'y' | 'z'
+				const axisString = option.slice(3) as 'x' | 'y' | 'z'
+				const axis = Axis[axisString]
 				arena.arenaObjects[objectIndex].quaternionInArena.premultiply(rotationQuaternion(axis, direction * angleChange))
 			} else if (option.includes('trans')) {
 				const axis = option.slice(5)
