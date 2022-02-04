@@ -1,4 +1,4 @@
-import { Object3D, PointLight, Mesh } from 'three'
+import { Object3D, PointLight, Mesh, MeshLambertMaterial, ShaderMaterial, DoubleSide, MeshStandardMaterial } from 'three'
 import Arena from "../utils/Arena"
 import { createMarkerIndicators } from "../utils/scene_init"
 import { Setup } from "../utils/setupAR"
@@ -6,6 +6,7 @@ import { InteractionManager } from "../utils/interactive"
 import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "../utils/constants"
 import { MarkerInfo } from "../utils/index"
 import { createFileUpload, createObjectControlForObject } from './utils'
+import VTKLoader from '../loaders/VTKLoader'
 
 const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void, controlPanel: HTMLDivElement) => {
 	setup.scene.add(new PointLight())
@@ -19,6 +20,40 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 	
 	controlPanel.appendChild(createFileUpload((object) => addCalibratableObject(object)))
 
+	const loader = new VTKLoader();
+	// loader.load('data/ricky_test3_0_0.vts', (geometry) => {
+	loader.load('data/TEST_ro_0_0.vts', (geometry) => {
+		geometry.center();
+		geometry.computeVertexNormals();
+
+		const vertexShader = `
+			attribute float rovx;
+			varying vec3 v_color;
+			void main() {
+				v_color = vec3(rovx, 0.0, 0.0);
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+			}
+		`
+
+		const fragmentShader = (opacity: number): string => `
+			varying vec3 v_color;
+			void main() {
+				gl_FragColor = vec4(v_color, ${opacity});
+			}
+		`
+		const material = new ShaderMaterial({
+			vertexShader,
+			fragmentShader: fragmentShader(0.8),
+			transparent: true,
+			side: DoubleSide
+		})
+
+		const mesh = new Mesh(geometry, material)
+		mesh.position.set(0, 1, 0);
+		mesh.scale.multiplyScalar(3);
+		addCalibratableObject(mesh)
+	});
+
 	setTimeout(() => {
 		calibratableObjects.forEach(o => {
 			const objectIndex = arena.objectIndices[o.uuid]
@@ -28,7 +63,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 		})
 		arena.clean()
 		onComplete(calibratableObjects)
-	}, 30000)
+	}, 3000000)
 
 	const addCalibratableObject = (object: Mesh) => {
 		const objectControl = createObjectControlForObject(

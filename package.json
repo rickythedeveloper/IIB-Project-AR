@@ -29,6 +29,8 @@
   },
   "dependencies": {
     "@ar-js-org/ar.js": "^3.3.3-es6-beta-02",
+    "base64-js": "^1.5.1",
+    "fflate": "^0.7.3",
     "three": "^0.137.5"
   }
 }

@@ -1,5 +1,6 @@
 import { Mesh, MeshLambertMaterial, Object3D, Quaternion, Vector3 } from "three"
-import { VTKLoader } from "three/examples/jsm/loaders/VTKLoader"
+// import { VTKLoader } from "three/examples/jsm/loaders/VTKLoader"
+import VTKLoader from "../loaders/VTKLoader"
 import { atanAngle } from "../utils/angle"
 import { InteractionManager, InteractiveEvent2, PinchEvent } from "../utils/interactive"
 import { Axis } from "../utils/three"
