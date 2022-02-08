@@ -1,38 +1,39 @@
-// Originally sourced from from https://github.com/markuslerner/THREE.Interactive
+// Originally sourced from from https://github.com/markuslerner/Interactive
 // Modified and Typescript-adapted by Rintaro Kawagishi
+import { Object3D, Vector2, Intersection, WebGLRenderer, Camera, Raycaster, Event as THREEEvent } from 'three';
 
 interface InteractiveObject {
-  target: THREE.Object3D
+  target: Object3D
   type: keyof HTMLElementEventMap | 'pinch'
   requiresIntersection: boolean
 }
 
-export interface PinchEvent extends THREE.Event {
+export interface PinchEvent extends THREEEvent {
   type: 'pinch'
-  target: THREE.Object3D
+  target: Object3D
   deltaScale: number
 }
 
-export interface InteractiveEvent2<K extends keyof HTMLElementEventMap> extends THREE.Event {
+export interface InteractiveEvent2<K extends keyof HTMLElementEventMap> extends THREEEvent {
   type: K
-  target: THREE.Object3D
+  target: Object3D
   htmlElementEvent: HTMLElementEventMap[K] | null
-  position: THREE.Vector2 // mouse / pointer position
-  intersection: THREE.Intersection | null
+  position: Vector2 // mouse / pointer position
+  intersection: Intersection | null
 }
 
 export class InteractionManager {
-	renderer: THREE.WebGLRenderer
-	camera: THREE.Camera
+	renderer: WebGLRenderer
+	camera: Camera
 	domElement: HTMLCanvasElement
-	mousePosition: THREE.Vector2 = new THREE.Vector2(-1, 1); // top left default position
+	mousePosition: Vector2 = new Vector2(-1, 1); // top left default position
 	supportsPointerEvents: boolean = !!window.PointerEvent
 	interactiveObjects: InteractiveObject[] = []
-	raycaster: THREE.Raycaster = new THREE.Raycaster()
+	raycaster: Raycaster = new Raycaster()
 	treatTouchEventsAsMouseEvents: boolean = true
   lastTouches: {[pointerId: number]: PointerEvent} = {}
 
-  constructor(renderer: THREE.WebGLRenderer, camera: THREE.Camera, domElement: HTMLCanvasElement) {
+  constructor(renderer: WebGLRenderer, camera: Camera, domElement: HTMLCanvasElement) {
     this.renderer = renderer;
     this.camera = camera;
     this.domElement = domElement;
@@ -70,33 +71,53 @@ export class InteractionManager {
     }
   };
 
-  add = (object: THREE.Object3D, type: keyof HTMLElementEventMap | 'pinch', requiresIntersection: boolean = true) => {
+  add = (object: Object3D, type: keyof HTMLElementEventMap | 'pinch', requiresIntersection: boolean = true) => {
     this.interactiveObjects.push({target: object, type, requiresIntersection})
   }
 
-  remove = (object: THREE.Object3D, type: keyof HTMLElementEventMap) => {
+  remove = (object: Object3D, type: keyof HTMLElementEventMap) => {
     this.interactiveObjects = this.interactiveObjects.filter(o => o.target.uuid !== object.uuid || o.type !== type)
   };
 
   dispatchForEvent = (type: keyof HTMLElementEventMap, htmlElementEvent: MouseEvent | TouchEvent, x: number, y: number) => {
     this.mapPositionToPoint(this.mousePosition, x, y);
     this.raycaster.setFromCamera(this.mousePosition, this.camera)
+
+    const objectsToConsider: InteractiveObject[] = []
     for (let i = 0; i < this.interactiveObjects.length; i++) {
       const interactiveObject = this.interactiveObjects[i]
-      if (interactiveObject.type !== type) continue 
-      const intersects = this.raycaster.intersectObject(interactiveObject.target)
-      const intersect = intersects.length > 0 ? intersects[0] : null
-      if (interactiveObject.requiresIntersection && intersect === null) continue
-      else {
-        const event: InteractiveEvent2<typeof type> = {
-          type: type,
-          target: interactiveObject.target,
-          htmlElementEvent: htmlElementEvent,
-          position: this.mousePosition,
-          intersection: intersect
-        }
-        event.target.dispatchEvent(event)
+      if (interactiveObject.type === type) objectsToConsider.push(interactiveObject)
+    }
+
+    // dispatch event for all intersection in the order of proximity
+    const intersects = this.raycaster.intersectObjects(objectsToConsider.map(o => o.target))
+    const notifiedObjectIDs: string[] = []
+    for (let i = 0; i < intersects.length; i++) {
+      const intersect = intersects[i]
+      const event: InteractiveEvent2<typeof type> = {
+        type: type,
+        target: intersect.object,
+        htmlElementEvent: htmlElementEvent,
+        position: this.mousePosition,
+        intersection: intersect
       }
+      notifiedObjectIDs.push(event.target.uuid)
+      event.target.dispatchEvent(event)
+    }
+
+    // check objects that do not require intersection
+    for (let i = 0; i < objectsToConsider.length; i++) {
+      const interactiveObject = objectsToConsider[i]
+      if (notifiedObjectIDs.includes(interactiveObject.target.uuid)) continue
+      if (interactiveObject.requiresIntersection) continue
+      const event: InteractiveEvent2<typeof type> = {
+        type: type,
+        target: interactiveObject.target,
+        htmlElementEvent: htmlElementEvent,
+        position: this.mousePosition,
+        intersection: null
+      }
+      event.target.dispatchEvent(event)
     }
   }
 
@@ -159,7 +180,7 @@ export class InteractionManager {
     this.dispatchForEvent('touchend', touchEvent, touchEvent.touches[0].clientX, touchEvent.touches[0].clientY)
   };
 
-  mapPositionToPoint = (point: THREE.Vector2, x: number, y: number) => {
+  mapPositionToPoint = (point: Vector2, x: number, y: number) => {
     let rect;
 
     // IE 11 fix

@@ -1,10 +1,11 @@
-import { createMarkerIndicator, createLine } from "./utils/three.js"
-import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./utils/arrays.js"
-import { Matrix, Vector, Positioning } from "./utils/index.js"
-import { createMarker, Setup } from "./utils/setupAR.js"
+import { createMarkerIndicator, createLine } from "./utils/three"
+import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./utils/arrays"
+import { Matrix, Vector, Positioning } from "./utils/index"
+import { createMarker, Setup } from "./utils/setupAR"
+import { Vector3, Quaternion, Object3D, Line, BufferGeometry, LineBasicMaterial, Color } from 'three'
 
-const zeroVector = new THREE.Vector3(0, 0, 0)
-const zeroQuaternion = new THREE.Quaternion(0, 0, 0, 1)
+const zeroVector = new Vector3(0, 0, 0)
+const zeroQuaternion = new Quaternion(0, 0, 0, 1)
 const RECORD_INTERVAL = 20
 const UPDATE_INTERVAL = 500
 const MAX_MARKER_DISTANCE = 100
@@ -12,11 +13,11 @@ const MIN_MEASUREMENTS = 1000
 const MAX_VARIANCE = 0.05
 
 interface MarkerPairInfo {
-	averageRelativePosition: THREE.Vector3
-	averageRelativeQuaternion: THREE.Quaternion
+	averageRelativePosition: Vector3
+	averageRelativeQuaternion: Quaternion
 	relativePositionConfidence: number
-	recordedRelativePositions: THREE.Vector3[]
-	recordedRelativeQuaternions: THREE.Quaternion[]
+	recordedRelativePositions: Vector3[]
+	recordedRelativeQuaternions: Quaternion[]
 }
 
 
@@ -26,7 +27,7 @@ const calculateConfidence = (numMeasurements: number, variance: {x: number, y: n
 	Math.min(1, MAX_VARIANCE / variance.y) *
 	Math.min(1, MAX_VARIANCE / variance.z)
 
-const calculateRelative = (marker1: THREE.Object3D, marker2: THREE.Object3D): Positioning | null => {
+const calculateRelative = (marker1: Object3D, marker2: Object3D): Positioning | null => {
 	if (!marker1.visible || !marker2.visible) return null
 
 	// 0: camera, 1: marker i, 2: marker j
@@ -44,7 +45,7 @@ const calculateRelative = (marker1: THREE.Object3D, marker2: THREE.Object3D): Po
 	return { position: p121, quaternion: q121 }
 }
 
-const recordValues = (markers: THREE.Object3D[], markerPairMatrix: Matrix<MarkerPairInfo>) => {
+const recordValues = (markers: Object3D[], markerPairMatrix: Matrix<MarkerPairInfo>) => {
 	for (let i = 0; i < markers.length; i++) {
 		for (let j = 0; j < markers.length; j++) {
 			if (i === j) continue
@@ -100,8 +101,8 @@ const connectMarkers = (
 const registerRoutes = (
 	routes: Route[], 
 	markerPairMatrix: Matrix<MarkerPairInfo>, 
-	markerPositions: Vector<THREE.Vector3 | null>, 
-	markerQuaternions: Vector<THREE.Quaternion | null>
+	markerPositions: Vector<Vector3 | null>, 
+	markerQuaternions: Vector<Quaternion | null>
 ) => {
 	for (const route of routes) {
 		const startIndex = route[0], endIndex = route[1]
@@ -121,7 +122,7 @@ const registerRoutes = (
 const updateConfidenceIndicators = (
 	numMarkers: number, 
 	markerPairMatrix: Matrix<MarkerPairInfo>, 
-	indicatorLines: Matrix<THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>>,
+	indicatorLines: Matrix<Line<BufferGeometry, LineBasicMaterial>>,
 ) => {
 	for (let i = 0; i < numMarkers; i++) {
 		for (let j = 0; j < numMarkers; j++) {
@@ -133,7 +134,7 @@ const updateConfidenceIndicators = (
 			// @ts-ignore
 			lineGeometry.attributes.position.array = vertices
 			lineGeometry.attributes.position.needsUpdate = true
-			lineMaterial.color = new THREE.Color(1 - confidence, confidence, 0)
+			lineMaterial.color = new Color(1 - confidence, confidence, 0)
 		}
 	}
 }
@@ -141,8 +142,8 @@ const updateConfidenceIndicators = (
 const scan = (
 	arSetup: Setup,
 	markerNumbers: number[], 
-	update: (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => void = () => {},
-	onComplete: (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => void = () => {}
+	update: (markerPositions: Vector3[], markerQuaternions: Quaternion[]) => void = () => {},
+	onComplete: (markerPositions: Vector3[], markerQuaternions: Quaternion[]) => void = () => {}
 ) => {
 	const markers = markerNumbers.map(n => createMarker(n, arSetup))
 	markers.forEach(m => arSetup.camera.add(m))
@@ -186,13 +187,13 @@ const scan = (
 		if (connectedMarkers.length === markers.length && !completed) {
 			completed = true
 			registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions)
-			onComplete(markerPositions as THREE.Vector3[], markerQuaternions as THREE.Quaternion[])
+			onComplete(markerPositions as Vector3[], markerQuaternions as Quaternion[])
 		}
 
 		// update confidence indicator lines between markers
 		updateConfidenceIndicators(markers.length, markerPairMatrix, indicatorLines)
 
-		update(markerPositions as THREE.Vector3[], markerQuaternions as THREE.Quaternion[])
+		update(markerPositions as Vector3[], markerQuaternions as Quaternion[])
 	}, UPDATE_INTERVAL)
 
 	return { recordValueInterval, setValueInterval, markers }

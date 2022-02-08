@@ -1,4 +1,4 @@
-import { Matrix, Vector } from "./index.js"
+import { Matrix, Vector } from "./index"
 
 export const matrixMultiplyScalar = (matrix: Matrix<number>, scalar: number) => {
 	const result: Matrix<number> = []

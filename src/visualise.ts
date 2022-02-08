@@ -1,11 +1,13 @@
-import Arena from "./utils/Arena.js"
-import { createMarkerIndicators } from "./utils/scene_init.js"
-import { Setup } from "./utils/setupAR.js"
-import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./utils/constants.js"
-import { MarkerInfo } from "./utils/index.js"
+import Arena from "./utils/Arena"
+import { createMarkerIndicators } from "./utils/scene_init"
+import { Setup } from "./utils/setupAR"
+import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "./utils/constants"
+import { MarkerInfo } from "./utils/index"
+import { Object3D, PointLight } from 'three'
 
-const visualise = (setup: Setup, markerInfos: MarkerInfo[], objects: THREE.Object3D[]) => {
-	setup.scene.add(new THREE.PointLight())
+
+const visualise = (setup: Setup, markerInfos: MarkerInfo[], objects: Object3D[]) => {
+	setup.scene.add(new PointLight())
 	const arena = new Arena(setup, markerInfos)
 	const markerIndicators = createMarkerIndicators(arena.markerPositions, arena.markerQuaternions)
 	arena.addObjects(...markerIndicators, ...objects)

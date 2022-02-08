@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "compile": "tsc --watch",
+    "build": "webpack",
+    "build-watch": "nodemon --exec npm run build --watch src --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,6 +21,16 @@
   "homepage": "https://github.com/rickythedeveloper/IIB-Project-AR#readme",
   "devDependencies": {
     "@types/three": "^0.136.1",
-    "typescript": "^4.5.5"
+    "nodemon": "^2.0.15",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.5.5",
+    "webpack": "^5.68.0",
+    "webpack-cli": "^4.9.2"
+  },
+  "dependencies": {
+    "@ar-js-org/ar.js": "^3.3.3-es6-beta-02",
+    "base64-js": "^1.5.1",
+    "fflate": "^0.7.3",
+    "three": "^0.137.5"
   }
 }

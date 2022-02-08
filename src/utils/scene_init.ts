@@ -1,7 +1,9 @@
-import { rotationQuaternion, createBufferObject } from "./three.js"
-import { createOption, createButton } from "./elements.js"
-import Arena from "./Arena.js"
-import { ThreeObjectWrapper } from "./index.js"
+import { rotationQuaternion, createBufferObject, Axis } from "./three"
+import { createOption, createButton } from "./elements"
+import Arena from "./Arena"
+import { ThreeObjectWrapper } from "./index"
+import { Vector3, Quaternion, PlaneGeometry, MeshBasicMaterial, DoubleSide, Mesh } from 'three'
+
 
 enum ChangeOption { rotx, roty, rotz, transx, transy, transz, scale }
 type ChangeOptionString = keyof typeof ChangeOption
@@ -19,7 +21,7 @@ export const createMoveDropdown = (objectWrapper: ThreeObjectWrapper, arena: Are
 	let selectedOption: ChangeOptionString = 'rotx'
 	optionDropdown.onchange = (e) => { if (e.target) { selectedOption = (e.target as HTMLSelectElement).value as ChangeOptionString } }
 
-	let changeIntervalObject: number | undefined
+	let changeIntervalObject: NodeJS.Timer | undefined
 	const changeInterval = 10, angleChange = changeInterval / 1000, scaleChange = 0.005, positionChange = changeInterval / 1000
 	const plusButton = createButton('+', () => { changeIntervalObject = createChangeInterval(1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, objectWrapper, arena) })
 	const minusButton = createButton('-', () => { changeIntervalObject = createChangeInterval(-1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, objectWrapper, arena) })
@@ -28,7 +30,7 @@ export const createMoveDropdown = (objectWrapper: ThreeObjectWrapper, arena: Are
 	const createChangeInterval = (
 		direction: 1 | -1,
 		option: ChangeOptionString,
-		intervalObject: number | undefined, 
+		intervalObject: NodeJS.Timer | undefined, 
 		interval: number, 
 		scaleChange: number, 
 		angleChange: number, 
@@ -49,11 +51,12 @@ export const createMoveDropdown = (objectWrapper: ThreeObjectWrapper, arena: Are
 			if (option === 'scale') {
 				objectWrapper.object.scale.addScalar(direction * scaleChange)
 			} else if (option.includes('rot')) {
-				const axis = option.slice(3) as 'x' | 'y' | 'z'
+				const axisString = option.slice(3) as 'x' | 'y' | 'z'
+				const axis = Axis[axisString]
 				arena.arenaObjects[objectIndex].quaternionInArena.premultiply(rotationQuaternion(axis, direction * angleChange))
 			} else if (option.includes('trans')) {
 				const axis = option.slice(5)
-				const axisVector = new THREE.Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0)
+				const axisVector = new Vector3(axis === 'x' ? 1 : 0, axis === 'y' ? 1 : 0, axis === 'z' ? 1 : 0)
 				arena.arenaObjects[objectIndex].positionInArena.addScaledVector(axisVector, direction * positionChange)
 			} else throw new Error('invalid change type')
 		}, interval)
@@ -85,14 +88,14 @@ export const createSimulationResultObject = (vertices: Float32Array, indices: Ui
 	return simulationResult
 }
 
-export const createMarkerIndicators = (markerPositions: THREE.Vector3[], markerQuaternions: THREE.Quaternion[]) => {
+export const createMarkerIndicators = (markerPositions: Vector3[], markerQuaternions: Quaternion[]) => {
 	const markerIndicators = []
 	for (let i = 0; i < markerPositions.length; i++) {
-		const markerIndicatorGeometry = new THREE.PlaneGeometry(1, 1)
-		const markerIndicatorMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.5, side: THREE.DoubleSide })
-		const markerIndicator = new THREE.Mesh(markerIndicatorGeometry, markerIndicatorMaterial)
+		const markerIndicatorGeometry = new PlaneGeometry(1, 1)
+		const markerIndicatorMaterial = new MeshBasicMaterial({ transparent: true, opacity: 0.5, side: DoubleSide })
+		const markerIndicator = new Mesh(markerIndicatorGeometry, markerIndicatorMaterial)
 		markerIndicator.position.set(markerPositions[i].x, markerPositions[i].y, markerPositions[i].z)
-		const correctionQuat = new THREE.Quaternion(Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4))
+		const correctionQuat = new Quaternion(Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4))
 		const indicatorQuat = correctionQuat.clone().premultiply(markerQuaternions[i])
 		markerIndicator.quaternion.set(indicatorQuat.x, indicatorQuat.y, indicatorQuat.z, indicatorQuat.w)
 		markerIndicators.push(markerIndicator)

@@ -1,9 +1,10 @@
-import setupAR from "./utils/setupAR.js";
-import visualise from "./visualise.js";
-import { createControlPanel } from "./utils/elements.js";
-import scan from "./scan.js";
-import calibrate from "./calibrate.js";
-import { MarkerInfo } from "./utils/index.js";
+import { Object3D, Quaternion, Vector3 } from "three";
+import setupAR from "./utils/setupAR";
+import visualise from "./visualise";
+import { createControlPanel } from "./utils/elements";
+import scan from "./scan";
+import calibrate from "./calibrate";
+import { MarkerInfo } from "./utils/index";
 
 const MODES = {
 	SCAN: 'scan',
@@ -17,13 +18,13 @@ const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
 const arSetup = setupAR() 
-const markerNumbers = [0, 1, 2, 3, 4, 5]
-let markers: THREE.Object3D[] = []
-let recordValueInterval: number, setValueInterval: number
+const markerNumbers = [0]
+let markers: Object3D[] = []
+let recordValueInterval: NodeJS.Timer, setValueInterval: NodeJS.Timer
 
 let markerInfos: MarkerInfo[] = []
 
-const onScanComplete = (pos: THREE.Vector3[], quats: THREE.Quaternion[]) => {
+const onScanComplete = (pos: Vector3[], quats: Quaternion[]) => {
 	console.log('scan completed');
 	clearInterval(recordValueInterval)
 	clearInterval(setValueInterval)
@@ -40,10 +41,10 @@ const onScanComplete = (pos: THREE.Vector3[], quats: THREE.Quaternion[]) => {
 			quaternion: quats[i]
 		})
 	}
-	calibrate(arSetup, markerInfos, onCalibrateComplete)
+	calibrate(arSetup, markerInfos, onCalibrateComplete, controlPanel)
 }
 
-const onCalibrateComplete = (objects: THREE.Object3D[]) => {
+const onCalibrateComplete = (objects: Object3D[]) => {
 	console.log('calibration complete!');
 	visualise(arSetup, markerInfos, objects.map(o => o.clone()))
 }

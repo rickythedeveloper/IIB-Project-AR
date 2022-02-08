@@ -1,6 +1,6 @@
 const getData = new Promise(async (resolve: (value: {indices: Uint32Array, vertices: Float32Array, data: Float32Array}) => void, reject) => {
 	let indices: Uint32Array, vertices: Float32Array, data: Float32Array;
-	const indicesResponse = await fetch('./data/indices.bin')
+	const indicesResponse = await fetch('data/indices.bin')
 	const indicesBlob = await indicesResponse.blob()
 	const indicesReader = new FileReader()
 	indicesReader.onload = () => {
@@ -10,7 +10,7 @@ const getData = new Promise(async (resolve: (value: {indices: Uint32Array, verti
 	indicesReader.onerror = reject
 	indicesReader.readAsArrayBuffer(indicesBlob)
 
-	const verticesResponse = await fetch('./data/vertices.bin')
+	const verticesResponse = await fetch('data/vertices.bin')
 	const verticesBlob = await verticesResponse.blob()
 	const verticesReader = new FileReader()
 	verticesReader.onload = () => {
@@ -20,7 +20,7 @@ const getData = new Promise(async (resolve: (value: {indices: Uint32Array, verti
 	verticesReader.onerror = reject
 	verticesReader.readAsArrayBuffer(verticesBlob);
 
-	const dataResponse = await fetch('https://dl.dropboxusercontent.com/s/0mmd7dczala0ljd/values_sch_all.bin')
+	const dataResponse = await fetch('data/values_sch_all.bin')
 	const dataBlob = await dataResponse.blob()
 	const dataReader = new FileReader()
 	dataReader.onload = () => {
