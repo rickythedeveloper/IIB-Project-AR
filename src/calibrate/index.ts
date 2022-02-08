@@ -6,7 +6,7 @@ import { InteractionManager } from "../utils/interactive"
 import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "../utils/constants"
 import { MarkerInfo } from "../utils/index"
 import { createFileUpload, createObjectControlForObject } from './utils'
-import VTKLoader from '../loaders/VTKLoader'
+import VTSLoader from '../loaders/VTK/VTSLoader'
 
 const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void, controlPanel: HTMLDivElement) => {
 	setup.scene.add(new PointLight())
@@ -20,7 +20,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 	
 	controlPanel.appendChild(createFileUpload((object) => addCalibratableObject(object)))
 
-	const loader = new VTKLoader();
+	const loader = new VTSLoader();
 	loader.load('data/ricky_test3_0_0.vts', (geometry) => {
 	// loader.load('data/TEST_ro_0_0.vts', (geometry) => {
 		geometry.center();

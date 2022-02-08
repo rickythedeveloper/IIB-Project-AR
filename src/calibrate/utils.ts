@@ -1,6 +1,5 @@
 import { Mesh, MeshLambertMaterial, Object3D, Quaternion, Vector3 } from "three"
-// import { VTKLoader } from "three/examples/jsm/loaders/VTKLoader"
-import VTKLoader from "../loaders/VTKLoader"
+import VTSLoader from "../loaders/VTK/VTSLoader"
 import { atanAngle } from "../utils/angle"
 import { InteractionManager, InteractiveEvent2, PinchEvent } from "../utils/interactive"
 import { Axis } from "../utils/three"
@@ -162,8 +161,7 @@ export const createFileUpload = (onComplete: (object: Mesh) => void) => {
 		const reader = new FileReader()
 		reader.onload = () => {
 			const url = reader.result as string
-
-			const loader = new VTKLoader();
+			const loader = new VTSLoader();
 			loader.load(url, (geometry) => {
 				geometry.center();
 				geometry.computeVertexNormals();
