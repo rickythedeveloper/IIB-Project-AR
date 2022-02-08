@@ -21,16 +21,17 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 	controlPanel.appendChild(createFileUpload((object) => addCalibratableObject(object)))
 
 	const loader = new VTKLoader();
-	// loader.load('data/ricky_test3_0_0.vts', (geometry) => {
-	loader.load('data/TEST_ro_0_0.vts', (geometry) => {
+	loader.load('data/ricky_test3_0_0.vts', (geometry) => {
+	// loader.load('data/TEST_ro_0_0.vts', (geometry) => {
 		geometry.center();
 		geometry.computeVertexNormals();
 
-		const vertexShader = `
-			attribute float rovx;
+		const vertexShader = (property: string, min: number, max: number) => `
+			attribute float ${property};
 			varying vec3 v_color;
 			void main() {
-				v_color = vec3(rovx, 0.0, 0.0);
+				float propertyValueNormalized = (${property} - (${min})) / (${max} - (${min}));
+				v_color = vec3(propertyValueNormalized, 0.0, 0.0);
 				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 			}
 		`
@@ -42,8 +43,8 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 			}
 		`
 		const material = new ShaderMaterial({
-			vertexShader,
-			fragmentShader: fragmentShader(0.8),
+			vertexShader: vertexShader('rovx', -23.180418015, 71.037857056),
+			fragmentShader: fragmentShader(1),
 			transparent: true,
 			side: DoubleSide
 		})

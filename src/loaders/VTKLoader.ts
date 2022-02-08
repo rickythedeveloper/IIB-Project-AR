@@ -13,6 +13,7 @@ import {
 import * as fflate from 'fflate';
 
 import { toByteArray } from 'base64-js'
+import { Axis } from '../utils/three';
 
 type DataType = 'Int8' | 'UInt8' | 'Int16' | 'UInt16' | 'Int32' | 'UInt32' | 'Int64' | 'UInt64' | 'Float32' | 'Float64'
 type DataFormat = 'appended' | 'binary' | 'ascii'
@@ -126,6 +127,41 @@ const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
 	} else {
 		throw new Error('not implemented')
 	}
+}
+
+const getFlatIndex = (i: number, j: number, k: number, numX: number, numY: number): number => k * numX * numY + j * numX + i
+
+const getIndexArray = (axis1: Axis, axis2: Axis, axis1low: number, axis1high: number, axis2low: number, axis2high: number, numX: number, numY: number) => {
+	const numTriangles = (axis1high - axis1low) * (axis2high - axis2low) * 2
+	const indexArray = new Uint32Array(numTriangles * 3)
+	
+	const val1 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i : (axis2 === axis ? j : 0)
+	const val2 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i + 1 : (axis2 === axis ? j : 0)
+	const val3 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i : (axis2 === axis ? j + 1 : 0)
+	const val4 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i + 1 : (axis2 === axis ? j + 1 : 0)
+	const index1 = (i: number, j: number) => getFlatIndex(val1(Axis.x, i, j), val1(Axis.y, i, j), val1(Axis.z, i, j), numX, numY)
+	const index2 = (i: number, j: number) => getFlatIndex(val2(Axis.x, i, j), val2(Axis.y, i, j), val2(Axis.z, i, j), numX, numY)
+	const index3 = (i: number, j: number) => getFlatIndex(val3(Axis.x, i, j), val3(Axis.y, i, j), val3(Axis.z, i, j), numX, numY)
+	const index4 = (i: number, j: number) => getFlatIndex(val4(Axis.x, i, j), val4(Axis.y, i, j), val4(Axis.z, i, j), numX, numY)
+	
+	let index = 0
+	for (let j = 0; j < axis2high - axis2low; j++) {
+		for (let i = 0; i < axis1high - axis1low; i++) {
+			const y1z1 = index1(i, j)
+			const y2z1 = index2(i, j)
+			const y1z2 = index3(i, j)
+			const y2z2 = index4(i, j)
+			indexArray[index] = y1z1
+			indexArray[index+1] = y2z1
+			indexArray[index+2] = y1z2
+			indexArray[index+3] = y2z1
+			indexArray[index+4] = y1z2
+			indexArray[index+5] = y2z2
+			index += 6
+		}
+	}
+
+	return indexArray
 }
 
 class VTKLoader extends Loader {
@@ -948,9 +984,17 @@ class VTKLoader extends Loader {
 
 					geometry.setAttribute('position', new BufferAttribute(typedArray, 3))
 					console.log(dataArray.attributes.Name, typedArray);
+
+					const [x1, x2, y1, y2, z1, z2] = grid.attributes.WholeExtent.split(' ').map(e => parseInt(e))
+					const numX = x2 - x1 + 1, numY = y2 - y1 + 1
+
+					let indexArray: Uint32Array
+					if (x1 == x2) indexArray = getIndexArray(Axis.y, Axis.z, y1, y2, z1, z2, numX, numY)
+					else if (y1 == y2) indexArray = getIndexArray(Axis.x, Axis.z, x1, x2, z1, z2, numX, numY)
+					else if (z1 == z2) indexArray = getIndexArray(Axis.x, Axis.y, x1, x2, y1, y2, numX, numY)
+					else throw new Error('vts file extent is multiply in all 3 dimentions')
+					geometry.index = new BufferAttribute(indexArray, 1)
 				}
-
-
 
 				return geometry
 			} else throw new Error( 'Unsupported DATASET type' );
