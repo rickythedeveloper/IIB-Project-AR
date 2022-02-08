@@ -5,6 +5,17 @@ import { BufferAttribute, BufferGeometry, FileLoader, Loader, LoaderUtils, Loadi
 import { Axis } from '../../utils/three';
 import { getDataFromDataArray, getTypeArrayConstructor, xmlToJson } from './utils';
 
+interface Property {
+	name: string
+	min: number
+	max: number
+}
+
+interface VTS {
+	geometry: BufferGeometry
+	properties: Property[]
+}
+
 const getFlatIndex = (i: number, j: number, k: number, numX: number, numY: number): number => k * numX * numY + j * numX + i
 
 const getIndexArray = (axis1: Axis, axis2: Axis, axis1Range: number, axis2Range: number, numX: number, numY: number) => {
@@ -37,7 +48,7 @@ const getIndexArray = (axis1: Axis, axis2: Axis, axis1Range: number, axis2Range:
 	return indexArray
 }
 
-const parseXMLVTS = (stringFile: string): BufferGeometry => {
+const parseXMLVTS = (stringFile: string): VTS => {
 	let dom: any
 	if ( window.DOMParser ) {
 		try { dom = ( new DOMParser() ).parseFromString(stringFile, 'text/xml'); } 
@@ -65,6 +76,9 @@ const parseXMLVTS = (stringFile: string): BufferGeometry => {
 	const compressed = file.attributes.compressor !== undefined // TODO implement for compressed file
 	const geometry = new BufferGeometry()
 
+
+	const properties: Property[] = []
+
 	// PointData
 	const pointDataSection = piece.PointData
 	const pointDataDataArrays = pointDataSection.DataArray instanceof Array ? pointDataSection.DataArray : [pointDataSection.DataArray]
@@ -75,6 +89,12 @@ const parseXMLVTS = (stringFile: string): BufferGeometry => {
 			continue
 		}
 		geometry.setAttribute(dataArray.attributes.Name, new BufferAttribute(typedArray, 1))
+
+		properties.push({
+			name: dataArray.attributes.Name, 
+			min: Number(dataArray.attributes.RangeMin), 
+			max: Number(dataArray.attributes.RangeMax)
+		})
 	}
 
 	// CellData
@@ -96,13 +116,13 @@ const parseXMLVTS = (stringFile: string): BufferGeometry => {
 		geometry.index = new BufferAttribute(indexArray, 1)
 	}
 
-	return geometry
+	return { geometry, properties }
 }
 
 class VTSLoader extends Loader {
 	constructor( manager?: LoadingManager ) { super(manager) }
 
-	load(url: string, onLoad: (geometry: BufferGeometry) => void, onProgress?: (request: ProgressEvent<EventTarget>) => void, onError?: (message: string) => void) {
+	load(url: string, onLoad: (vts: VTS) => void, onProgress?: (request: ProgressEvent<EventTarget>) => void, onError?: (message: string) => void) {
 		const scope = this;
 		const loader = new FileLoader(scope.manager);
 		loader.setPath(scope.path);
@@ -124,7 +144,7 @@ class VTSLoader extends Loader {
 		);
 	}
 
-	parse(data: ArrayBuffer): BufferGeometry {
+	parse(data: ArrayBuffer): VTS {
 		const text = LoaderUtils.decodeText(data)
 		return parseXMLVTS(text)
 	}

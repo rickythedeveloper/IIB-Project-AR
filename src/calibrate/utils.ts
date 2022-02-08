@@ -162,7 +162,8 @@ export const createFileUpload = (onComplete: (object: Mesh) => void) => {
 		reader.onload = () => {
 			const url = reader.result as string
 			const loader = new VTSLoader();
-			loader.load(url, (geometry) => {
+			loader.load(url, (vts) => {
+				const { geometry, properties } = vts
 				geometry.center();
 				geometry.computeVertexNormals();
 				const material = new MeshLambertMaterial( { color: 0xffffff } );

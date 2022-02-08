@@ -21,8 +21,10 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 	controlPanel.appendChild(createFileUpload((object) => addCalibratableObject(object)))
 
 	const loader = new VTSLoader();
-	loader.load('data/ricky_test3_0_0.vts', (geometry) => {
-	// loader.load('data/TEST_ro_0_0.vts', (geometry) => {
+	// loader.load('data/ricky_test3_0_0.vts', (vts) => {
+	loader.load('data/TEST_ro_0_0.vts', (vts) => {
+		const { geometry, properties } = vts
+		console.log(properties);
 		geometry.center();
 		geometry.computeVertexNormals();
 
