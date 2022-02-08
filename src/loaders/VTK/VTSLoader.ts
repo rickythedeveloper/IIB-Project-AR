@@ -5,7 +5,7 @@ import { BufferAttribute, BufferGeometry, FileLoader, Loader, LoaderUtils, Loadi
 import { Axis } from '../../utils/three';
 import { getDataFromDataArray, getTypeArrayConstructor, xmlToJson } from './utils';
 
-interface Property {
+export interface Property {
 	name: string
 	min: number
 	max: number
