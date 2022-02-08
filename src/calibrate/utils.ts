@@ -150,31 +150,18 @@ export const createObjectControlForObject = (
 	return objectControl
 }
 
-export const createFileUpload = (onComplete: (object: Mesh) => void) => {
+export const createFileUpload = (onComplete: (fileURL: string) => void) => {
 	const input = document.createElement('input')
 	input.type = 'file'
-	input.onchange = (e) => {
+	input.onchange = () => {
 		if (input.files === null) return
-		const aa = input.files[0]
-		console.log(aa.name);
-		
+		const file = input.files[0]
 		const reader = new FileReader()
 		reader.onload = () => {
 			const url = reader.result as string
-			const loader = new VTSLoader();
-			loader.load(url, (vts) => {
-				const { geometry, properties } = vts
-				geometry.center();
-				geometry.computeVertexNormals();
-				const material = new MeshLambertMaterial( { color: 0xffffff } );
-				const mesh = new Mesh( geometry, material );
-				mesh.position.set(0, 1, 0);
-				mesh.scale.multiplyScalar(3);
-				onComplete(mesh)
-			});
+			onComplete(url)
 		}
-		reader.readAsDataURL(aa)
-		
+		reader.readAsDataURL(file)
 	}
 	return input
 }

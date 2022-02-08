@@ -19,58 +19,56 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 	const calibratableObjects: Object3D[] = []
 	const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement)
 	
-	controlPanel.appendChild(createFileUpload((object) => addCalibratableObject(object)))
-
-	const loader = new VTSLoader();
-	// loader.load('data/ricky_test3_0_0.vts', (vts) => {
-	loader.load('data/TEST_ro_0_0.vts', (vts) => {
-		const { geometry, properties } = vts
-		if (properties.length === 0) throw new Error('could not detect any properties to display')
-
-		geometry.center();
-		geometry.computeVertexNormals();
-
-		const vertexShader = (property: string, min: number, max: number) => `
-			attribute float ${property};
-			varying vec3 v_color;
-			void main() {
-				float propertyValueNormalized = (${property} - (${min.toFixed(20)})) / (${max.toFixed(20)} - (${min.toFixed(20)}));
-				v_color = vec3(propertyValueNormalized, 0.0, 0.0);
-				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	controlPanel.appendChild(createFileUpload((url) => {
+		const loader = new VTSLoader();
+		loader.load(url, ({ geometry, properties }) => {
+			if (properties.length === 0) throw new Error('could not detect any properties to display')
+			geometry.center();
+			geometry.computeVertexNormals();
+	
+			const vertexShader = (property: string, min: number, max: number) => `
+				attribute float ${property};
+				varying vec3 v_color;
+				void main() {
+					float propertyValueNormalized = (${property} - (${min.toFixed(20)})) / (${max.toFixed(20)} - (${min.toFixed(20)}));
+					v_color = vec3(propertyValueNormalized, 0.0, 0.0);
+					gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+				}
+			`
+			const fragmentShader = (opacity: number): string => `
+				varying vec3 v_color;
+				void main() {
+					gl_FragColor = vec4(v_color, ${opacity});
+				}
+			`
+	
+			const getMaterial = (property: Property) => new ShaderMaterial({
+				vertexShader: vertexShader(property.name, property.min, property.max),
+				fragmentShader: fragmentShader(1),
+				transparent: true,
+				side: DoubleSide
+			})
+	
+			const mesh = new Mesh(geometry, getMaterial(properties[0]))
+			mesh.position.set(0, 1, 0);
+			mesh.scale.multiplyScalar(3);
+			addCalibratableObject(mesh)
+	
+			// add dropdown option
+			const optionDropdown = document.createElement('select')
+			properties.forEach(p => optionDropdown.appendChild(createOption(p.name, p.name)))
+			optionDropdown.onchange = (e) => {
+				if (e.target) {
+					const propertyName = (e.target as HTMLSelectElement).value
+					const property = properties.filter(p => p.name === propertyName)[0]
+					mesh.material = getMaterial(property)
+				}
 			}
-		`
+			optionDropdown.selectedIndex = 0
+			controlPanel.append(optionDropdown)
+		});
+	}))
 
-		const fragmentShader = (opacity: number): string => `
-			varying vec3 v_color;
-			void main() {
-				gl_FragColor = vec4(v_color, ${opacity});
-			}
-		`
-
-		const getMaterial = (property: Property) => new ShaderMaterial({
-			vertexShader: vertexShader(property.name, property.min, property.max),
-			fragmentShader: fragmentShader(1),
-			transparent: true,
-			side: DoubleSide
-		})
-
-		const mesh = new Mesh(geometry, getMaterial(properties[0]))
-		mesh.position.set(0, 1, 0);
-		mesh.scale.multiplyScalar(3);
-		addCalibratableObject(mesh)
-
-		const optionDropdown = document.createElement('select')
-		properties.forEach(p => optionDropdown.appendChild(createOption(p.name, p.name)))
-		optionDropdown.onchange = (e) => {
-			if (e.target) {
-				const propertyName = (e.target as HTMLSelectElement).value
-				const property = properties.filter(p => p.name === propertyName)[0]
-				mesh.material = getMaterial(property)
-			}
-		}
-		optionDropdown.selectedIndex = 0
-		controlPanel.append(optionDropdown)
-	});
 
 	setTimeout(() => {
 		calibratableObjects.forEach(o => {
