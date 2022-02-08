@@ -126,3 +126,29 @@ Used the sign of w to correct it.
 - various small improvements to the control UI
 - merge into master
 - put every object on its own closest marker to increase stability
+
+## 30/01
+- refactor
+- implement detection box
+
+## 31/01
+- implement zooming pinch
+
+## 01/02
+- use npm modules of threejs and arjs
+- show vtk bunny (legacy format)
+
+## 02/02
+- dynamic positioning of object controls
+- closest intersection for control
+
+## 03/02
+- uploading file
+- refactor
+
+## 04/02 - 06/02
+- working on our own vtk loader
+
+## 07/02
+- working on vts file (structured grid)
+- struggling to generate mesh from points
