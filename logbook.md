@@ -152,3 +152,7 @@ Used the sign of w to correct it.
 ## 07/02
 - working on vts file (structured grid)
 - struggling to generate mesh from points
+
+## 08/02
+- refine VTSLoader
+- show property options
