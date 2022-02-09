@@ -22,7 +22,6 @@ const parse = (stringFile: string): VTP => {
 	const pointDataDataArrays = piece.PointData.DataArray instanceof Array ? piece.PointData.DataArray : [piece.PointData.DataArray]
 	for (const dataArray of pointDataDataArrays) {
 		const typedArray = getDataFromDataArray(file, dataArray)
-		console.log(dataArray.attributes.Name, typedArray);
 		if (typedArray instanceof BigInt64Array || typedArray instanceof BigUint64Array) {
 			console.warn('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
 			continue
@@ -42,21 +41,8 @@ const parse = (stringFile: string): VTP => {
 	const pointsDataArrays = piece.Points.DataArray instanceof Array ? piece.Points.DataArray : [piece.Points.DataArray]
 	for (const dataArray of pointsDataArrays) {
 		const typedArray = getDataFromDataArray(file, dataArray)
-		console.log(dataArray.attributes.Name, typedArray);
 		if (typedArray instanceof BigInt64Array || typedArray instanceof BigUint64Array) throw new Error('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
 		geometry.setAttribute('position', new BufferAttribute(typedArray, 3))
-
-		let xmin: number = typedArray[0], xmax: number = typedArray[0], ymin: number = typedArray[1], ymax: number = typedArray[1], zmin: number = typedArray[2], zmax: number = typedArray[2]
-		for (let i = 0; i < typedArray.length; i += 3) {
-			const x = typedArray[i], y = typedArray[i+1], z = typedArray[i+2]
-			if (x < xmin) xmin = x
-			if (x > xmax) xmax = x
-			if (y < ymin) ymin = y
-			if (y > ymax) ymax = y
-			if (z < zmin) zmin = z
-			if (z > zmax) zmax = z
-		}
-		console.log(xmin, xmax, ymin, ymax, zmin, zmax);
 	}
 
 	// Verts
@@ -75,7 +61,6 @@ const parse = (stringFile: string): VTP => {
 				if (val > Number.MAX_SAFE_INTEGER) requiresBigInt = true
 			})
 			if (requiresBigInt) throw new Error(`${d.attributes.Name} array requires bigint`)
-			console.log(typedArray);
 			return typedArray instanceof BigInt64Array ? Int32Array.from(typedArray, (bigint, num) => Number(bigint)) : Uint32Array.from(typedArray, (bigint, num) => Number(bigint))
 		}
 		return typedArray
@@ -90,8 +75,6 @@ const parse = (stringFile: string): VTP => {
 		}
 		lastOffset = offset
 	}
-	console.log(connectivity, indices);
-
 	geometry.index = new BufferAttribute(new Uint32Array(indices), 1)
 	
 	return {geometry, properties}

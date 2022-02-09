@@ -150,7 +150,7 @@ export const createObjectControlForObject = (
 	return objectControl
 }
 
-export const createFileUpload = (onComplete: (fileURL: string) => void) => {
+export const createFileUpload = (onComplete: (fileURL: string, fileName: string) => void) => {
 	const input = document.createElement('input')
 	input.type = 'file'
 	input.onchange = () => {
@@ -159,9 +159,14 @@ export const createFileUpload = (onComplete: (fileURL: string) => void) => {
 		const reader = new FileReader()
 		reader.onload = () => {
 			const url = reader.result as string
-			onComplete(url)
+			onComplete(url, file.name)
 		}
 		reader.readAsDataURL(file)
 	}
 	return input
+}
+
+export const getFileExtension = (fileName: string): string => {
+	const splits = fileName.split('.')
+	return splits[splits.length-1]
 }
