@@ -1,4 +1,5 @@
 import { BufferAttribute, BufferGeometry, FileLoader, Loader, LoaderUtils, LoadingManager } from "three";
+import BaseLoader from "./BaseLoader";
 import { fileToJson } from "./utils";
 import { getIndexBufferFromConnectivity, parsePolyData, registerPointData, registerPoints } from "./utils/parse";
 
@@ -39,32 +40,10 @@ const parse = (stringFile: string): VTP => {
 	return {geometry, properties}
 }
 
-class VTPLoader extends Loader {
+class VTPLoader extends BaseLoader<VTP> {
 	constructor( manager?: LoadingManager ) { super(manager) }
 
-	load(url: string, onLoad: (vtp: VTP) => void, onProgress?: (request: ProgressEvent<EventTarget>) => void, onError?: (message: string) => void) {
-		const scope = this;
-		const loader = new FileLoader(scope.manager);
-		loader.setPath(scope.path);
-		loader.setResponseType( 'arraybuffer' );
-		loader.setRequestHeader( scope.requestHeader );
-		loader.setWithCredentials( scope.withCredentials );
-		loader.load(url, 
-			(buffer) => {
-				try {
-					if (buffer instanceof ArrayBuffer) onLoad(scope.parse(buffer));
-				} catch (e) {
-					if (e instanceof Error && onError) onError(e.message)
-					else console.error(e)
-					scope.manager.itemError(url);
-				}
-			}, 
-			onProgress, 
-			(e) => {if (onError) onError(e.message) } 
-		);
-	}
-
-	parse(data: ArrayBuffer): VTP {
+	parse = (data: ArrayBuffer): VTP => {
 		const text = LoaderUtils.decodeText(data)
 		return parse(text)
 	}
