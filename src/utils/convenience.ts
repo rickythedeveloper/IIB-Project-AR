@@ -1,5 +1,6 @@
+// eslint-disable-next-line no-async-promise-executor
 const getData = new Promise(async (resolve: (value: {indices: Uint32Array, vertices: Float32Array, data: Float32Array}) => void, reject) => {
-	let indices: Uint32Array, vertices: Float32Array, data: Float32Array;
+	let indices: Uint32Array, vertices: Float32Array, data: Float32Array
 	const indicesResponse = await fetch('data/indices.bin')
 	const indicesBlob = await indicesResponse.blob()
 	const indicesReader = new FileReader()
@@ -18,7 +19,7 @@ const getData = new Promise(async (resolve: (value: {indices: Uint32Array, verti
 		if (indices && vertices && data) resolve({ indices, vertices, data })
 	}
 	verticesReader.onerror = reject
-	verticesReader.readAsArrayBuffer(verticesBlob);
+	verticesReader.readAsArrayBuffer(verticesBlob)
 
 	const dataResponse = await fetch('data/values_sch_all.bin')
 	const dataBlob = await dataResponse.blob()

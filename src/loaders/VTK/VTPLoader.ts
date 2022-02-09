@@ -1,7 +1,8 @@
-import { BufferAttribute, BufferGeometry, FileLoader, Loader, LoaderUtils, LoadingManager } from "three";
-import BaseLoader from "./BaseLoader";
-import { fileToJson } from "./utils";
-import { getIndexBufferFromConnectivity, parsePolyData, registerPointData, registerPoints } from "./utils/parse";
+import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
+import BaseLoader from './BaseLoader'
+import { fileToJson } from './utils'
+import { getIndexBufferFromConnectivity, parsePolyData, registerPointData, registerPoints } from './utils/parse'
+import { Property, VTKFile } from './types'
 
 interface VTP {
 	geometry: BufferGeometry
@@ -15,7 +16,7 @@ const parse = (stringFile: string): VTP => {
 	const polyData = file.PolyData
 	const piece = polyData.Piece
 	if (piece instanceof Array) throw new Error('multiple pieces exist in a .vts file')
-	const compressed = file.attributes.compressor !== undefined // TODO implement for compressed file
+	// const compressed = file.attributes.compressor !== undefined // TODO implement for compressed file
 	const geometry = new BufferGeometry()
 
 	// PointData
@@ -36,8 +37,8 @@ const parse = (stringFile: string): VTP => {
 	const { connectivity, offsets } = parsePolyData(piece.Polys, file)
 	const indexBuffer = getIndexBufferFromConnectivity(connectivity, offsets)
 	geometry.index = new BufferAttribute(indexBuffer, 1)
-	
-	return {geometry, properties}
+
+	return { geometry, properties }
 }
 
 class VTPLoader extends BaseLoader<VTP> {

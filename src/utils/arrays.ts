@@ -1,6 +1,6 @@
-import { Vector3, Quaternion } from "three"
-import { Matrix, Vector } from "./index"
-import { getColumn, matrixAdd, matrixMultiplyScalar, outerProduct } from "./vectors"
+import { Quaternion, Vector3 } from 'three'
+import { Matrix, Vector } from './index'
+import { getColumn, matrixAdd, matrixMultiplyScalar, outerProduct } from './vectors'
 
 export const getMean = (values: number[]): number => {
 	if (values.length === 0) throw new Error('The values array has to have a length greater than 0')
@@ -19,7 +19,7 @@ export const getMidValues = (values: number[], proportion: number): number[] => 
 	return values.slice(startIndex, endIndex)
 }
 
-export const arrayIsFilled = (arr: Array<any>): boolean => {
+export const arrayIsFilled = (arr: Array<unknown>): boolean => {
 	for (const val of arr) {
 		if (val === undefined || val === null) return false
 	}
@@ -82,10 +82,11 @@ export const getMeanVector = (vectors: Vector3[]) => {
 	const variances = meanAndVariance.map(x => x.variance)
 	return {
 		vector: new Vector3(meanAndVariance[0].mean, meanAndVariance[1].mean, meanAndVariance[2].mean),
-		variances: {x: variances[0], y: variances[1], z: variances[2]}
+		variances: { x: variances[0], y: variances[1], z: variances[2] }
 	}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace math {
 	export function eigs (matrix: number[][]): { values: number[], vectors: number[][] }
 }

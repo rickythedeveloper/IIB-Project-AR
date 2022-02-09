@@ -21,7 +21,7 @@ export const createControlPanel = () => {
 
 	const controlPanel = document.createElement('div')
 	controlPanel.style.margin = '20px'
-	controlPanel.style.flexGrow = '1';
+	controlPanel.style.flexGrow = '1'
 	controlPanelWrapper.appendChild(controlPanel)
 
 	return { controlPanelWrapper, controlPanel }
@@ -34,7 +34,7 @@ export const createOption = (value: string, innerText: string) => {
 	return option
 }
 
-export const createButton = (innerText: string, onclick: ((this: GlobalEventHandlers, ev: MouseEvent) => any)) => {
+export const createButton = (innerText: string, onclick: ((this: GlobalEventHandlers, ev: MouseEvent) => void)) => {
 	const button = document.createElement('button')
 	button.innerText = innerText
 	button.onclick = onclick

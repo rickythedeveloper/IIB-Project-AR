@@ -1,14 +1,15 @@
-import { Object3D, PointLight, Mesh, ShaderMaterial, DoubleSide, BufferGeometry, Group, Box3 } from 'three'
-import Arena from "../utils/Arena"
-import { createMarkerIndicators } from "../utils/scene_init"
-import { Setup } from "../utils/setupAR"
-import { InteractionManager } from "../utils/interactive"
-import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "../utils/constants"
-import { MarkerInfo } from "../utils/index"
+import { Box3, BufferGeometry, DoubleSide, Group, Mesh, Object3D, PointLight, ShaderMaterial } from 'three'
+import Arena from '../utils/Arena'
+import { createMarkerIndicators } from '../utils/scene_init'
+import { Setup } from '../utils/setupAR'
+import { InteractionManager } from '../utils/interactive'
+import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from '../utils/constants'
+import { MarkerInfo } from '../utils/index'
 import { createFileUpload, createObjectControlForObject, getFileExtension } from './utils'
 import VTSLoader from '../loaders/VTK/VTSLoader'
 import { createOption } from '../utils/elements'
 import VTPLoader from '../loaders/VTK/VTPLoader'
+import { Property } from '../loaders/VTK/types'
 
 const vertexShader = (property: string, min: number, max: number) => `
 	attribute float ${property};
@@ -47,7 +48,7 @@ const getMeshAndFlowPropertyDropdown = (geometry: BufferGeometry, properties: Pr
 		}
 	}
 	optionDropdown.selectedIndex = 0
-	return {mesh, optionDropdown}
+	return { mesh, optionDropdown }
 }
 
 const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void, controlPanel: HTMLDivElement) => {
@@ -59,20 +60,20 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 
 	const calibratableObjects: Object3D[] = []
 	const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement)
-	
+
 	controlPanel.appendChild(createFileUpload(fileInfos => {
 		const group = new Group()
 		for (let i = 0; i < fileInfos.length; i++) {
 			const fileInfo = fileInfos[i]
 			const ext = getFileExtension(fileInfo.name)
-			const loader = 
-				ext === 'vtp' ? new VTPLoader() : 
-				ext === 'vts' ? new VTSLoader() :
-				null
+			const loader =
+				ext === 'vtp' ? new VTPLoader() :
+					ext === 'vts' ? new VTSLoader() :
+						null
 			if (loader === null) throw new Error('uploaded a file with an invalid file extension')
-	
+
 			loader.load(fileInfo.url, ({ geometry, properties }) => {
-				const {mesh, optionDropdown} = getMeshAndFlowPropertyDropdown(geometry, properties)
+				const { mesh, optionDropdown } = getMeshAndFlowPropertyDropdown(geometry, properties)
 				group.add(mesh)
 				controlPanel.append(optionDropdown)
 
@@ -83,7 +84,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 					groupBox.getCenter(group.position).multiplyScalar(-1)
 					addCalibratableObject(groupWrapper)
 				}
-			});
+			})
 		}
 	}))
 
@@ -100,12 +101,12 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 
 	const addCalibratableObject = (object: Object3D) => {
 		const objectControl = createObjectControlForObject(
-			object, 
-			interactionManager, 
+			object,
+			interactionManager,
 			(o) => {
 				const objectIndex = arena.objectIndices[o.uuid]
 				return arena.arenaObjects[objectIndex].positionInArena
-			}, 
+			},
 			(o) => {
 				const objectIndex = arena.objectIndices[o.uuid]
 				return arena.arenaObjects[objectIndex].quaternionInArena
@@ -127,12 +128,9 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 
 	setInterval(() => {
 		for (let i = 0; i < arena.markers.length; i++) {
-			markerIndicators[i].material.color.set(
-				arena.markers[i].visible ? VISIBLE_MARKER_COLOR : 
-				HIDDEN_MARKER_COLOR
-			)
+			markerIndicators[i].material.color.set(arena.markers[i].visible ? VISIBLE_MARKER_COLOR : HIDDEN_MARKER_COLOR)
 		}
-	}, MARKER_INDICATOR_UPDATE_INTERVAL);
+	}, MARKER_INDICATOR_UPDATE_INTERVAL)
 }
 
 export default calibrate

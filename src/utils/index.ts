@@ -1,4 +1,4 @@
-import { Object3D, Vector3, Quaternion } from "three"
+import { Object3D, Quaternion, Vector3 } from 'three'
 
 export interface ThreeObjectWrapper {
 	object: Object3D | null
