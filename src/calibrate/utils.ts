@@ -1,40 +1,24 @@
-import { Mesh, MeshLambertMaterial, Object3D, Quaternion, Vector3 } from "three"
+import { Object3D, Quaternion, Vector3 } from "three"
 import VTSLoader from "../loaders/VTK/VTSLoader"
 import { atanAngle } from "../utils/angle"
 import { InteractionManager, InteractiveEvent2, PinchEvent } from "../utils/interactive"
 import { Axis } from "../utils/three"
 import { createObjectControl, ObjectControl, RotationRing, TranslationArrow } from "./three"
 
-const updateControlPosition = (object: Mesh, objectControl: ObjectControl) => {
+const updateControlPosition = (object: Object3D, objectControl: ObjectControl) => {
 	const rings = objectControl.rings
 	const arrows = objectControl.arrows
-	object.geometry.computeBoundingSphere()
-	const boundingSphere = object.geometry.boundingSphere
-	if (boundingSphere) {
-		const radiusMultiplierRing = 1.2, radiusMultiplierArrow = 1.5
-		const center = boundingSphere.center, radius =  boundingSphere.radius * object.scale.x // assumes same scale in each dimension
-		rings[0].container.position.set(center.x + radius * radiusMultiplierRing, center.y, center.z)
-		rings[1].container.position.set(center.x, center.y + radius * radiusMultiplierRing, center.z)
-		rings[2].container.position.set(center.x, center.y, center.z + radius * radiusMultiplierRing)
-		arrows[0].container.position.set(center.x + radius * radiusMultiplierArrow, center.y, center.z)
-		arrows[1].container.position.set(center.x, center.y + radius * radiusMultiplierArrow, center.z)
-		arrows[2].container.position.set(center.x, center.y, center.z + radius * radiusMultiplierArrow)
-
-		rings.forEach(r => r.container.scale.setScalar(radius * 2)) // control can be made to fit an object of radius of 0.5
-		arrows.forEach(a => a.container.scale.setScalar(radius * 2))
-	} else {
-		const ringOffset = 1, arrowOffset = 1.5
-		rings[0].container.position.set(ringOffset, 0, 0)
-		rings[1].container.position.set(0, ringOffset, 0)
-		rings[2].container.position.set(0, 0, ringOffset)
-		arrows[0].container.position.set(arrowOffset, 0, 0)
-		arrows[1].container.position.set(0, arrowOffset, 0)
-		arrows[2].container.position.set(0, 0, arrowOffset)
-	}
+	const ringOffset = 1, arrowOffset = 1.5
+	rings[0].container.position.set(ringOffset, 0, 0)
+	rings[1].container.position.set(0, ringOffset, 0)
+	rings[2].container.position.set(0, 0, ringOffset)
+	arrows[0].container.position.set(arrowOffset, 0, 0)
+	arrows[1].container.position.set(0, arrowOffset, 0)
+	arrows[2].container.position.set(0, 0, arrowOffset)
 }
 
 export const createObjectControlForObject = (
-	object: Mesh, 
+	object: Object3D, 
 	interactionManager: InteractionManager, 
 	getPositionToUpdate: (object: Object3D) => Vector3, 
 	getQuaternionToUpdate: (object: Object3D) => Quaternion, 
@@ -150,18 +134,36 @@ export const createObjectControlForObject = (
 	return objectControl
 }
 
-export const createFileUpload = (onComplete: (fileURL: string) => void) => {
+interface FileInfo {
+	url: string,
+	name: string
+}
+
+export const createFileUpload = (onComplete: (fileInfos: FileInfo[]) => void) => {
 	const input = document.createElement('input')
 	input.type = 'file'
+	input.setAttribute('multiple', '')
 	input.onchange = () => {
 		if (input.files === null) return
-		const file = input.files[0]
-		const reader = new FileReader()
-		reader.onload = () => {
-			const url = reader.result as string
-			onComplete(url)
+		const fileInfos: FileInfo[] = []
+		for (let i = 0; i < input.files.length; i++) {
+			const file = input.files[i]
+			const reader = new FileReader()
+			reader.onload = () => {
+				const url = reader.result as string
+				fileInfos.push({url, name: file.name})
+
+				if (input.files !== null && fileInfos.length === input.files.length) {
+					onComplete(fileInfos)
+				}
+			}
+			reader.readAsDataURL(file)
 		}
-		reader.readAsDataURL(file)
 	}
 	return input
+}
+
+export const getFileExtension = (fileName: string): string => {
+	const splits = fileName.split('.')
+	return splits[splits.length-1]
 }
