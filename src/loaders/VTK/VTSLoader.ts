@@ -3,7 +3,8 @@
 
 import { BufferAttribute, BufferGeometry, FileLoader, Loader, LoaderUtils, LoadingManager } from 'three';
 import { Axis } from '../../utils/three';
-import { getDataFromDataArray, getTypeArrayConstructor, xmlToJson } from './utils';
+import { fileToJson } from './utils';
+import { getIndexBufferFromExtent, registerPointData, registerPoints } from './utils/parse';
 
 interface VTS {
 	geometry: BufferGeometry
@@ -43,72 +44,26 @@ const getIndexArray = (axis1: Axis, axis2: Axis, axis1Range: number, axis2Range:
 }
 
 const parseXMLVTS = (stringFile: string): VTS => {
-	let dom: any
-	if ( window.DOMParser ) {
-		try { dom = ( new DOMParser() ).parseFromString(stringFile, 'text/xml'); } 
-		catch ( e ) { dom = null; }
-	} else if ( window.ActiveXObject ) {
-		try {
-			dom = new ActiveXObject( 'Microsoft.XMLDOM' ); // eslint-disable-line no-undef
-			dom.async = false;
-			if ( ! dom.loadXML( /* xml */ ) ) throw new Error( dom.parseError.reason + dom.parseError.srcText );
-		} catch ( e ) {
-			dom = null;
-		}
-	} else throw new Error( 'Cannot parse xml string!' );
-
-	// Get the doc
-	var doc = dom.documentElement;
-	// Convert to json
-	const file = xmlToJson(doc) as VTKFile;
-
+	const file = fileToJson(stringFile) as VTKFile
 	if (file.StructuredGrid === undefined) throw new Error('the file does not contain StructuredGrid')
 
 	const grid = file.StructuredGrid!
 	const piece = grid.Piece
-	if (piece instanceof Array) throw new Error('hanya')
+	if (piece instanceof Array) throw new Error('multiple pieces exist in a .vts file')
 	const compressed = file.attributes.compressor !== undefined // TODO implement for compressed file
 	const geometry = new BufferGeometry()
 
-
-	const properties: Property[] = []
-
 	// PointData
-	const pointDataSection = piece.PointData
-	const pointDataDataArrays = pointDataSection.DataArray instanceof Array ? pointDataSection.DataArray : [pointDataSection.DataArray]
-	for (const dataArray of pointDataDataArrays) {
-		const typedArray = getDataFromDataArray(file, dataArray)
-		if (typedArray instanceof BigInt64Array || typedArray instanceof BigUint64Array) {
-			console.warn('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
-			continue
-		}
-		geometry.setAttribute(dataArray.attributes.Name, new BufferAttribute(typedArray, 1))
-
-		properties.push({
-			name: dataArray.attributes.Name, 
-			min: Number(dataArray.attributes.RangeMin), 
-			max: Number(dataArray.attributes.RangeMax)
-		})
-	}
+	const { properties } = registerPointData(piece.PointData, file, geometry)
 
 	// CellData
 
 	// Points
-	const pointsDataArrays = piece.Points.DataArray instanceof Array ? piece.Points.DataArray : [piece.Points.DataArray]
-	for (const dataArray of pointsDataArrays) {
-		const typedArray = getDataFromDataArray(file, dataArray)
-		if (typedArray instanceof BigInt64Array || typedArray instanceof BigUint64Array) throw new Error('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
-		geometry.setAttribute('position', new BufferAttribute(typedArray, 3))
+	registerPoints(piece.Points, file, geometry)
 
-		const [x1, x2, y1, y2, z1, z2] = grid.attributes.WholeExtent.split(' ').map(e => parseInt(e))
-		const numX = x2 - x1 + 1, numY = y2 - y1 + 1
-		let indexArray: Uint32Array
-		if (x1 == x2) indexArray = getIndexArray(Axis.y, Axis.z, y2 - y1, z2 - z1, numX, numY)
-		else if (y1 == y2) indexArray = getIndexArray(Axis.x, Axis.z, x2 - x1, z2 - z1, numX, numY)
-		else if (z1 == z2) indexArray = getIndexArray(Axis.x, Axis.y, x2 - x1, y2 - y1, numX, numY)
-		else throw new Error('vts file extent is multiple in all 3 dimentions')
-		geometry.index = new BufferAttribute(indexArray, 1)
-	}
+	// Index buffer
+	const indexBuffer = getIndexBufferFromExtent(grid.attributes.WholeExtent)
+	geometry.index = new BufferAttribute(indexBuffer, 1)
 
 	return { geometry, properties }
 }

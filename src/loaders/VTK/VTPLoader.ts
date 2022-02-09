@@ -1,5 +1,6 @@
 import { BufferAttribute, BufferGeometry, FileLoader, Loader, LoaderUtils, LoadingManager } from "three";
-import { fileToJson, getDataFromDataArray } from "./utils";
+import { fileToJson } from "./utils";
+import { getIndexBufferFromConnectivity, parsePolyData, registerPointData, registerPoints } from "./utils/parse";
 
 interface VTP {
 	geometry: BufferGeometry
@@ -12,38 +13,17 @@ const parse = (stringFile: string): VTP => {
 
 	const polyData = file.PolyData
 	const piece = polyData.Piece
-	if (piece instanceof Array) throw new Error('hanya')
+	if (piece instanceof Array) throw new Error('multiple pieces exist in a .vts file')
 	const compressed = file.attributes.compressor !== undefined // TODO implement for compressed file
 	const geometry = new BufferGeometry()
 
-	const properties: Property[] = []
-
 	// PointData
-	const pointDataDataArrays = piece.PointData.DataArray instanceof Array ? piece.PointData.DataArray : [piece.PointData.DataArray]
-	for (const dataArray of pointDataDataArrays) {
-		const typedArray = getDataFromDataArray(file, dataArray)
-		if (typedArray instanceof BigInt64Array || typedArray instanceof BigUint64Array) {
-			console.warn('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
-			continue
-		}
-		geometry.setAttribute(dataArray.attributes.Name, new BufferAttribute(typedArray, 1))
-
-		properties.push({
-			name: dataArray.attributes.Name, 
-			min: Number(dataArray.attributes.RangeMin), 
-			max: Number(dataArray.attributes.RangeMax)
-		})
-	}
+	const { properties } = registerPointData(piece.PointData, file, geometry)
 
 	// CellData
 
 	// Points
-	const pointsDataArrays = piece.Points.DataArray instanceof Array ? piece.Points.DataArray : [piece.Points.DataArray]
-	for (const dataArray of pointsDataArrays) {
-		const typedArray = getDataFromDataArray(file, dataArray)
-		if (typedArray instanceof BigInt64Array || typedArray instanceof BigUint64Array) throw new Error('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
-		geometry.setAttribute('position', new BufferAttribute(typedArray, 3))
-	}
+	registerPoints(piece.Points, file, geometry)
 
 	// Verts
 
@@ -52,30 +32,9 @@ const parse = (stringFile: string): VTP => {
 	// Strips
 
 	// Polys
-	const polysDataArrays = piece.Polys.DataArray
-	const [connectivity, offsets] = polysDataArrays.map(d => {
-		const typedArray = getDataFromDataArray(file, d)
-		if (typedArray instanceof BigInt64Array || typedArray instanceof BigUint64Array) {
-			let requiresBigInt = false
-			typedArray.forEach(val => {
-				if (val > Number.MAX_SAFE_INTEGER) requiresBigInt = true
-			})
-			if (requiresBigInt) throw new Error(`${d.attributes.Name} array requires bigint`)
-			return typedArray instanceof BigInt64Array ? Int32Array.from(typedArray, (bigint, num) => Number(bigint)) : Uint32Array.from(typedArray, (bigint, num) => Number(bigint))
-		}
-		return typedArray
-	})
-	
-	const indices: number[] = []
-	let lastOffset = 0
-	for (const offset of offsets) {
-		const jump = offset - lastOffset
-		if (jump === 3) {
-			indices.push(...connectivity.slice(lastOffset, offset))
-		}
-		lastOffset = offset
-	}
-	geometry.index = new BufferAttribute(new Uint32Array(indices), 1)
+	const { connectivity, offsets } = parsePolyData(piece.Polys, file)
+	const indexBuffer = getIndexBufferFromConnectivity(connectivity, offsets)
+	geometry.index = new BufferAttribute(indexBuffer, 1)
 	
 	return {geometry, properties}
 }

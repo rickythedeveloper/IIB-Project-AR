@@ -6,6 +6,13 @@ type VTKFileType =
 type ByteOrder = 'LittleEndian' | 'BigEndian'
 type HeaderType = 'UInt64' | 'UInt32'
 
+type IntArray = Int8Array | Int16Array | Int32Array
+type UintArray = Uint8Array | Uint16Array | Uint32Array
+type BigIntArray = BigInt64Array
+type BigUintArray = BigUint64Array
+type FloatArray = Float32Array | Float64Array
+type NumberArray = IntArray | UintArray | FloatArray
+
 interface DataArray {
 	attributes: {
 		type: DataType
@@ -31,7 +38,7 @@ interface PointData {
 }
 
 interface Points {
-	DataArray: DataArray[] | DataArray
+	DataArray: DataArray
 }
 
 interface PieceAttributes {
@@ -43,6 +50,8 @@ interface PieceAttributes {
 	Extent?: string
 }
 
+interface Polys { DataArray: [DataArray, DataArray] }
+
 interface Piece {
 	attributes: PieceAttributes
 	PointData: PointData
@@ -51,7 +60,7 @@ interface Piece {
 	Verts: [DataArray, DataArray]
 	Lines: [DataArray, DataArray]
 	Strips: [DataArray, DataArray]
-	Polys: { DataArray: [DataArray, DataArray] }
+	Polys: Polys
 	Cells: [DataArray, DataArray, DataArray]
 }
 
