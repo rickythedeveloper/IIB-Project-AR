@@ -34,15 +34,24 @@ interface Points {
 	DataArray: DataArray[] | DataArray
 }
 
+interface PieceAttributes {
+	NumberOfPoints?: string
+	NumberOfVerts?: string
+	NumberOfLines?: string
+	NumberOfStrips?: string
+	NumberOfPolys?: string
+	Extent?: string
+}
+
 interface Piece {
-	attributes: { Extent: string }
+	attributes: PieceAttributes
 	PointData: PointData
 	Points: Points
 	Coordinates: [DataArray, DataArray, DataArray]
 	Verts: [DataArray, DataArray]
 	Lines: [DataArray, DataArray]
 	Strips: [DataArray, DataArray]
-	Polys: [DataArray, DataArray]
+	Polys: { DataArray: [DataArray, DataArray] }
 	Cells: [DataArray, DataArray, DataArray]
 }
 
@@ -72,4 +81,10 @@ interface VTKFile {
 	AppendedData?: AppendedData,
 	StructuredGrid?: StructuredGrid
 	PolyData?: PolyData
+}
+
+interface Property {
+	name: string
+	min: number
+	max: number
 }

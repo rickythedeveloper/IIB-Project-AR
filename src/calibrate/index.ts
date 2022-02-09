@@ -6,8 +6,9 @@ import { InteractionManager } from "../utils/interactive"
 import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from "../utils/constants"
 import { MarkerInfo } from "../utils/index"
 import { createFileUpload, createObjectControlForObject } from './utils'
-import VTSLoader, { Property } from '../loaders/VTK/VTSLoader'
+import VTSLoader from '../loaders/VTK/VTSLoader'
 import { createOption } from '../utils/elements'
+import VTPLoader from '../loaders/VTK/VTPLoader'
 
 const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void, controlPanel: HTMLDivElement) => {
 	setup.scene.add(new PointLight())
@@ -18,6 +19,53 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 
 	const calibratableObjects: Object3D[] = []
 	const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement)
+
+	const loader = new VTPLoader()
+	loader.load('data/ricky_test_24_0.vtp', ({geometry, properties}) => {
+		geometry.center();
+		geometry.computeVertexNormals();
+
+		const vertexShader = (property: string, min: number, max: number) => `
+			attribute float ${property};
+			varying vec3 v_color;
+			void main() {
+				float propertyValueNormalized = (${property} - (${min.toFixed(20)})) / (${max.toFixed(20)} - (${min.toFixed(20)}));
+				v_color = vec3(propertyValueNormalized, 0.0, 0.0);
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+			}
+		`
+		const fragmentShader = (opacity: number): string => `
+			varying vec3 v_color;
+			void main() {
+				gl_FragColor = vec4(v_color, ${opacity});
+			}
+		`
+
+		const getMaterial = (property: Property) => new ShaderMaterial({
+			vertexShader: vertexShader(property.name, property.min, property.max),
+			fragmentShader: fragmentShader(1),
+			transparent: true,
+			side: DoubleSide
+		})
+
+		const mesh = new Mesh(geometry, getMaterial(properties[0]))
+		mesh.position.set(0, 1, 0);
+		mesh.scale.multiplyScalar(10);
+		addCalibratableObject(mesh)
+
+		// add dropdown option
+		const optionDropdown = document.createElement('select')
+		properties.forEach(p => optionDropdown.appendChild(createOption(p.name, p.name)))
+		optionDropdown.onchange = (e) => {
+			if (e.target) {
+				const propertyName = (e.target as HTMLSelectElement).value
+				const property = properties.filter(p => p.name === propertyName)[0]
+				mesh.material = getMaterial(property)
+			}
+		}
+		optionDropdown.selectedIndex = 0
+		controlPanel.append(optionDropdown)
+	})
 	
 	controlPanel.appendChild(createFileUpload((url) => {
 		const loader = new VTSLoader();
@@ -79,7 +127,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 		})
 		arena.clean()
 		onComplete(calibratableObjects)
-	}, 3000000)
+	}, 300000)
 
 	const addCalibratableObject = (object: Mesh) => {
 		const objectControl = createObjectControlForObject(

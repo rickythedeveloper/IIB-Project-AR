@@ -18,7 +18,7 @@ export const xmlToJson = (xml: any) => {
 	} else if ( xml.nodeType === 3 ) { // text
 		obj = xml.nodeValue.trim();
 	}
-
+	
 	// do children
 	if ( xml.hasChildNodes() ) {
 		for ( var i = 0; i < xml.childNodes.length; i ++ ) {
@@ -37,8 +37,30 @@ export const xmlToJson = (xml: any) => {
 			}
 		}
 	}
-
+	
 	return obj;
+}
+
+export const fileToJson = (stringFile: string) => {
+	let dom: any
+	if ( window.DOMParser ) {
+		try { dom = ( new DOMParser() ).parseFromString(stringFile, 'text/xml'); } 
+		catch ( e ) { dom = null; }
+	} else if ( window.ActiveXObject ) {
+		try {
+			dom = new ActiveXObject( 'Microsoft.XMLDOM' ); // eslint-disable-line no-undef
+			dom.async = false;
+			if ( ! dom.loadXML( /* xml */ ) ) throw new Error( dom.parseError.reason + dom.parseError.srcText );
+		} catch ( e ) {
+			dom = null;
+		}
+	} else throw new Error( 'Cannot parse xml string!' );
+
+	// Get the doc
+	var doc = dom.documentElement;
+	// Convert to json
+	const file: any = xmlToJson(doc)
+	return file
 }
 
 export const getTypeArrayConstructor = (type: DataType) => {
@@ -77,3 +99,4 @@ export const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
 		throw new Error('not implemented')
 	}
 }
+

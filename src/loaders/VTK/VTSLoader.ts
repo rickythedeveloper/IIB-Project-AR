@@ -5,12 +5,6 @@ import { BufferAttribute, BufferGeometry, FileLoader, Loader, LoaderUtils, Loadi
 import { Axis } from '../../utils/three';
 import { getDataFromDataArray, getTypeArrayConstructor, xmlToJson } from './utils';
 
-export interface Property {
-	name: string
-	min: number
-	max: number
-}
-
 interface VTS {
 	geometry: BufferGeometry
 	properties: Property[]
