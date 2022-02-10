@@ -97,3 +97,16 @@ export interface Property {
 	min: number
 	max: number
 }
+
+export const typedArrayConstructorMap = {
+	Int8: Int8Array,
+	UInt8: Uint8Array,
+	Int16: Int16Array,
+	UInt16: Uint16Array,
+	Int32: Int32Array,
+	UInt32: Uint32Array,
+	Int64: BigInt64Array,
+	UInt64: BigUint64Array,
+	Float32: Float32Array,
+	Float64: Float64Array
+}

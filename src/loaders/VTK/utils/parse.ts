@@ -1,7 +1,46 @@
+import { toByteArray } from 'base64-js'
 import { BufferAttribute, BufferGeometry } from 'three'
 import { Axis } from '../../../utils/three'
-import { getDataFromDataArray } from '.'
-import { NumberArray, PointData, Points, Polys, Property, VTKFile } from '../types'
+import { DataArray, NumberArray, PointData, Points, Polys, Property, VTKFile, typedArrayConstructorMap } from '../types'
+
+const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
+	if (dataArray.attributes.format === 'appended') {
+		if (dataArray.attributes.offset && file.AppendedData && file.AppendedData['#text']) {
+			const numBytesHeader = file.attributes.header_type === 'UInt32' ? 4 : 8
+			const headerArrayConstructor = typedArrayConstructorMap[file.attributes.header_type]
+			const offset = parseInt(dataArray.attributes.offset)
+			const text = file.AppendedData['#text'].slice(offset+1) // account for the underscore at the beginning
+			const byteArray = toByteArray(text)
+			const header = new headerArrayConstructor(byteArray.slice(0, numBytesHeader).buffer)
+			const numBytesContent = header[0]
+			if (numBytesContent > Number.MAX_SAFE_INTEGER) throw new Error('number of bytes for content is larger than the max safe integer')
+			const content = byteArray.slice(numBytesHeader, numBytesHeader + Number(numBytesContent)) // first 4 or 8 bytes simply signify the number of content bytes
+			const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
+			const typedArray = new arrayConstructor(content.buffer)
+			return typedArray
+		} else throw new Error('cannot find appended data')
+	} else if (dataArray.attributes.format === 'binary') {
+		const contentString = dataArray['#text']
+		const byteArray = toByteArray(contentString)
+		const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
+		const typedArray = new arrayConstructor(byteArray.buffer)
+		return typedArray
+	} else if (dataArray.attributes.format === 'ascii') {
+		const contentString = dataArray['#text']
+		const numsStr = contentString.split(' ')
+
+		if (dataArray.attributes.type === 'UInt64' || dataArray.attributes.type === 'Int64') {
+			const nums = numsStr.map(str => BigInt(str))
+			const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
+			const typedArray = new arrayConstructor(nums)
+			return typedArray
+		}
+		const nums = numsStr.map(str => Number(str))
+		const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
+		const typedArray = new arrayConstructor(nums)
+		return typedArray
+	} else throw new Error('unrecognised dataarray format')
+}
 
 export const registerPoints = (points: Points, file: VTKFile, geometry: BufferGeometry) => {
 	const dataArray = points.DataArray

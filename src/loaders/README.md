@@ -1,14 +1,14 @@
 # Loader requirements
 ## Visualization Toolkit (VTK)
 ### VTPLoader (.vtp)
-- Data is appended
-- Appended data is encoded (base64)
+- 'appended' data array format has been tested. 'binary' & 'ascii' data array formats are yet to be tested
+- Appended data is encoded (base64) if there is any
 - File is uncompressed
 - CellData, Verts, Lines, Strips are unused
 
 ### VTSLoader (.vts)
-- Data is appended
-- Appended data is encoded (base64)
+- 'appended' data array format has been tested. 'binary' & 'ascii' data array formats are yet to be tested
+- Appended data is encoded (base64) if there is any
 - File is uncompressed
 - CellData is unused
 
