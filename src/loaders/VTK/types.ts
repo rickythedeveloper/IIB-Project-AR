@@ -8,10 +8,10 @@ export type HeaderType = 'UInt64' | 'UInt32'
 
 export type IntArray = Int8Array | Int16Array | Int32Array
 export type UintArray = Uint8Array | Uint16Array | Uint32Array
-export type BigIntArray = BigInt64Array
-export type BigUintArray = BigUint64Array
 export type FloatArray = Float32Array | Float64Array
 export type NumberArray = IntArray | UintArray | FloatArray
+export type BigIntArray = BigInt64Array | BigUint64Array
+export type TypedArray = NumberArray | BigIntArray
 
 export interface DataArray {
 	attributes: {
@@ -96,6 +96,7 @@ export interface Property {
 	name: string
 	min: number
 	max: number
+	data: NumberArray
 }
 
 export const typedArrayConstructorMap = {

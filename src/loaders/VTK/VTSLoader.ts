@@ -4,7 +4,7 @@
 import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
 import BaseLoader from './BaseLoader'
 import { fileToJson } from './utils'
-import { getIndexBufferFromExtent, registerPointData, registerPoints } from './utils/parse'
+import { getIndexBufferFromExtent, parsePointData, parsePoints } from './utils/parse'
 import { Property, VTKFile } from './types'
 
 interface VTS {
@@ -22,12 +22,15 @@ const parseXMLVTS = (stringFile: string): VTS => {
 	const geometry = new BufferGeometry()
 
 	// PointData
-	const { properties } = registerPointData(piece.PointData, file, geometry)
+	const properties = parsePointData(piece.PointData, file)
+	properties.forEach(p => geometry.setAttribute(p.name, new BufferAttribute(p.data, 1)))
+
 
 	// CellData
 
 	// Points
-	registerPoints(piece.Points, file, geometry)
+	const positions = parsePoints(piece.Points, file)
+	geometry.setAttribute('position', new BufferAttribute(positions, 3))
 
 	// Index buffer
 	const indexBuffer = getIndexBufferFromExtent(grid.attributes.WholeExtent)

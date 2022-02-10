@@ -1,7 +1,7 @@
 import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
 import BaseLoader from './BaseLoader'
 import { fileToJson } from './utils'
-import { getIndexBufferFromConnectivity, parsePolyData, registerPointData, registerPoints } from './utils/parse'
+import { getIndexBufferFromConnectivity, parsePointData, parsePoints, parsePolyData } from './utils/parse'
 import { Property, VTKFile } from './types'
 
 interface VTP {
@@ -20,12 +20,14 @@ const parse = (stringFile: string): VTP => {
 	const geometry = new BufferGeometry()
 
 	// PointData
-	const { properties } = registerPointData(piece.PointData, file, geometry)
+	const properties = parsePointData(piece.PointData, file)
+	properties.forEach(p => geometry.setAttribute(p.name, new BufferAttribute(p.data, 1)))
 
 	// CellData
 
 	// Points
-	registerPoints(piece.Points, file, geometry)
+	const positions = parsePoints(piece.Points, file)
+	geometry.setAttribute('position', new BufferAttribute(positions, 3))
 
 	// Verts
 

@@ -1,5 +1,4 @@
 import { toByteArray } from 'base64-js'
-import { BufferAttribute, BufferGeometry } from 'three'
 import { Axis } from '../../../utils/three'
 import { DataArray, NumberArray, PointData, Points, Polys, Property, VTKFile, typedArrayConstructorMap } from '../types'
 
@@ -42,15 +41,14 @@ const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
 	} else throw new Error('unrecognised dataarray format')
 }
 
-export const registerPoints = (points: Points, file: VTKFile, geometry: BufferGeometry) => {
+export const parsePoints = (points: Points, file: VTKFile) => {
 	const dataArray = points.DataArray
 	const positions = getDataFromDataArray(file, dataArray)
 	if (positions instanceof BigInt64Array || positions instanceof BigUint64Array) throw new Error('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
-	geometry.setAttribute('position', new BufferAttribute(positions, 3))
-	return { positions }
+	return positions
 }
 
-export const registerPointData = (pointData: PointData, file: VTKFile, geometry: BufferGeometry) => {
+export const parsePointData = (pointData: PointData, file: VTKFile) => {
 	const pointDataDataArrays = pointData.DataArray instanceof Array ? pointData.DataArray : [pointData.DataArray]
 	const properties: Property[] = []
 	for (const dataArray of pointDataDataArrays) {
@@ -59,14 +57,14 @@ export const registerPointData = (pointData: PointData, file: VTKFile, geometry:
 			console.warn('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
 			continue
 		}
-		geometry.setAttribute(dataArray.attributes.Name, new BufferAttribute(propertyData, 1))
 		properties.push({
 			name: dataArray.attributes.Name,
 			min: Number(dataArray.attributes.RangeMin),
-			max: Number(dataArray.attributes.RangeMax)
+			max: Number(dataArray.attributes.RangeMax),
+			data: propertyData
 		})
 	}
-	return { properties }
+	return properties
 }
 
 export const parsePolyData = (polys: Polys, file: VTKFile) => {
