@@ -6,8 +6,8 @@ export interface Setup {
 	renderer: WebGLRenderer
 	scene: Scene
 	camera: Camera
-	arToolkitContext: any
-	arToolkitSource: any
+	arToolkitContext: ArToolkitContext
+	arToolkitSource: ArToolkitSource
 	onRenderFunctions: OnRenderFunction[]
 }
 
@@ -79,6 +79,7 @@ const setupAR = (): Setup => {
 	const internalOnRenderFunctions: OnRenderFunction[] = [
 		() => {
 			if( arToolkitSource.ready === false )	return
+			if (arToolkitSource.domElement === null) return
 			arToolkitContext.update( arToolkitSource.domElement )
 		},
 		() => {
