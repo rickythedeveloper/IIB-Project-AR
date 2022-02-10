@@ -1,13 +1,14 @@
-import { BufferAttribute, BufferGeometry } from "three"
-import { Axis } from "../../../utils/three"
-import { getDataFromDataArray } from "."
+import { BufferAttribute, BufferGeometry } from 'three'
+import { Axis } from '../../../utils/three'
+import { getDataFromDataArray } from '.'
+import { NumberArray, PointData, Points, Polys, Property, VTKFile } from '../types'
 
 export const registerPoints = (points: Points, file: VTKFile, geometry: BufferGeometry) => {
 	const dataArray = points.DataArray
 	const positions = getDataFromDataArray(file, dataArray)
 	if (positions instanceof BigInt64Array || positions instanceof BigUint64Array) throw new Error('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
 	geometry.setAttribute('position', new BufferAttribute(positions, 3))
-	return {positions}
+	return { positions }
 }
 
 export const registerPointData = (pointData: PointData, file: VTKFile, geometry: BufferGeometry) => {
@@ -21,12 +22,12 @@ export const registerPointData = (pointData: PointData, file: VTKFile, geometry:
 		}
 		geometry.setAttribute(dataArray.attributes.Name, new BufferAttribute(propertyData, 1))
 		properties.push({
-			name: dataArray.attributes.Name, 
-			min: Number(dataArray.attributes.RangeMin), 
+			name: dataArray.attributes.Name,
+			min: Number(dataArray.attributes.RangeMin),
 			max: Number(dataArray.attributes.RangeMax)
 		})
 	}
-	return {properties}
+	return { properties }
 }
 
 export const parsePolyData = (polys: Polys, file: VTKFile) => {
@@ -39,7 +40,7 @@ export const parsePolyData = (polys: Polys, file: VTKFile) => {
 				if (val > Number.MAX_SAFE_INTEGER) requiresBigInt = true
 			})
 			if (requiresBigInt) throw new Error(`${d.attributes.Name} array requires bigint`)
-			return typedArray instanceof BigInt64Array ? Int32Array.from(typedArray, (bigint, num) => Number(bigint)) : Uint32Array.from(typedArray, (bigint, num) => Number(bigint))
+			return typedArray instanceof BigInt64Array ? Int32Array.from(typedArray, (bigint) => Number(bigint)) : Uint32Array.from(typedArray, (bigint) => Number(bigint))
 		}
 		return typedArray
 	})
@@ -57,7 +58,7 @@ const getFlatIndex = (i: number, j: number, k: number, numX: number, numY: numbe
 const getIndexBufferFrom2D = (axis1: Axis, axis2: Axis, axis1Range: number, axis2Range: number, numX: number, numY: number): Uint32Array => {
 	const numTriangles = axis1Range * axis2Range * 2
 	const indexBuffer = new Uint32Array(numTriangles * 3)
-	
+
 	const val1 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i : (axis2 === axis ? j : 0)
 	const val2 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i + 1 : (axis2 === axis ? j : 0)
 	const val3 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i : (axis2 === axis ? j + 1 : 0)
@@ -66,7 +67,7 @@ const getIndexBufferFrom2D = (axis1: Axis, axis2: Axis, axis1Range: number, axis
 	const index2 = (i: number, j: number) => getFlatIndex(val2(Axis.x, i, j), val2(Axis.y, i, j), val2(Axis.z, i, j), numX, numY)
 	const index3 = (i: number, j: number) => getFlatIndex(val3(Axis.x, i, j), val3(Axis.y, i, j), val3(Axis.z, i, j), numX, numY)
 	const index4 = (i: number, j: number) => getFlatIndex(val4(Axis.x, i, j), val4(Axis.y, i, j), val4(Axis.z, i, j), numX, numY)
-	
+
 	let index = 0
 	for (let j = 0; j < axis2Range; j++) {
 		for (let i = 0; i < axis1Range; i++) {
@@ -103,7 +104,7 @@ export const getIndexBufferFromConnectivity = (connectivity: NumberArray, offset
 		const jump = offset - lastOffset
 		if (jump === 3) {
 			indices.push(...connectivity.slice(lastOffset, offset))
-		} 
+		}
 		// TODO implement for jump larger than 3
 		lastOffset = offset
 	}

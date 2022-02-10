@@ -1,7 +1,7 @@
-import { createMarker, Setup } from "./setupAR"
-import { getAverageQuaternion } from "./arrays"
-import { MarkerInfo } from "./index"
-import { Object3D, Vector3, Quaternion } from "three"
+import { Setup, createMarker } from './setupAR'
+import { getAverageQuaternion } from './arrays'
+import { MarkerInfo } from './index'
+import { Object3D, Quaternion, Vector3 } from 'three'
 
 interface ArenaObject {
 	object: Object3D
@@ -27,7 +27,7 @@ export default class Arena {
 
 		setInterval(this._mainLoop.bind(this), 50)
 	}
-	
+
 	get visibleMarkerPositions() {
 		return this.markerPositions.filter((_, index) => this.markers[index].visible)
 	}
@@ -115,7 +115,7 @@ export default class Arena {
 
 			const arr_p030 = [], arr_q030 = []
 			const weights = []
-			let weightSum = 0;
+			let weightSum = 0
 			for (let markerIndex = 0; markerIndex < this.markers.length; markerIndex++) {
 				if (!this.markers[markerIndex].visible) continue
 
@@ -148,7 +148,7 @@ export default class Arena {
 				weights[w] /= weightSum
 			}
 
-			let x = 0, y = 0, z = 0; // in world coordinates (camera frame)
+			let x = 0, y = 0, z = 0 // in world coordinates (camera frame)
 			for (let w = 0; w < weights.length; w++) {
 				if (weights[w] === 0) continue
 				const p030 = arr_p030[w]
@@ -156,7 +156,7 @@ export default class Arena {
 				y += weights[w] * p030.y
 				z += weights[w] * p030.z
 			}
-			
+
 			// average
 			const p030 = new Vector3(x, y, z)
 			const q030 = getAverageQuaternion(arr_q030, weights)

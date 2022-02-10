@@ -1,23 +1,23 @@
-import { Object3D, Quaternion, Vector3 } from "three";
-import setupAR from "./utils/setupAR";
-import visualise from "./visualise";
-import { createControlPanel } from "./utils/elements";
-import scan from "./scan";
-import calibrate from "./calibrate";
-import { MarkerInfo } from "./utils/index";
+import { Object3D, Quaternion, Vector3 } from 'three'
+import setupAR from './utils/setupAR'
+import visualise from './visualise'
+import { createControlPanel } from './utils/elements'
+import scan from './scan'
+import calibrate from './calibrate'
+import { MarkerInfo } from './utils/index'
 
 const MODES = {
 	SCAN: 'scan',
 	SHOW: 'show'
-};
+}
 
-let mode = MODES.SCAN
+const mode = MODES.SCAN
 
 // Add a 'control panel' div to put controls on
 const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
-const arSetup = setupAR() 
+const arSetup = setupAR()
 const markerNumbers = [0]
 let markers: Object3D[] = []
 let recordValueInterval: NodeJS.Timer, setValueInterval: NodeJS.Timer
@@ -25,7 +25,7 @@ let recordValueInterval: NodeJS.Timer, setValueInterval: NodeJS.Timer
 let markerInfos: MarkerInfo[] = []
 
 const onScanComplete = (pos: Vector3[], quats: Quaternion[]) => {
-	console.log('scan completed');
+	console.log('scan completed')
 	clearInterval(recordValueInterval)
 	clearInterval(setValueInterval)
 	markers.forEach(marker => {
@@ -45,20 +45,21 @@ const onScanComplete = (pos: Vector3[], quats: Quaternion[]) => {
 }
 
 const onCalibrateComplete = (objects: Object3D[]) => {
-	console.log('calibration complete!');
+	console.log('calibration complete!')
 	visualise(arSetup, markerInfos, objects.map(o => o.clone()))
 }
 
 switch (mode) {
-	case MODES.SHOW:
-		// visualise(arSetup, markerNumbers, markerPositions, markerQuaternions)
-		break
-	case MODES.SCAN:
-		const { recordValueInterval: rvInterval, setValueInterval: svInterval, markers: mks } = scan(arSetup, markerNumbers, undefined, onScanComplete)
-		recordValueInterval = rvInterval
-		setValueInterval = svInterval
-		markers = mks
-		break
-	default:
-		throw Error('Mode not selected')
+case MODES.SHOW:
+	// visualise(arSetup, markerNumbers, markerPositions, markerQuaternions)
+	break
+case MODES.SCAN: {
+	const { recordValueInterval: rvInterval, setValueInterval: svInterval, markers: mks } = scan(arSetup, markerNumbers, undefined, onScanComplete)
+	recordValueInterval = rvInterval
+	setValueInterval = svInterval
+	markers = mks
+	break
+}
+default:
+	throw Error('Mode not selected')
 }

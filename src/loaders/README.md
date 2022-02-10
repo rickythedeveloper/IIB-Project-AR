@@ -13,6 +13,7 @@
 - CellData is unused
 
 ### VTKLoader (.vtk)
+- Use three.js example
 - File format is legacy
 - Data type is PolyData
 - Not actively supported

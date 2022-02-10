@@ -1,23 +1,23 @@
-type DataType = 'Int8' | 'UInt8' | 'Int16' | 'UInt16' | 'Int32' | 'UInt32' | 'Int64' | 'UInt64' | 'Float32' | 'Float64'
-type DataFormat = 'appended' | 'binary' | 'ascii'
-type VTKFileType = 
-	'ImageData' | 'PolyData' | 'RectilinearGrid' | 'StructuredGrid' | 'UnstructuredGrid' | 
+export type DataType = 'Int8' | 'UInt8' | 'Int16' | 'UInt16' | 'Int32' | 'UInt32' | 'Int64' | 'UInt64' | 'Float32' | 'Float64'
+export type DataFormat = 'appended' | 'binary' | 'ascii'
+export type VTKFileType =
+	'ImageData' | 'PolyData' | 'RectilinearGrid' | 'StructuredGrid' | 'UnstructuredGrid' |
 	'PImageData' | 'PPolyData' | 'PRectilinearGrid' | 'PStructuredGrid' | 'PUnstructuredGrid'
-type ByteOrder = 'LittleEndian' | 'BigEndian'
-type HeaderType = 'UInt64' | 'UInt32'
+export type ByteOrder = 'LittleEndian' | 'BigEndian'
+export type HeaderType = 'UInt64' | 'UInt32'
 
-type IntArray = Int8Array | Int16Array | Int32Array
-type UintArray = Uint8Array | Uint16Array | Uint32Array
-type BigIntArray = BigInt64Array
-type BigUintArray = BigUint64Array
-type FloatArray = Float32Array | Float64Array
-type NumberArray = IntArray | UintArray | FloatArray
+export type IntArray = Int8Array | Int16Array | Int32Array
+export type UintArray = Uint8Array | Uint16Array | Uint32Array
+export type BigIntArray = BigInt64Array
+export type BigUintArray = BigUint64Array
+export type FloatArray = Float32Array | Float64Array
+export type NumberArray = IntArray | UintArray | FloatArray
 
-interface DataArray {
+export interface DataArray {
 	attributes: {
 		type: DataType
 		Name: string
-		NumberOfComponents: string 
+		NumberOfComponents: string
 		format: DataFormat
 		RangeMin: string
 		RangeMax: string
@@ -26,7 +26,7 @@ interface DataArray {
 	'#text': string
 }
 
-interface PointData {
+export interface PointData {
 	attributes: {
 		Scalars?: string,
 		Vectors?: string
@@ -37,11 +37,11 @@ interface PointData {
 	DataArray: DataArray[] | DataArray
 }
 
-interface Points {
+export interface Points {
 	DataArray: DataArray
 }
 
-interface PieceAttributes {
+export interface PieceAttributes {
 	NumberOfPoints?: string
 	NumberOfVerts?: string
 	NumberOfLines?: string
@@ -50,9 +50,9 @@ interface PieceAttributes {
 	Extent?: string
 }
 
-interface Polys { DataArray: [DataArray, DataArray] }
+export interface Polys { DataArray: [DataArray, DataArray] }
 
-interface Piece {
+export interface Piece {
 	attributes: PieceAttributes
 	PointData: PointData
 	Points: Points
@@ -64,26 +64,26 @@ interface Piece {
 	Cells: [DataArray, DataArray, DataArray]
 }
 
-interface StructuredGrid {
+export interface StructuredGrid {
 	attributes: { WholeExtent: string }
 	Piece: Piece[] | Piece
 }
 
-interface PolyData {
+export interface PolyData {
 	attributes: { WholeExtent: string }
 	Piece: Piece
 }
 
-interface AppendedData {
+export interface AppendedData {
 	attributes: {encoding: 'base64'},
 	'#text'?: string
 }
 
-interface VTKFile {
+export interface VTKFile {
 	attributes: {
-		type: VTKFileType, 
-		version: string, 
-		byte_order: ByteOrder, 
+		type: VTKFileType,
+		version: string,
+		byte_order: ByteOrder,
 		header_type: HeaderType,
 		compressor?: string
 	}
@@ -92,7 +92,7 @@ interface VTKFile {
 	PolyData?: PolyData
 }
 
-interface Property {
+export interface Property {
 	name: string
 	min: number
 	max: number

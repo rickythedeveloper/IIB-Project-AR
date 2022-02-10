@@ -1,8 +1,8 @@
-import { createMarkerIndicator, createLine } from "./utils/three"
-import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from "./utils/arrays"
-import { Matrix, Vector, Positioning } from "./utils/index"
-import { createMarker, Setup } from "./utils/setupAR"
-import { Vector3, Quaternion, Object3D, Line, BufferGeometry, LineBasicMaterial, Color } from 'three'
+import { createLine, createMarkerIndicator } from './utils/three'
+import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from './utils/arrays'
+import { Matrix, Positioning, Vector } from './utils/index'
+import { Setup, createMarker } from './utils/setupAR'
+import { BufferGeometry, Color, Line, LineBasicMaterial, Object3D, Quaternion, Vector3 } from 'three'
 
 const zeroVector = new Vector3(0, 0, 0)
 const zeroQuaternion = new Quaternion(0, 0, 0, 1)
@@ -21,7 +21,7 @@ interface MarkerPairInfo {
 }
 
 
-const calculateConfidence = (numMeasurements: number, variance: {x: number, y: number, z: number}) => 
+const calculateConfidence = (numMeasurements: number, variance: {x: number, y: number, z: number}) =>
 	Math.min(1, numMeasurements / MIN_MEASUREMENTS) *
 	Math.min(1, MAX_VARIANCE / variance.x) *
 	Math.min(1, MAX_VARIANCE / variance.y) *
@@ -75,11 +75,11 @@ const updateAverages = (numMarkers: number, markerPairMatrix: Matrix<MarkerPairI
 
 type Route = [number, number]
 const connectMarkers = (
-	dominantMarkerIndex: number, 
-	numMarkers: number, 
+	dominantMarkerIndex: number,
+	numMarkers: number,
 	markerPairMatrix: Matrix<MarkerPairInfo>
 ): {
-	connectedMarkers: number[], 
+	connectedMarkers: number[],
 	routes: [number, number][]
 } => {
 	const connectedMarkers = [dominantMarkerIndex]
@@ -99,15 +99,15 @@ const connectMarkers = (
 }
 
 const registerRoutes = (
-	routes: Route[], 
-	markerPairMatrix: Matrix<MarkerPairInfo>, 
-	markerPositions: Vector<Vector3 | null>, 
+	routes: Route[],
+	markerPairMatrix: Matrix<MarkerPairInfo>,
+	markerPositions: Vector<Vector3 | null>,
 	markerQuaternions: Vector<Quaternion | null>
 ) => {
 	for (const route of routes) {
 		const startIndex = route[0], endIndex = route[1]
 		// 0: dominant marker
-		// 1: marker at the beginning of the route, 
+		// 1: marker at the beginning of the route,
 		// 2: marker at the end of the route
 		const p121 = markerPairMatrix[startIndex][endIndex].averageRelativePosition, q121 = markerPairMatrix[startIndex][endIndex].averageRelativeQuaternion
 		const p010 = markerPositions[startIndex], q010 = markerQuaternions[startIndex]
@@ -120,8 +120,8 @@ const registerRoutes = (
 }
 
 const updateConfidenceIndicators = (
-	numMarkers: number, 
-	markerPairMatrix: Matrix<MarkerPairInfo>, 
+	numMarkers: number,
+	markerPairMatrix: Matrix<MarkerPairInfo>,
 	indicatorLines: Matrix<Line<BufferGeometry, LineBasicMaterial>>,
 ) => {
 	for (let i = 0; i < numMarkers; i++) {
@@ -131,6 +131,7 @@ const updateConfidenceIndicators = (
 			const confidence = markerPairMatrix[i][j].relativePositionConfidence
 			const lineGeometry = indicatorLines[i][j].geometry, lineMaterial = indicatorLines[i][j].material
 			const vertices = new Float32Array([0, 0, 0, relativePosition.x, relativePosition.y, relativePosition.z])
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			lineGeometry.attributes.position.array = vertices
 			lineGeometry.attributes.position.needsUpdate = true
@@ -141,9 +142,9 @@ const updateConfidenceIndicators = (
 
 const scan = (
 	arSetup: Setup,
-	markerNumbers: number[], 
-	update: (markerPositions: Vector3[], markerQuaternions: Quaternion[]) => void = () => {},
-	onComplete: (markerPositions: Vector3[], markerQuaternions: Quaternion[]) => void = () => {}
+	markerNumbers: number[],
+	update?: (markerPositions: Vector3[], markerQuaternions: Quaternion[]) => void,
+	onComplete?: (markerPositions: Vector3[], markerQuaternions: Quaternion[]) => void
 ) => {
 	const markers = markerNumbers.map(n => createMarker(n, arSetup))
 	markers.forEach(m => arSetup.camera.add(m))
@@ -152,7 +153,7 @@ const scan = (
 	// add marker indicators
 	markers.forEach(marker => marker.add(createMarkerIndicator(0x0000ff, 0.5)))
 
-	const indicatorLines = createMatrix([markers.length, markers.length], (i, j) => {
+	const indicatorLines = createMatrix([markers.length, markers.length], (i) => {
 		const line = createLine(0xff0000)
 		markers[i].add(line)
 		return line
@@ -161,7 +162,7 @@ const scan = (
 	// container for the final positions and quaternions
 	const markerPositions = createVector(markers.length, i => i === dominantMarkerIndex ? zeroVector.clone() : null)
 	const markerQuaternions = createVector(markers.length, i => i === dominantMarkerIndex ? zeroQuaternion.clone() : null)
-	const markerPairMatrix: Matrix<MarkerPairInfo> = createMatrix([markers.length, markers.length], (i, j) => {
+	const markerPairMatrix: Matrix<MarkerPairInfo> = createMatrix([markers.length, markers.length], () => {
 		return {
 			averageRelativePosition: zeroVector.clone(),
 			averageRelativeQuaternion: zeroQuaternion.clone(),
@@ -187,13 +188,13 @@ const scan = (
 		if (connectedMarkers.length === markers.length && !completed) {
 			completed = true
 			registerRoutes(routes, markerPairMatrix, markerPositions, markerQuaternions)
-			onComplete(markerPositions as Vector3[], markerQuaternions as Quaternion[])
+			if (onComplete) onComplete(markerPositions as Vector3[], markerQuaternions as Quaternion[])
 		}
 
 		// update confidence indicator lines between markers
 		updateConfidenceIndicators(markers.length, markerPairMatrix, indicatorLines)
 
-		update(markerPositions as Vector3[], markerQuaternions as Quaternion[])
+		if (update) update(markerPositions as Vector3[], markerQuaternions as Quaternion[])
 	}, UPDATE_INTERVAL)
 
 	return { recordValueInterval, setValueInterval, markers }

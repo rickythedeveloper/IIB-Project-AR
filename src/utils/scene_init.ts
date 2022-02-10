@@ -1,8 +1,8 @@
-import { rotationQuaternion, createBufferObject, Axis } from "./three"
-import { createOption, createButton } from "./elements"
-import Arena from "./Arena"
-import { ThreeObjectWrapper } from "./index"
-import { Vector3, Quaternion, PlaneGeometry, MeshBasicMaterial, DoubleSide, Mesh } from 'three'
+import { Axis, createBufferObject, rotationQuaternion } from './three'
+import { createButton, createOption } from './elements'
+import Arena from './Arena'
+import { ThreeObjectWrapper } from './index'
+import { DoubleSide, Mesh, MeshBasicMaterial, PlaneGeometry, Quaternion, Vector3 } from 'three'
 
 
 enum ChangeOption { rotx, roty, rotz, transx, transy, transz, scale }
@@ -26,16 +26,16 @@ export const createMoveDropdown = (objectWrapper: ThreeObjectWrapper, arena: Are
 	const plusButton = createButton('+', () => { changeIntervalObject = createChangeInterval(1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, objectWrapper, arena) })
 	const minusButton = createButton('-', () => { changeIntervalObject = createChangeInterval(-1, selectedOption, changeIntervalObject, changeInterval, scaleChange, angleChange, positionChange, objectWrapper, arena) })
 
-	
+
 	const createChangeInterval = (
 		direction: 1 | -1,
 		option: ChangeOptionString,
-		intervalObject: NodeJS.Timer | undefined, 
-		interval: number, 
-		scaleChange: number, 
-		angleChange: number, 
-		positionChange: number, 
-		objectWrapper: ThreeObjectWrapper, 
+		intervalObject: NodeJS.Timer | undefined,
+		interval: number,
+		scaleChange: number,
+		angleChange: number,
+		positionChange: number,
+		objectWrapper: ThreeObjectWrapper,
 		arena: Arena
 	) => {
 		if (intervalObject !== undefined) {
@@ -77,9 +77,10 @@ export const createSimulationResultObject = (vertices: Float32Array, indices: Ui
 	const simResultScale = 1.475
 	simulationResult.scale.set(simResultScale, simResultScale, simResultScale)
 
-	let time = 0;
+	let time = 0
 	setInterval(() => {
 		time = time < nTimes - 1 ? time + 1 : 0
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		simulationResult.geometry.attributes.color.array = colors.slice(time * colorBufferSizePerTime, (time + 1) * colorBufferSizePerTime)
 		simulationResult.geometry.attributes.color.needsUpdate = true

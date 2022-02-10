@@ -1,63 +1,64 @@
 import { toByteArray } from 'base64-js'
+import { DataArray, DataType, VTKFile } from '../types'
 
 // Changes XML to JSON, based on https://davidwalsh.name/convert-xml-json
 export const xmlToJson = (xml: any) => {
 	// Create the return object
-	let obj: any = {};
+	let obj: any = {}
 	if ( xml.nodeType === 1 ) { // element
 		// do attributes
 		if ( xml.attributes ) {
 			if ( xml.attributes.length > 0 ) {
-				obj[ 'attributes' ] = {};
-				for ( var j = 0; j < xml.attributes.length; j ++ ) {
-					var attribute = xml.attributes.item( j );
-					obj[ 'attributes' ][ attribute.nodeName ] = attribute.nodeValue.trim();
+				obj[ 'attributes' ] = {}
+				for ( let j = 0; j < xml.attributes.length; j ++ ) {
+					const attribute = xml.attributes.item( j )
+					obj[ 'attributes' ][ attribute.nodeName ] = attribute.nodeValue.trim()
 				}
 			}
 		}
 	} else if ( xml.nodeType === 3 ) { // text
-		obj = xml.nodeValue.trim();
+		obj = xml.nodeValue.trim()
 	}
-	
+
 	// do children
 	if ( xml.hasChildNodes() ) {
-		for ( var i = 0; i < xml.childNodes.length; i ++ ) {
-			var item = xml.childNodes.item( i );
-			var nodeName = item.nodeName;
+		for ( let i = 0; i < xml.childNodes.length; i ++ ) {
+			const item = xml.childNodes.item( i )
+			const nodeName = item.nodeName
 			if ( typeof obj[ nodeName ] === 'undefined' ) {
-				var tmp = xmlToJson( item );
-				if ( tmp !== '' ) obj[ nodeName ] = tmp;
+				const tmp = xmlToJson( item )
+				if ( tmp !== '' ) obj[ nodeName ] = tmp
 			} else {
 				if ( typeof obj[ nodeName ].push === 'undefined' ) {
-					var old = obj[ nodeName ];
-					obj[ nodeName ] = [ old ];
+					const old = obj[ nodeName ]
+					obj[ nodeName ] = [ old ]
 				}
-				var tmp = xmlToJson( item );
-				if ( tmp !== '' ) obj[ nodeName ].push( tmp );
+				const tmp = xmlToJson( item )
+				if ( tmp !== '' ) obj[ nodeName ].push( tmp )
 			}
 		}
 	}
-	
-	return obj;
+
+	return obj
 }
 
 export const fileToJson = (stringFile: string) => {
 	let dom: any
 	if ( window.DOMParser ) {
-		try { dom = ( new DOMParser() ).parseFromString(stringFile, 'text/xml'); } 
-		catch ( e ) { dom = null; }
+		try { dom = ( new DOMParser() ).parseFromString(stringFile, 'text/xml') }
+		catch ( e ) { dom = null }
 	} else if ( window.ActiveXObject ) {
 		try {
-			dom = new ActiveXObject( 'Microsoft.XMLDOM' ); // eslint-disable-line no-undef
-			dom.async = false;
-			if ( ! dom.loadXML( /* xml */ ) ) throw new Error( dom.parseError.reason + dom.parseError.srcText );
+			dom = new ActiveXObject( 'Microsoft.XMLDOM' ) // eslint-disable-line no-undef
+			dom.async = false
+			if ( ! dom.loadXML( /* xml */ ) ) throw new Error( dom.parseError.reason + dom.parseError.srcText )
 		} catch ( e ) {
-			dom = null;
+			dom = null
 		}
-	} else throw new Error( 'Cannot parse xml string!' );
+	} else throw new Error( 'Cannot parse xml string!' )
 
 	// Get the doc
-	var doc = dom.documentElement;
+	const doc = dom.documentElement
 	// Convert to json
 	const file: any = xmlToJson(doc)
 	return file
@@ -65,16 +66,16 @@ export const fileToJson = (stringFile: string) => {
 
 export const getTypeArrayConstructor = (type: DataType) => {
 	switch (type) {
-		case 'Int8': return Int8Array
-		case 'UInt8': return Uint8Array
-		case 'Int16': return Int16Array
-		case 'UInt16': return Uint16Array
-		case 'Int32': return Int32Array
-		case 'UInt32': return Uint32Array
-		case 'Int64': return BigInt64Array
-		case 'UInt64': return BigUint64Array
-		case 'Float32': return Float32Array
-		case 'Float64': return Float64Array
+	case 'Int8': return Int8Array
+	case 'UInt8': return Uint8Array
+	case 'Int16': return Int16Array
+	case 'UInt16': return Uint16Array
+	case 'Int32': return Int32Array
+	case 'UInt32': return Uint32Array
+	case 'Int64': return BigInt64Array
+	case 'UInt64': return BigUint64Array
+	case 'Float32': return Float32Array
+	case 'Float64': return Float64Array
 	}
 }
 

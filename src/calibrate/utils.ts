@@ -1,9 +1,8 @@
-import { Object3D, Quaternion, Vector3 } from "three"
-import VTSLoader from "../loaders/VTK/VTSLoader"
-import { atanAngle } from "../utils/angle"
-import { InteractionManager, InteractiveEvent2, PinchEvent } from "../utils/interactive"
-import { Axis } from "../utils/three"
-import { createObjectControl, ObjectControl, RotationRing, TranslationArrow } from "./three"
+import { Object3D, Quaternion, Vector3 } from 'three'
+import { atanAngle } from '../utils/angle'
+import { InteractionManager, InteractiveEvent2, PinchEvent } from '../utils/interactive'
+import { Axis } from '../utils/three'
+import { ObjectControl, RotationRing, TranslationArrow, createObjectControl } from './three'
 
 const updateControlPosition = (object: Object3D, objectControl: ObjectControl) => {
 	const rings = objectControl.rings
@@ -18,10 +17,10 @@ const updateControlPosition = (object: Object3D, objectControl: ObjectControl) =
 }
 
 export const createObjectControlForObject = (
-	object: Object3D, 
-	interactionManager: InteractionManager, 
-	getPositionToUpdate: (object: Object3D) => Vector3, 
-	getQuaternionToUpdate: (object: Object3D) => Quaternion, 
+	object: Object3D,
+	interactionManager: InteractionManager,
+	getPositionToUpdate: (object: Object3D) => Vector3,
+	getQuaternionToUpdate: (object: Object3D) => Quaternion,
 	worldToRelevant: (worldCoords: Vector3) => Vector3
 ) => {
 	const objectControl = createObjectControl()
@@ -44,8 +43,8 @@ export const createObjectControlForObject = (
 				const lastIntersectFromObject = lastIntersecPosition.clone().sub(objectPosition)
 				const theta =
 					axis === Axis.x ? atanAngle(intersectFromObject.y, intersectFromObject.z) - atanAngle(lastIntersectFromObject.y, lastIntersectFromObject.z) :
-					axis === Axis.y ? atanAngle(intersectFromObject.z, intersectFromObject.x) - atanAngle(lastIntersectFromObject.z, lastIntersectFromObject.x) :
-					atanAngle(intersectFromObject.x, intersectFromObject.y) - atanAngle(lastIntersectFromObject.x, lastIntersectFromObject.y)
+						axis === Axis.y ? atanAngle(intersectFromObject.z, intersectFromObject.x) - atanAngle(lastIntersectFromObject.z, lastIntersectFromObject.x) :
+							atanAngle(intersectFromObject.x, intersectFromObject.y) - atanAngle(lastIntersectFromObject.x, lastIntersectFromObject.y)
 				const sin = Math.sin(theta/2), cos = Math.cos(theta/2)
 				objectQuaternion.premultiply(new Quaternion(axis === Axis.x ? sin : 0, axis === Axis.y ? sin : 0, axis === Axis.z ? sin : 0, cos))
 			}
@@ -53,14 +52,14 @@ export const createObjectControlForObject = (
 		}
 		interactionManager.add(r.ringDetectionCylinder, 'mousedown')
 		interactionManager.add(r.ringDetectionCylinder, 'mouseup', false);
-		(r.ringDetectionCylinder as Object3D<InteractiveEvent2<'mousedown'>>).addEventListener('mousedown', (event) => {
+		(r.ringDetectionCylinder as Object3D<InteractiveEvent2<'mousedown'>>).addEventListener('mousedown', () => {
 			if (controlIsBusy) return
 			interactionManager.add(r.invisiblePlane, 'mousemove');
 			(r.invisiblePlane as Object3D<InteractiveEvent2<'mousemove'>>).addEventListener('mousemove', rotationListener)
 			r.visiblePlane.visible = true
 			controlIsBusy = true
 		});
-		(r.ringDetectionCylinder as Object3D<InteractiveEvent2<'mouseup'>>).addEventListener('mouseup', event => {
+		(r.ringDetectionCylinder as Object3D<InteractiveEvent2<'mouseup'>>).addEventListener('mouseup', () => {
 			interactionManager.remove(r.invisiblePlane, 'mousemove');
 			(r.invisiblePlane as Object3D<InteractiveEvent2<'mousemove'>>).removeEventListener('mousemove', rotationListener)
 			r.visiblePlane.visible = false
@@ -94,13 +93,13 @@ export const createObjectControlForObject = (
 			const objectPosition = getPositionToUpdate(object).clone()
 			const relativeCameraPosition = cameraPosition.clone().sub(objectPosition)
 			const angle = Math.PI/2 + (
-				axis === Axis.x ? atanAngle(relativeCameraPosition.y, relativeCameraPosition.z) : 
-				axis === Axis.y ? atanAngle(-relativeCameraPosition.x, relativeCameraPosition.z): 
-				atanAngle(relativeCameraPosition.y, -relativeCameraPosition.x)
+				axis === Axis.x ? atanAngle(relativeCameraPosition.y, relativeCameraPosition.z) :
+					axis === Axis.y ? atanAngle(-relativeCameraPosition.x, relativeCameraPosition.z):
+						atanAngle(relativeCameraPosition.y, -relativeCameraPosition.x)
 			)
 			a.visiblePlane.quaternion.set(Math.sin(angle/2), 0, 0, Math.cos(angle/2))
 			a.invisiblePlane.quaternion.set(Math.sin(angle/2), 0, 0, Math.cos(angle/2))
-			
+
 			a.visiblePlane.visible = true
 			interactionManager.add(a.invisiblePlane, 'mousemove');
 			(a.invisiblePlane as Object3D<InteractiveEvent2<'mousemove'>>).addEventListener('mousemove', translationListener)
@@ -151,7 +150,7 @@ export const createFileUpload = (onComplete: (fileInfos: FileInfo[]) => void) =>
 			const reader = new FileReader()
 			reader.onload = () => {
 				const url = reader.result as string
-				fileInfos.push({url, name: file.name})
+				fileInfos.push({ url, name: file.name })
 
 				if (input.files !== null && fileInfos.length === input.files.length) {
 					onComplete(fileInfos)
