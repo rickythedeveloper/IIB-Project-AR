@@ -1,12 +1,12 @@
 import Arena from './utils/Arena'
 import { createMarkerIndicators } from './utils/scene_init'
-import { Setup } from './utils/setupAR'
+import setupAR from './utils/setupAR'
 import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from './utils/constants'
 import { MarkerInfo } from './utils/index'
 import { Object3D, PointLight } from 'three'
 
-
-const visualise = (setup: Setup, markerInfos: MarkerInfo[], objects: Object3D[]) => {
+const visualise = (markerInfos: MarkerInfo[], objects: Object3D[]) => {
+	const setup = setupAR()
 	setup.scene.add(new PointLight())
 	const arena = new Arena(setup, markerInfos)
 	const markerIndicators = createMarkerIndicators(arena.markerPositions, arena.markerQuaternions)

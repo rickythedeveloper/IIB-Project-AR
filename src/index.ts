@@ -46,7 +46,7 @@ const onScanComplete = (pos: Vector3[], quats: Quaternion[]) => {
 
 const onCalibrateComplete = (objects: Object3D[]) => {
 	console.log('calibration complete!')
-	visualise(arSetup, markerInfos, objects.map(o => o.clone()))
+	visualise(markerInfos, objects.map(o => o.clone()))
 }
 
 switch (mode) {
