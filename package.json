@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/rickythedeveloper/IIB-Project-AR#readme",
   "devDependencies": {
+    "@types/d3-scale-chromatic": "^3.0.0",
     "@types/three": "^0.136.1",
     "@typescript-eslint/eslint-plugin": "^5.11.0",
     "@typescript-eslint/parser": "^5.11.0",
@@ -35,6 +36,7 @@
   "dependencies": {
     "@ar-js-org/ar.js": "^3.3.3-es6-beta-02",
     "base64-js": "^1.5.1",
+    "d3-scale-chromatic": "^3.0.0",
     "fflate": "^0.7.3",
     "three": "^0.137.5"
   }

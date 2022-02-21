@@ -1,39 +1,64 @@
-import { Box3, BufferGeometry, DoubleSide, Group, Mesh, Object3D, PointLight, ShaderMaterial } from 'three'
+import { Box3, BufferGeometry, Color, DataTexture, DoubleSide, Group, Mesh, Object3D, PointLight, ShaderMaterial } from 'three'
 import Arena from '../utils/Arena'
 import { createMarkerIndicators } from '../utils/scene_init'
 import { Setup } from '../utils/setupAR'
 import { InteractionManager } from '../utils/interactive'
 import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from '../utils/constants'
-import { MarkerInfo } from '../utils/index'
+import { MarkerInfo } from '../utils'
 import { createFileUpload, createObjectControlForObject, getFileExtension } from './utils'
 import VTSLoader from '../loaders/VTK/VTSLoader'
 import { createOption } from '../utils/elements'
 import VTPLoader from '../loaders/VTK/VTPLoader'
 import { Property } from '../loaders/VTK/types'
+import { interpolateRdBu } from 'd3-scale-chromatic'
 
 const vertexShader = (property: string, min: number, max: number) => `
 	attribute float ${property};
-	varying vec3 v_color;
+	varying float propertyValueNormalized;
 	void main() {
-		float propertyValueNormalized = (${property} - (${min.toFixed(20)})) / (${max.toFixed(20)} - (${min.toFixed(20)}));
-		v_color = vec3(propertyValueNormalized, 0.0, 0.0);
+		propertyValueNormalized = (${property} - (${min.toFixed(20)})) / (${max.toFixed(20)} - (${min.toFixed(20)}));
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
 `
 
-const fragmentShader = (opacity: number): string => `
-	varying vec3 v_color;
+const fragmentShader = (): string => `
+	uniform sampler2D colorMap;
+	varying float propertyValueNormalized;
 	void main() {
-		gl_FragColor = vec4(v_color, ${opacity});
+		gl_FragColor = texture2D(colorMap, vec2(propertyValueNormalized, 0.5));
 	}
 `
 
-const getMaterial = (property: Property) => new ShaderMaterial({
-	vertexShader: vertexShader(property.name, property.min, property.max),
-	fragmentShader: fragmentShader(1),
-	transparent: true,
-	side: DoubleSide
-})
+const getTexture = (opacity: number): DataTexture => {
+	const schemeSize = 100
+	const colorData = new Uint8Array(4 * schemeSize)
+	for (let i = 0; i < schemeSize; i++) {
+		const stride = i * 4
+		const t = i / (schemeSize - 1)
+		const color = new Color(interpolateRdBu(t))
+		colorData[stride] = Math.floor(color.r * 255)
+		colorData[stride + 1] = Math.floor(color.g * 255)
+		colorData[stride + 2] = Math.floor(color.b * 255)
+		colorData[stride + 3] = Math.floor(opacity * 255)
+	}
+
+	const texture = new DataTexture(colorData, schemeSize, 1)
+	texture.needsUpdate = true
+	return texture
+}
+
+const getMaterial = (property: Property): ShaderMaterial => {
+	const opacity = 1
+	return new ShaderMaterial({
+		vertexShader: vertexShader(property.name, property.min, property.max),
+		fragmentShader: fragmentShader(),
+		transparent: true,
+		side: DoubleSide,
+		uniforms: {
+			colorMap: { value: getTexture(opacity) },
+		}
+	})
+}
 
 const getMeshAndFlowPropertyDropdown = (geometry: BufferGeometry, properties: Property[]): {mesh: Mesh, optionDropdown: HTMLSelectElement} => {
 	const mesh = new Mesh(geometry, getMaterial(properties[0]))
