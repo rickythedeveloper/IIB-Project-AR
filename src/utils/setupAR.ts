@@ -9,6 +9,7 @@ export interface Setup {
 	arToolkitContext: ArToolkitContext
 	arToolkitSource: ArToolkitSource
 	onRenderFunctions: OnRenderFunction[]
+	cleanup: () => void
 }
 
 export const createMarker = (num: number, setup: Setup) => {
@@ -102,7 +103,12 @@ const setupAR = (): Setup => {
 	}
 	requestAnimationFrame(animate)
 
-	return { renderer, scene, camera, arToolkitContext, arToolkitSource, onRenderFunctions: externalOnRenderFunctions }
+	const cleanup = () => {
+		if (arToolkitSource.domElement) document.body.removeChild(arToolkitSource.domElement)
+		document.body.removeChild(renderer.domElement)
+	}
+
+	return { renderer, scene, camera, arToolkitContext, arToolkitSource, onRenderFunctions: externalOnRenderFunctions, cleanup }
 }
 
 export default setupAR

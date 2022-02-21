@@ -2,7 +2,7 @@
 declare module '@ar-js-org/ar.js/three.js/build/ar-threex.js' {
 	class ArToolkitSource {
 		ready: boolean
-		domElement: HTMLElement | null
+		domElement: HTMLVideoElement | null
 		constructor(parameters: Partial<ArToolkitSourceParameters>)
 		init(onReady: () => void, onError?: (error: {name: string, message: string}) => void): ArToolkitSource
 		onResizeElement()
