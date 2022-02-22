@@ -1,11 +1,16 @@
 export default class ColorBar {
-	element: HTMLCanvasElement
+	element: HTMLCanvasElement = document.createElement('canvas')
 
-	constructor(public getColor: (t: number) => string, public numColors: number, width = 50, height = 200) {
-		this.element = document.createElement('canvas')
-		this.element.width = width
-		this.element.height = height
+	constructor(public getColor: (t: number) => string, public numColors: number) {}
 
+	get width() { return this.element.width }
+	set width(value: number) {
+		this.element.width = value
+		this.update()
+	}
+	get height() { return this.element.height }
+	set height(value: number) {
+		this.element.height = value
 		this.update()
 	}
 

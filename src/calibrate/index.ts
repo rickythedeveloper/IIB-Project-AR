@@ -1,4 +1,5 @@
 import { Box3, BufferGeometry, Color, DataTexture, DoubleSide, Group, Mesh, Object3D, PointLight, ShaderMaterial } from 'three'
+import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib'
 import PropertyInspector from '../components/PropertyInspector'
 import Arena from '../utils/Arena'
 import { createMarkerIndicators } from '../utils/scene_init'
@@ -11,6 +12,7 @@ import VTSLoader from '../loaders/VTK/VTSLoader'
 import VTPLoader from '../loaders/VTK/VTPLoader'
 import { Property } from '../loaders/VTK/types'
 import { interpolateRdBu } from 'd3-scale-chromatic'
+import init = RectAreaLightUniformsLib.init
 
 const vertexShader = (property: string, min: number, max: number) => `
 	attribute float ${property};
@@ -47,10 +49,10 @@ const getTexture = (opacity: number): DataTexture => {
 	return texture
 }
 
-const getMaterial = (property: Property): ShaderMaterial => {
+const getMaterial = (propertyName: string, min: number, max: number): ShaderMaterial => {
 	const opacity = 1
 	return new ShaderMaterial({
-		vertexShader: vertexShader(property.name, property.min, property.max),
+		vertexShader: vertexShader(propertyName, min, max),
 		fragmentShader: fragmentShader(),
 		transparent: true,
 		side: DoubleSide,
@@ -61,14 +63,25 @@ const getMaterial = (property: Property): ShaderMaterial => {
 }
 
 const getMeshAndFlowPropertyDropdown = (geometry: BufferGeometry, properties: Property[]): {mesh: Mesh, propertyInspector: PropertyInspector} => {
-	const mesh = new Mesh(geometry, getMaterial(properties[0]))
+	const initialProperty = properties[0]
+	const mesh = new Mesh(geometry, getMaterial(initialProperty.name, initialProperty.min, initialProperty.max))
 
-	const propertyInspector = new PropertyInspector(properties, interpolateRdBu, (newProperty) => {
-		const matchingProperties = properties.filter(p => p.name === newProperty.name)
-		if (matchingProperties.length === 0) throw Error('could not find matching property')
-		const propertyWithData = matchingProperties[0]
-		mesh.material = getMaterial(propertyWithData)
-	})
+	let propertyName = initialProperty.name
+	const propertyInspector = new PropertyInspector(
+		properties,
+		interpolateRdBu,
+		(newProperty) => {
+			const matchingProperties = properties.filter(p => p.name === newProperty.name)
+			if (matchingProperties.length === 0) throw Error('could not find matching property')
+			const propertyWithData = matchingProperties[0]
+			// mesh.material = getMaterial(propertyWithData, propertyWithData.min, propertyWithData.max)
+			mesh.material.vertexShader = vertexShader(propertyWithData.name, propertyWithData.min, propertyWithData.max)
+			propertyName = propertyWithData.name
+		},
+		(min, max) => {
+			mesh.material.vertexShader = vertexShader(propertyName, min, max)
+		}
+	)
 
 	return { mesh, propertyInspector }
 }
@@ -122,7 +135,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 		})
 		arena.clean()
 		onComplete(calibratableObjects)
-	}, 30000)
+	}, 3000000)
 
 	const addCalibratableObject = (object: Object3D) => {
 		const objectControl = createObjectControlForObject(
