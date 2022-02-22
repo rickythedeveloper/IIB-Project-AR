@@ -18,6 +18,7 @@ export const createControlPanel = () => {
 	controlPanelWrapper.style.zIndex = '1000'
 	controlPanelWrapper.style.display = 'flex'
 	controlPanelWrapper.style.flexDirection = 'column'
+	controlPanelWrapper.style.pointerEvents = 'none' // allow under layer (renderer) to be clicked
 
 	const controlPanel = document.createElement('div')
 	controlPanel.style.margin = '20px'

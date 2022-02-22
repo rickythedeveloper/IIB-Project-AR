@@ -83,7 +83,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 	const calibratableObjects: Object3D[] = []
 	const interactionManager = new InteractionManager(setup.renderer, setup.camera, setup.renderer.domElement)
 
-	controlPanel.appendChild(createFileUpload(fileInfos => {
+	const uploadButton = createFileUpload(fileInfos => {
 		const group = new Group()
 		for (let i = 0; i < fileInfos.length; i++) {
 			const fileInfo = fileInfos[i]
@@ -108,7 +108,10 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 				}
 			})
 		}
-	}))
+	})
+	uploadButton.style.pointerEvents = 'auto' // enable mouse events for this element
+
+	controlPanel.appendChild(uploadButton)
 
 	setTimeout(() => {
 		calibratableObjects.forEach(o => {
