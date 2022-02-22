@@ -1,4 +1,5 @@
 import { Box3, BufferGeometry, Color, DataTexture, DoubleSide, Group, Mesh, Object3D, PointLight, ShaderMaterial } from 'three'
+import PropertyInspector from '../components/PropertyInspector'
 import Arena from '../utils/Arena'
 import { createMarkerIndicators } from '../utils/scene_init'
 import { Setup } from '../utils/setupAR'
@@ -7,7 +8,6 @@ import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_C
 import { MarkerInfo } from '../utils'
 import { createFileUpload, createObjectControlForObject, getFileExtension } from './utils'
 import VTSLoader from '../loaders/VTK/VTSLoader'
-import { createOption } from '../utils/elements'
 import VTPLoader from '../loaders/VTK/VTPLoader'
 import { Property } from '../loaders/VTK/types'
 import { interpolateRdBu } from 'd3-scale-chromatic'
@@ -60,20 +60,17 @@ const getMaterial = (property: Property): ShaderMaterial => {
 	})
 }
 
-const getMeshAndFlowPropertyDropdown = (geometry: BufferGeometry, properties: Property[]): {mesh: Mesh, optionDropdown: HTMLSelectElement} => {
+const getMeshAndFlowPropertyDropdown = (geometry: BufferGeometry, properties: Property[]): {mesh: Mesh, propertyInspector: PropertyInspector} => {
 	const mesh = new Mesh(geometry, getMaterial(properties[0]))
 
-	const optionDropdown = document.createElement('select')
-	properties.forEach(p => optionDropdown.appendChild(createOption(p.name, p.name)))
-	optionDropdown.onchange = (e) => {
-		if (e.target) {
-			const propertyName = (e.target as HTMLSelectElement).value
-			const property = properties.filter(p => p.name === propertyName)[0]
-			mesh.material = getMaterial(property)
-		}
-	}
-	optionDropdown.selectedIndex = 0
-	return { mesh, optionDropdown }
+	const propertyInspector = new PropertyInspector(properties, interpolateRdBu, (newProperty) => {
+		const matchingProperties = properties.filter(p => p.name === newProperty.name)
+		if (matchingProperties.length === 0) throw Error('could not find matching property')
+		const propertyWithData = matchingProperties[0]
+		mesh.material = getMaterial(propertyWithData)
+	})
+
+	return { mesh, propertyInspector }
 }
 
 const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void, controlPanel: HTMLDivElement) => {
@@ -98,9 +95,9 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 			if (loader === null) throw new Error('uploaded a file with an invalid file extension')
 
 			loader.load(fileInfo.url, ({ geometry, properties }) => {
-				const { mesh, optionDropdown } = getMeshAndFlowPropertyDropdown(geometry, properties)
+				const { mesh, propertyInspector } = getMeshAndFlowPropertyDropdown(geometry, properties)
 				group.add(mesh)
-				controlPanel.append(optionDropdown)
+				controlPanel.append(propertyInspector.element)
 
 				if (group.children.length === fileInfos.length) {
 					const groupWrapper = new Group()
