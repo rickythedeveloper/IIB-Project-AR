@@ -1,7 +1,7 @@
 import { createOption } from './generic'
 import ColorBarWithScale from './ColorBarWithScale'
 
-interface Property {
+export interface Property {
 	name: string
 	min: number
 	max: number
