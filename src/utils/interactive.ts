@@ -23,9 +23,6 @@ export interface InteractiveEvent2<K extends keyof HTMLElementEventMap> extends 
 }
 
 export class InteractionManager {
-	renderer: WebGLRenderer
-	camera: Camera
-	domElement: HTMLCanvasElement
 	mousePosition: Vector2 = new Vector2(-1, 1) // top left default position
 	supportsPointerEvents = !!window.PointerEvent
 	interactiveObjects: InteractiveObject[] = []
@@ -33,24 +30,20 @@ export class InteractionManager {
 	treatTouchEventsAsMouseEvents = true
 	lastTouches: {[pointerId: number]: PointerEvent} = {}
 
-	constructor(renderer: WebGLRenderer, camera: Camera, domElement: HTMLCanvasElement) {
-		this.renderer = renderer
-		this.camera = camera
-		this.domElement = domElement
-
-		domElement.ownerDocument.addEventListener('click', this.onMouseClick)
+	constructor(public renderer: WebGLRenderer, public camera: Camera, public domElement: HTMLCanvasElement) {
+		domElement.addEventListener('click', this.onMouseClick)
 
 		if (this.supportsPointerEvents) {
-			domElement.ownerDocument.addEventListener('pointermove', this.onDocumentMouseMove)
-			domElement.ownerDocument.addEventListener('pointerdown', this.onMouseDown)
-			domElement.ownerDocument.addEventListener('pointerup', this.onMouseUp)
+			domElement.addEventListener('pointermove', this.onDocumentMouseMove)
+			domElement.addEventListener('pointerdown', this.onMouseDown)
+			domElement.addEventListener('pointerup', this.onMouseUp)
 		} else {
-			domElement.ownerDocument.addEventListener('mousemove',this.onDocumentMouseMove)
-			domElement.ownerDocument.addEventListener('mousedown', this.onMouseDown)
-			domElement.ownerDocument.addEventListener('mouseup', this.onMouseUp)
-			domElement.ownerDocument.addEventListener('touchstart', this.onTouchStart, { passive: true })
-			domElement.ownerDocument.addEventListener('touchmove', this.onTouchMove, { passive: true })
-			domElement.ownerDocument.addEventListener('touchend', this.onTouchEnd, { passive: true })
+			domElement.addEventListener('mousemove',this.onDocumentMouseMove)
+			domElement.addEventListener('mousedown', this.onMouseDown)
+			domElement.addEventListener('mouseup', this.onMouseUp)
+			domElement.addEventListener('touchstart', this.onTouchStart, { passive: true })
+			domElement.addEventListener('touchmove', this.onTouchMove, { passive: true })
+			domElement.addEventListener('touchend', this.onTouchEnd, { passive: true })
 		}
 	}
 
@@ -58,11 +51,11 @@ export class InteractionManager {
 		this.domElement.removeEventListener('click', this.onMouseClick)
 
 		if (this.supportsPointerEvents) {
-			this.domElement.ownerDocument.removeEventListener('pointermove', this.onDocumentMouseMove)
+			this.domElement.removeEventListener('pointermove', this.onDocumentMouseMove)
 			this.domElement.removeEventListener('pointerdown', this.onMouseDown)
 			this.domElement.removeEventListener('pointerup', this.onMouseUp)
 		} else {
-			this.domElement.ownerDocument.removeEventListener('mousemove', this.onDocumentMouseMove)
+			this.domElement.removeEventListener('mousemove', this.onDocumentMouseMove)
 			this.domElement.removeEventListener('mousedown', this.onMouseDown)
 			this.domElement.removeEventListener('mouseup', this.onMouseUp)
 			this.domElement.removeEventListener('touchstart', this.onTouchStart)
