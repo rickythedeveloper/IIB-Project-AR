@@ -1,5 +1,4 @@
 import { Box3, BufferGeometry, Color, DataTexture, DoubleSide, Group, Mesh, Object3D, PointLight, ShaderMaterial } from 'three'
-import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib'
 import PropertyInspector from '../components/PropertyInspector'
 import Arena from '../utils/Arena'
 import { createMarkerIndicators } from '../utils/scene_init'
@@ -12,7 +11,6 @@ import VTSLoader from '../loaders/VTK/VTSLoader'
 import VTPLoader from '../loaders/VTK/VTPLoader'
 import { Property } from '../loaders/VTK/types'
 import { interpolateRdBu } from 'd3-scale-chromatic'
-import init = RectAreaLightUniformsLib.init
 
 const vertexShader = (property: string, min: number, max: number) => `
 	attribute float ${property};

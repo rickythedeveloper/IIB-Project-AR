@@ -1,8 +1,5 @@
-import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib'
 import { createOption } from '../utils/elements'
-import ColorBar from './ColorBar'
 import ColorBarWithScale from './ColorBarWithScale'
-import init = RectAreaLightUniformsLib.init
 
 interface Property {
 	name: string
