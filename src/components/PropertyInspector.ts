@@ -1,7 +1,7 @@
 import { createOption } from './generic'
 import ColorBarWithScale from './ColorBarWithScale'
 
-interface Property {
+export interface Property {
 	name: string
 	min: number
 	max: number
@@ -11,30 +11,41 @@ const BAR_WIDTH = 50
 const BAR_HEIGHT = 200
 const ELEMENT_WIDTH = 50
 const NUM_COLORS = BAR_HEIGHT / 2
+const INITIAL_PROPERTY_INDEX = 0
 
 export default class PropertyInspector {
 	element: HTMLDivElement
 	selectElement: HTMLSelectElement
 	colorBarWithScale: ColorBarWithScale
+	currentPropertyName: string
 
-	constructor(properties: Property[], getColor: (t: number) => string, onPropertyChange: (newProperty: Property) => void, onRangeChange: (min: number, max: number) => void) {
+	constructor(
+		properties: Property[],
+		getColor: (t: number) => string,
+		onPropertyChange: (newProperty: Property) => void,
+		onRangeChange: (min: number, max: number, propertyName: string) => void
+	) {
 		this.selectElement = document.createElement('select')
 		properties.forEach(p => this.selectElement.appendChild(createOption(p.name, p.name)))
-		this.colorBarWithScale = new ColorBarWithScale(getColor, NUM_COLORS, onRangeChange)
+		this.colorBarWithScale = new ColorBarWithScale(
+			getColor,
+			NUM_COLORS,
+			(min, max) => onRangeChange(min, max, this.currentPropertyName)
+		)
 		this.colorBarWithScale.colorBar.width = BAR_WIDTH
 		this.colorBarWithScale.colorBar.height = BAR_HEIGHT
-		const initialProperty = properties[0]
+		const initialProperty = properties[INITIAL_PROPERTY_INDEX]
+		this.currentPropertyName = initialProperty.name
 		this.colorBarWithScale.min = initialProperty.min
 		this.colorBarWithScale.max = initialProperty.max
 
 		this.selectElement.onchange = (e) => {
-			if (e.target) {
-				const propertyName = (e.target as HTMLSelectElement).value
-				const property = properties.filter(p => p.name === propertyName)[0]
-				onPropertyChange(property)
-				this.colorBarWithScale.min = property.min
-				this.colorBarWithScale.max = property.max
-			}
+			const propertyName = (e.target as HTMLSelectElement).value
+			const property = properties.filter(p => p.name === propertyName)[0]
+			onPropertyChange(property)
+			this.currentPropertyName = property.name
+			this.colorBarWithScale.min = property.min
+			this.colorBarWithScale.max = property.max
 		}
 		this.selectElement.selectedIndex = 0
 

@@ -128,12 +128,10 @@ export default class ColorBarWithScale {
 	updateScale() {
 		const nums = generateScaleNumbers(this.min, this.max)
 		const normalizedNums = nums.map(n => this.normalize(n))
-		console.log(normalizedNums)
 		const { height } = this.colorBar.element.getBoundingClientRect()
 		for (let i = 0; i < this.lineElements.length; i++) {
 			this.lineElements[i].style.visibility = i < normalizedNums.length ? 'visible' : 'hidden'
 			this.lineElements[i].style.bottom = `${height * normalizedNums[i]}px`
-			console.log('oi')
 		}
 
 		this.maxElement.innerText = `${this._max.toPrecision(5)}`
