@@ -15,7 +15,7 @@ const parse = (stringFile: string): VTP => {
 
 	const polyData = file.PolyData
 	const piece = polyData.Piece
-	if (piece instanceof Array) throw new Error('multiple pieces exist in a .vts file')
+	if (piece instanceof Array) throw new Error('multiple pieces exist in a .vtp file')
 	// const compressed = file.attributes.compressor !== undefined // TODO implement for compressed file
 	const geometry = new BufferGeometry()
 

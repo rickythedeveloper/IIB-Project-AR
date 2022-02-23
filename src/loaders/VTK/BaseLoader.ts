@@ -1,12 +1,12 @@
 import { FileLoader, Loader, LoadingManager } from 'three'
 
 abstract class BaseLoader<ResultType> extends Loader {
-	constructor( manager?: LoadingManager ) { super(manager) }
+	protected constructor( manager?: LoadingManager ) { super(manager) }
 
 	load = (
 		url: string,
 		onLoad: (result: ResultType) => void,
-		onProgress?: (request: ProgressEvent<EventTarget>) => void,
+		onProgress?: (request: ProgressEvent) => void,
 		onError?: (message: string) => void
 	) => {
 		const loader = new FileLoader(this.manager)

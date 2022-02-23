@@ -121,8 +121,7 @@ export class InteractionManager {
 			const pointerEvent = this.lastTouches[pointerId]
 			points.push([pointerEvent.clientX, pointerEvent.clientY])
 		}
-		const distance = Math.sqrt((points[0][0] - points[1][0]) ** 2 + (points[0][1] - points[1][1]) ** 2)
-		return distance
+		return Math.sqrt((points[0][0] - points[1][0]) ** 2 + (points[0][1] - points[1][1]) ** 2)
 	}
 
 	dispatchPinch = (pointerEvent: PointerEvent) => {

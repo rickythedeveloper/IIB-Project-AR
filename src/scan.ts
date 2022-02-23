@@ -1,6 +1,7 @@
-import { createLine, createMarkerIndicator } from './utils/three'
-import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from './utils/arrays'
-import { Matrix, Positioning, Vector } from './utils/index'
+import { createLine, createMarkerIndicator } from './three_utils/convenience'
+import { createMatrix, createVector, getAverageQuaternion, getMeanVector } from './maths/arrays'
+import { Positioning } from './utils'
+import { Matrix, Vector } from './maths/vectors'
 import { Setup, createMarker } from './utils/setupAR'
 import { BufferGeometry, Color, Line, LineBasicMaterial, Object3D, Quaternion, Vector3 } from 'three'
 

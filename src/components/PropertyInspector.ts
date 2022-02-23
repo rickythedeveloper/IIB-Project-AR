@@ -1,4 +1,4 @@
-import { createOption } from '../utils/elements'
+import { createOption } from './generic'
 import ColorBarWithScale from './ColorBarWithScale'
 
 interface Property {

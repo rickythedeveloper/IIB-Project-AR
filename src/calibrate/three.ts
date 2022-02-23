@@ -1,5 +1,6 @@
 import { BoxGeometry, ColorRepresentation, ConeGeometry, Curve, CylinderGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, Object3D, PlaneGeometry, Quaternion, SphereGeometry, TubeGeometry, Vector3 } from 'three'
-import { Axis, rotationQuaternion } from '../utils/three'
+import { Axis } from '../three_utils'
+import { rotationQuaternion } from '../three_utils/convenience'
 
 class Circle3D extends Curve<Vector3> {
 	constructor(public radius: number) {
@@ -18,8 +19,7 @@ export const createRing = (ringRadius: number, tubeRadius: number, nSegments: nu
 	const circle = new Circle3D(ringRadius)
 	const geometry = new TubeGeometry(circle, nSegments, tubeRadius, 8, true)
 	const material = new MeshStandardMaterial({ transparent: true, opacity: 0.7, color, side: DoubleSide })
-	const mesh = new Mesh(geometry, material)
-	return mesh
+	return new Mesh(geometry, material)
 }
 
 export interface RotationRing {
@@ -91,8 +91,7 @@ const createThickArrow = (radius: number, height: number, color: ColorRepresenta
 	cylinder.position.set(0, cylinderHeight/2, 0)
 
 	const coneHeight = height - cylinderHeight
-	const coneRadius = radius
-	const coneGeometry = new ConeGeometry(coneRadius, coneHeight, 32)
+	const coneGeometry = new ConeGeometry(radius, coneHeight, 32)
 	const coneMaterial = new MeshStandardMaterial({ transparent: true, opacity, color })
 	const cone = new Mesh(coneGeometry, coneMaterial)
 	cone.position.set(0, cylinderHeight + coneHeight/2, 0)
@@ -139,8 +138,7 @@ const createTranslationArrows = (): [TranslationArrow, TranslationArrow, Transla
 const createOriginIndicator = (radius: number) => {
 	const geometry = new SphereGeometry(radius, 16, 16)
 	const material = new MeshStandardMaterial({ color: 0xffffff })
-	const sphere = new Mesh(geometry, material)
-	return sphere
+	return new Mesh(geometry, material)
 }
 
 export interface ObjectControl {

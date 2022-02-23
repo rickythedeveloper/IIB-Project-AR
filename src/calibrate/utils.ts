@@ -1,7 +1,7 @@
 import { Object3D, Quaternion, Vector3 } from 'three'
-import { atanAngle } from '../utils/angle'
+import { atanAngle } from '../maths/angle'
+import { Axis } from '../three_utils'
 import { InteractionManager, InteractiveEvent2, PinchEvent } from '../utils/interactive'
-import { Axis } from '../utils/three'
 import { ObjectControl, RotationRing, TranslationArrow, createObjectControl } from './three'
 
 const updateControlPosition = (object: Object3D, objectControl: ObjectControl) => {

@@ -1,5 +1,5 @@
 import { Setup, createMarker } from './setupAR'
-import { getAverageQuaternion } from './arrays'
+import { getAverageQuaternion } from '../maths/arrays'
 import { MarkerInfo } from './index'
 import { Object3D, Quaternion, Vector3 } from 'three'
 
