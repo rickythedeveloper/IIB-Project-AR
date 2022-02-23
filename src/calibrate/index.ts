@@ -44,8 +44,6 @@ const getPropertyInspector = (properties: Property[], meshes: Mesh<BufferGeometr
 	)
 }
 
-const INITIAL_PROPERTY_INDEX = 0
-
 const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void, controlPanel: HTMLDivElement) => {
 	setup.scene.add(new PointLight())
 
@@ -65,7 +63,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 			const propertyInspector = getPropertyInspector(commonProperties, meshes)
 
 			// all meshes show the first common property
-			const initialProperty = commonProperties[INITIAL_PROPERTY_INDEX]
+			const initialProperty = commonProperties[0]
 			for (const mesh of meshes) updateMeshVertexShader(mesh, initialProperty)
 
 			group.add(...meshes)
