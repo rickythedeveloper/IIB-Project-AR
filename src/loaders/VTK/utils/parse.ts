@@ -1,5 +1,5 @@
 import { toByteArray } from 'base64-js'
-import { Axis } from '../../../utils/three'
+import { Axis } from '../../../three_utils'
 import { DataArray, NumberArray, PointData, Points, Polys, Property, VTKFile, typedArrayConstructorMap } from '../types'
 
 const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
@@ -15,15 +15,13 @@ const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
 			if (numBytesContent > Number.MAX_SAFE_INTEGER) throw new Error('number of bytes for content is larger than the max safe integer')
 			const content = byteArray.slice(numBytesHeader, numBytesHeader + Number(numBytesContent)) // first 4 or 8 bytes simply signify the number of content bytes
 			const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
-			const typedArray = new arrayConstructor(content.buffer)
-			return typedArray
+			return new arrayConstructor(content.buffer)
 		} else throw new Error('cannot find appended data')
 	} else if (dataArray.attributes.format === 'binary') {
 		const contentString = dataArray['#text']
 		const byteArray = toByteArray(contentString)
 		const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
-		const typedArray = new arrayConstructor(byteArray.buffer)
-		return typedArray
+		return new arrayConstructor(byteArray.buffer)
 	} else if (dataArray.attributes.format === 'ascii') {
 		const contentString = dataArray['#text']
 		const numsStr = contentString.split(' ')
@@ -31,13 +29,11 @@ const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
 		if (dataArray.attributes.type === 'UInt64' || dataArray.attributes.type === 'Int64') {
 			const nums = numsStr.map(str => BigInt(str))
 			const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
-			const typedArray = new arrayConstructor(nums)
-			return typedArray
+			return new arrayConstructor(nums)
 		}
 		const nums = numsStr.map(str => Number(str))
 		const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
-		const typedArray = new arrayConstructor(nums)
-		return typedArray
+		return new arrayConstructor(nums)
 	} else throw new Error('unrecognised dataarray format')
 }
 

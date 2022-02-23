@@ -71,7 +71,7 @@ export interface StructuredGrid {
 
 export interface PolyData {
 	attributes: { WholeExtent: string }
-	Piece: Piece
+	Piece: Piece[] | Piece
 }
 
 export interface AppendedData {

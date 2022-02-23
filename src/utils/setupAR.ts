@@ -79,7 +79,7 @@ const setupAR = (): Setup => {
 
 	const internalOnRenderFunctions: OnRenderFunction[] = [
 		() => {
-			if( arToolkitSource.ready === false )	return
+			if(!arToolkitSource.ready)	return
 			if (arToolkitSource.domElement === null) return
 			arToolkitContext.update( arToolkitSource.domElement )
 		},

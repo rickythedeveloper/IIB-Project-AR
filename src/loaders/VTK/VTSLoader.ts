@@ -25,7 +25,6 @@ const parseXMLVTS = (stringFile: string): VTS => {
 	const properties = parsePointData(piece.PointData, file)
 	properties.forEach(p => geometry.setAttribute(p.name, new BufferAttribute(p.data, 1)))
 
-
 	// CellData
 
 	// Points

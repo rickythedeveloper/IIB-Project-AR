@@ -1,10 +1,10 @@
 import { Object3D, Quaternion, Vector3 } from 'three'
 import setupAR from './utils/setupAR'
 import visualise from './visualise'
-import { createControlPanel } from './utils/elements'
+import createControlPanel from './components/ControlPanel'
 import scan from './scan'
 import calibrate from './calibrate'
-import { MarkerInfo } from './utils/index'
+import { MarkerInfo } from './utils'
 
 const MODES = {
 	SCAN: 'scan',
