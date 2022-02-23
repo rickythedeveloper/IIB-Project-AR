@@ -26,7 +26,7 @@ export default class ColorBar {
 			console.error('ctx is null')
 			return
 		}
-		for (let i = 0; i < this.numColors; i++) {
+		for (let i = 1; i <= this.numColors; i++) {
 			const y = canvas.height * (1 - i / this.numColors) // canvas origin at top left
 			const t = i / this.numColors
 			ctx.beginPath()

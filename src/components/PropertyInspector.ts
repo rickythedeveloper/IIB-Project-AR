@@ -10,8 +10,8 @@ interface Property {
 	max: number
 }
 
-const BAR_WIDTH = 30
-const BAR_HEIGHT = 150
+const BAR_WIDTH = 50
+const BAR_HEIGHT = 200
 const ELEMENT_WIDTH = 50
 const NUM_COLORS = BAR_HEIGHT / 2
 
