@@ -1,4 +1,4 @@
-import { Box3, BufferGeometry, Color, DataTexture, DoubleSide, Group, Mesh, Object3D, PointLight, ShaderMaterial } from 'three'
+import { Box3, BufferGeometry, DoubleSide, Group, Mesh, Object3D, PointLight, ShaderMaterial } from 'three'
 import PropertyInspector from '../components/PropertyInspector'
 import { fragmentShader, vertexShader } from '../three_utils/shaders'
 import { getTexture } from '../three_utils/texture'
@@ -14,6 +14,10 @@ import VTPLoader from '../loaders/VTK/VTPLoader'
 import { interpolateRdBu } from 'd3-scale-chromatic'
 import { Property } from '../components/PropertyInspector'
 
+const updateMeshVertexShader = (mesh: Mesh<BufferGeometry, ShaderMaterial>, property: Property) => {
+	mesh.material.vertexShader = vertexShader(property.name, property.min, property.max)
+}
+
 const getMesh = (geometry: BufferGeometry, initialProperty: Property, opacity: number): Mesh<BufferGeometry, ShaderMaterial> => {
 	const material = new ShaderMaterial({
 		vertexShader: vertexShader(initialProperty.name, initialProperty.min, initialProperty.max),
@@ -27,16 +31,14 @@ const getMesh = (geometry: BufferGeometry, initialProperty: Property, opacity: n
 	return new Mesh(geometry, material)
 }
 
-const getPropertyInspector = (properties: Property[], initialPropertyName: string, meshes: Mesh<BufferGeometry, ShaderMaterial>[]) => {
-	let propertyName = initialPropertyName // stores current property name TODO store this in PropertyInspector instance
+const getPropertyInspector = (properties: Property[], meshes: Mesh<BufferGeometry, ShaderMaterial>[]) => {
 	return new PropertyInspector(
 		properties,
 		interpolateRdBu,
 		(newProperty) => {
-			for (const mesh of meshes) mesh.material.vertexShader = vertexShader(newProperty.name, newProperty.min, newProperty.max)
-			propertyName = newProperty.name
+			for (const mesh of meshes) updateMeshVertexShader(mesh, newProperty)
 		},
-		(min, max) => {
+		(min, max, propertyName) => {
 			for (const mesh of meshes) mesh.material.vertexShader = vertexShader(propertyName, min, max)
 		}
 	)
@@ -60,10 +62,11 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 		let commonProperties: Property[] | null = null
 		const onLoadAll = () => {
 			if (commonProperties === null || commonProperties.length === 0) return // TODO show error message (no common properties)
-			const initialProperty = commonProperties[INITIAL_PROPERTY_INDEX].name
-			const propertyInspector = getPropertyInspector(commonProperties, initialProperty, meshes)
+			const propertyInspector = getPropertyInspector(commonProperties, meshes)
 
-			// TODO do the same thing as onPropertyChange
+			// all meshes show the first common property
+			const initialProperty = commonProperties[INITIAL_PROPERTY_INDEX]
+			for (const mesh of meshes) updateMeshVertexShader(mesh, initialProperty)
 
 			group.add(...meshes)
 			controlPanel.append(propertyInspector.element)
@@ -85,7 +88,7 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 			if (loader === null) throw new Error('uploaded a file with an invalid file extension')
 
 			loader.load(fileInfo.url, ({ geometry, properties }) => {
-				meshes.push(getMesh(geometry, properties[INITIAL_PROPERTY_INDEX], 1))
+				meshes.push(getMesh(geometry, properties[0], 1)) // create mesh with whatever property is first
 
 				if (commonProperties === null) commonProperties = properties
 				else {
