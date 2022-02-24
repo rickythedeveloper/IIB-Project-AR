@@ -2,6 +2,7 @@
 // https://kitware.github.io/vtk-examples/site/VTKFileFormats/#vtk-file-formats
 
 import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
+import { SHADER_PROPERTY_PREFIX } from '../../constants'
 import BaseLoader from './BaseLoader'
 import { fileToJson } from './utils'
 import { getIndexBufferFromExtent, parsePointData, parsePoints } from './utils/parse'
@@ -23,7 +24,7 @@ const parseXMLVTS = (stringFile: string): VTS => {
 
 	// PointData
 	const properties = parsePointData(piece.PointData, file)
-	properties.forEach(p => geometry.setAttribute(p.name, new BufferAttribute(p.data, 1)))
+	properties.forEach(p => geometry.setAttribute(SHADER_PROPERTY_PREFIX + p.name, new BufferAttribute(p.data, 1)))
 
 	// CellData
 

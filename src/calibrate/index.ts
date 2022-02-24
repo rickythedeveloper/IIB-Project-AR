@@ -6,7 +6,12 @@ import Arena from '../utils/Arena'
 import { createMarkerIndicators } from '../three_utils/convenience'
 import { Setup } from '../utils/setupAR'
 import { InteractionManager } from '../utils/interactive'
-import { HIDDEN_MARKER_COLOR, MARKER_INDICATOR_UPDATE_INTERVAL, VISIBLE_MARKER_COLOR } from '../constants'
+import {
+	HIDDEN_MARKER_COLOR,
+	MARKER_INDICATOR_UPDATE_INTERVAL,
+	SHADER_COLOR_MAP,
+	VISIBLE_MARKER_COLOR
+} from '../constants'
 import { MarkerInfo } from '../utils'
 import { createFileUpload, createObjectControlForObject, getFileExtension } from './utils'
 import VTSLoader from '../loaders/VTK/VTSLoader'
@@ -25,7 +30,7 @@ const getMesh = (geometry: BufferGeometry, initialProperty: Property, opacity: n
 		transparent: true,
 		side: DoubleSide,
 		uniforms: {
-			colorMap: { value: getTexture(opacity) },
+			[SHADER_COLOR_MAP]: { value: getTexture(opacity) },
 		}
 	})
 	return new Mesh(geometry, material)

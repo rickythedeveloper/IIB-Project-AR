@@ -1,4 +1,5 @@
 import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
+import { SHADER_PROPERTY_PREFIX } from '../../constants'
 import BaseLoader from './BaseLoader'
 import { fileToJson } from './utils'
 import { getIndexBufferFromConnectivity, parsePointData, parsePoints, parsePolyData } from './utils/parse'
@@ -21,7 +22,7 @@ const parse = (stringFile: string): VTP => {
 
 	// PointData
 	const properties = parsePointData(piece.PointData, file)
-	properties.forEach(p => geometry.setAttribute(p.name, new BufferAttribute(p.data, 1)))
+	properties.forEach(p => geometry.setAttribute(SHADER_PROPERTY_PREFIX + p.name, new BufferAttribute(p.data, 1)))
 
 	// CellData
 
