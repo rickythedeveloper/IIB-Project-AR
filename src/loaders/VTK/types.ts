@@ -3,7 +3,7 @@ export type DataFormat = 'appended' | 'binary' | 'ascii'
 export type VTKFileType =
 	'ImageData' | 'PolyData' | 'RectilinearGrid' | 'StructuredGrid' | 'UnstructuredGrid' |
 	'PImageData' | 'PPolyData' | 'PRectilinearGrid' | 'PStructuredGrid' | 'PUnstructuredGrid'
-export type ByteOrder = 'LittleEndian' | 'BigEndian'
+export type ByteOrder = 'LittleEndian' | 'BigEndian' // TODO not used. Only tested with LittleEndian
 export type HeaderType = 'UInt64' | 'UInt32'
 
 export type IntArray = Int8Array | Int16Array | Int32Array
@@ -75,7 +75,7 @@ export interface PolyData {
 }
 
 export interface AppendedData {
-	attributes: {encoding: 'base64'},
+	attributes: {encoding: 'base64' | 'raw'},
 	'#text'?: string
 }
 

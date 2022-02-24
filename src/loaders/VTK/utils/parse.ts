@@ -1,6 +1,7 @@
 import { toByteArray } from 'base64-js'
 import { Axis } from '../../../three_utils'
 import { DataArray, NumberArray, PointData, Points, Polys, Property, VTKFile, typedArrayConstructorMap } from '../types'
+import { Extent } from './index'
 
 const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
 	if (dataArray.attributes.format === 'appended') {
@@ -85,26 +86,37 @@ export const parsePolyData = (polys: Polys, file: VTKFile) => {
  */
 const getFlatIndex = (i: number, j: number, k: number, numX: number, numY: number): number => k * numX * numY + j * numX + i
 
-/**
- * Return the index buffer given the two axes of the manifold
- */
-const getIndexBufferFrom2D = (axis1: Axis, axis2: Axis, axis1Range: number, axis2Range: number, numX: number, numY: number): Uint32Array => {
-	const numTriangles = axis1Range * axis2Range * 2
+const getFourFlatIndicesAround = (i: number, j: number, k: number, numX: number, numY: number) => {
+	return {
+		i1: getFlatIndex(i, j, k, numX, numY),
+		i2: getFlatIndex(i + 1, j, k, numX, numY),
+		i3: getFlatIndex(i, j + 1, k, numX, numY),
+		i4: getFlatIndex(i + 1, j + 1, k, numX, numY),
+	}
+}
+
+const getIndexBufferWithFixedAxis = (extent: Extent, fixedAxis: Axis, fixedValue: number): Uint32Array => {
+	const { x1, x2, y1, y2, z1, z2 } = extent
+	const numX = x2 - x1 + 1, numY = y2 - y1 + 1
+
+	const a1 = fixedAxis === Axis.x ? y1 : x1
+	const a2 = fixedAxis === Axis.x ? y2 : x2
+	const b1 = fixedAxis === Axis.z ? y1 : z1
+	const b2 = fixedAxis === Axis.z ? y2 : z2
+	const c =
+		fixedAxis === Axis.x ? fixedValue - x1 :
+			fixedAxis === Axis.y ? fixedValue - y1 :
+				fixedValue - z1
+	const numTriangles = (a2 - a1) * (b2 - b1) * 2
 	const indexBuffer = new Uint32Array(numTriangles * 3)
 
-	const val1 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i : (axis2 === axis ? j : 0)
-	const val2 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i + 1 : (axis2 === axis ? j : 0)
-	const val3 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i : (axis2 === axis ? j + 1 : 0)
-	const val4 = (axis: Axis, i: number, j: number): number => axis1 === axis ? i + 1 : (axis2 === axis ? j + 1 : 0)
-	const index1 = (i: number, j: number) => getFlatIndex(val1(Axis.x, i, j), val1(Axis.y, i, j), val1(Axis.z, i, j), numX, numY)
-	const index2 = (i: number, j: number) => getFlatIndex(val2(Axis.x, i, j), val2(Axis.y, i, j), val2(Axis.z, i, j), numX, numY)
-	const index3 = (i: number, j: number) => getFlatIndex(val3(Axis.x, i, j), val3(Axis.y, i, j), val3(Axis.z, i, j), numX, numY)
-	const index4 = (i: number, j: number) => getFlatIndex(val4(Axis.x, i, j), val4(Axis.y, i, j), val4(Axis.z, i, j), numX, numY)
-
 	let index = 0
-	for (let j = 0; j < axis2Range; j++) {
-		for (let i = 0; i < axis1Range; i++) {
-			const i1 = index1(i, j), i2 = index2(i, j), i3 = index3(i, j), i4 = index4(i, j)
+	for (let b = 0; b < b2 - b1; b++) {
+		for (let a = 0; a < a2 - a1; a++) {
+			const { i1, i2, i3, i4 } =
+				fixedAxis === Axis.x ? getFourFlatIndicesAround(c, a, b, numX, numY) :
+					fixedAxis === Axis.y ? getFourFlatIndicesAround(a, c, b, numX, numY) :
+						getFourFlatIndicesAround(a, b, c, numX, numY)
 			indexBuffer[index] = i1
 			indexBuffer[index+1] = i2
 			indexBuffer[index+2] = i3
@@ -121,13 +133,14 @@ const getIndexBufferFrom2D = (axis1: Axis, axis2: Axis, axis1Range: number, axis
 /**
  * Return the index buffer given the extent. The extent needs to have a zero range in one dimension
  */
-export const getIndexBufferFromExtent = (wholeExtent: string): Uint32Array => {
-	const [x1, x2, y1, y2, z1, z2] = wholeExtent.split(' ').map(e => parseInt(e))
-	const numX = x2 - x1 + 1, numY = y2 - y1 + 1
-	if (x1 == x2) return getIndexBufferFrom2D(Axis.y, Axis.z, y2 - y1, z2 - z1, numX, numY)
-	if (y1 == y2) return getIndexBufferFrom2D(Axis.x, Axis.z, x2 - x1, z2 - z1, numX, numY)
-	if (z1 == z2) return getIndexBufferFrom2D(Axis.x, Axis.y, x2 - x1, y2 - y1, numX, numY)
-	throw new Error('vts file extent is multiple in all 3 dimentions')
+export const getIndexBufferFromExtent = (extent: Extent, axis?: Axis, value?: number): Uint32Array => {
+	const { x1, x2, y1, y2, z1, z2 } = extent
+	if (x1 == x2) return getIndexBufferWithFixedAxis(extent, Axis.x, x1)
+	if (y1 == y2) return getIndexBufferWithFixedAxis(extent, Axis.y, y1)
+	if (z1 == z2) return getIndexBufferWithFixedAxis(extent, Axis.z, z1)
+
+	if (axis === undefined || value === undefined) return getIndexBufferWithFixedAxis(extent, Axis.x, x1)
+	return getIndexBufferWithFixedAxis(extent, axis, value)
 }
 
 export const getIndexBufferFromConnectivity = (connectivity: NumberArray, offsets: NumberArray): Uint32Array => {

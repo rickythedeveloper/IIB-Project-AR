@@ -1,5 +1,18 @@
-import { Box3, BufferGeometry, DoubleSide, Group, Mesh, Object3D, PointLight, ShaderMaterial } from 'three'
+import {
+	Box3,
+	BufferAttribute,
+	BufferGeometry,
+	DoubleSide,
+	Group,
+	Mesh,
+	Object3D,
+	PointLight,
+	ShaderMaterial
+} from 'three'
+import { createOption, createSlider } from '../components/generic'
 import PropertyInspector from '../components/PropertyInspector'
+import { getIndexBufferFromExtent } from '../loaders/VTK/utils/parse'
+import { Axis } from '../three_utils'
 import { fragmentShader, vertexShader } from '../three_utils/shaders'
 import { getTexture } from '../three_utils/texture'
 import Arena from '../utils/Arena'
@@ -89,26 +102,55 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 					ext === 'vts' ? new VTSLoader() :
 						null
 			if (loader === null) throw new Error('uploaded a file with an invalid file extension')
+			const result = loader.parse(fileInfo.arrayBuffer)
+			const { geometry, properties } = result
+			meshes.push(getMesh(geometry, properties[0], 1)) // create mesh with whatever property is first
 
-			loader.load(fileInfo.url, ({ geometry, properties }) => {
-				meshes.push(getMesh(geometry, properties[0], 1)) // create mesh with whatever property is first
+			if (commonProperties === null) commonProperties = properties
+			else {
+				const propertyNames = properties.map(p => p.name)
+				commonProperties = commonProperties.filter(p => propertyNames.includes(p.name))
+				// make sure the common properties have the correct values of min and max
+				for (const commonProperty of commonProperties) {
+					const property = properties.filter(p => p.name === commonProperty.name)
+					if (property.length === 0) break
+					if (property[0].min < commonProperty.min) commonProperty.min = property[0].min
+					if (property[0].max > commonProperty.max) commonProperty.max = property[0].max
+				}
+			}
 
-				if (commonProperties === null) commonProperties = properties
-				else {
-					const propertyNames = properties.map(p => p.name)
-					commonProperties = commonProperties.filter(p => propertyNames.includes(p.name))
-					// make sure the common properties have the correct values of min and max
-					for (const commonProperty of commonProperties) {
-						const property = properties.filter(p => p.name === commonProperty.name)
-						if (property.length === 0) break
-						if (property[0].min < commonProperty.min) commonProperty.min = property[0].min
-						if (property[0].max > commonProperty.max) commonProperty.max = property[0].max
+			// loading complete
+			if (meshes.length === fileInfos.length) {
+				onLoadAll()
+				if (result.type === 'VTS') {
+					const { x1, x2, y1, y2, z1, z2 } = result.extent
+					const is3D = x1 !== x2 && y1 !== y2 && z1 !== z2
+					if (is3D) {
+						const axisSelector = document.createElement('select')
+						const axes = ['x', 'y', 'z']
+						axes.forEach(axis => axisSelector.append(createOption(axis, axis)))
+						const slider = createSlider(x1, x2, x1, 1)
+
+						axisSelector.onchange = (e) => {
+							const axisName = (e.target as HTMLSelectElement).value
+							slider.min = String(axisName === 'x' ? x1 : axisName === 'y' ? y1 : z1)
+							slider.max = String(axisName === 'x' ? x2 : axisName === 'y' ? y2 : z2)
+							slider.value = String(axisName === 'x' ? x1 : axisName === 'y' ? y1 : z1)
+							const axis = axisName === 'x' ? Axis.x : axisName === 'y' ? Axis.y : Axis.z
+							const value = parseInt(slider.value)
+							meshes.forEach(mesh => mesh.geometry.index = new BufferAttribute(getIndexBufferFromExtent(result.extent, axis, value), 1))
+						}
+						slider.oninput = (e) => {
+							const value = parseInt((e.target as HTMLInputElement).value)
+							const axis = axisSelector.value === 'x' ? Axis.x : axisSelector.value === 'y' ? Axis.y : Axis.z
+							meshes.forEach(mesh => mesh.geometry.index = new BufferAttribute(getIndexBufferFromExtent(result.extent, axis, value), 1))
+						}
+						axisSelector.style.pointerEvents = 'auto'
+						slider.style.pointerEvents = 'auto'
+						controlPanel.append(axisSelector, slider)
 					}
 				}
-
-				// loading complete
-				if (meshes.length === fileInfos.length) onLoadAll()
-			})
+			}
 		}
 	})
 	uploadButton.style.pointerEvents = 'auto' // enable mouse events for this element

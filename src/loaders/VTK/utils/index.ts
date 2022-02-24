@@ -60,3 +60,12 @@ export const fileToJson = (stringFile: string) => {
 	const file: any = xmlToJson(doc)
 	return file
 }
+
+export interface Extent {
+	x1: number
+	x2: number
+	y1: number
+	y2: number
+	z1: number
+	z2: number
+}

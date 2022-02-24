@@ -134,7 +134,7 @@ export const createObjectControlForObject = (
 }
 
 interface FileInfo {
-	url: string,
+	arrayBuffer: ArrayBuffer
 	name: string
 }
 
@@ -149,14 +149,10 @@ export const createFileUpload = (onComplete: (fileInfos: FileInfo[]) => void) =>
 			const file = input.files[i]
 			const reader = new FileReader()
 			reader.onload = () => {
-				const url = reader.result as string
-				fileInfos.push({ url, name: file.name })
-
-				if (input.files !== null && fileInfos.length === input.files.length) {
-					onComplete(fileInfos)
-				}
+				fileInfos.push({ arrayBuffer: reader.result as ArrayBuffer, name: file.name })
+				if (input.files !== null && fileInfos.length === input.files.length) onComplete(fileInfos)
 			}
-			reader.readAsDataURL(file)
+			reader.readAsArrayBuffer(file)
 		}
 	}
 	return input
