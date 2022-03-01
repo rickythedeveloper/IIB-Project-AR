@@ -6,6 +6,7 @@ import { getIndexBufferFromConnectivity, parsePointData, parsePoints, parsePolyD
 import { Property, VTKFile } from './types'
 
 interface VTP {
+	type: 'VTP'
 	geometry: BufferGeometry
 	properties: Property[]
 }
@@ -41,7 +42,7 @@ const parse = (stringFile: string): VTP => {
 	const indexBuffer = getIndexBufferFromConnectivity(connectivity, offsets)
 	geometry.index = new BufferAttribute(indexBuffer, 1)
 
-	return { geometry, properties }
+	return { type: 'VTP', geometry, properties }
 }
 
 class VTPLoader extends BaseLoader<VTP> {

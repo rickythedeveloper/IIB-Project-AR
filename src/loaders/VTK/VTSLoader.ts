@@ -4,13 +4,15 @@
 import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
 import { SHADER_PROPERTY_PREFIX } from '../../constants'
 import BaseLoader from './BaseLoader'
-import { fileToJson } from './utils'
+import { Extent, fileToJson } from './utils'
 import { getIndexBufferFromExtent, parsePointData, parsePoints } from './utils/parse'
 import { Property, VTKFile } from './types'
 
 interface VTS {
+	type: 'VTS',
 	geometry: BufferGeometry
 	properties: Property[]
+	extent: Extent
 }
 
 const parseXMLVTS = (stringFile: string): VTS => {
@@ -33,10 +35,12 @@ const parseXMLVTS = (stringFile: string): VTS => {
 	geometry.setAttribute('position', new BufferAttribute(positions, 3))
 
 	// Index buffer
-	const indexBuffer = getIndexBufferFromExtent(grid.attributes.WholeExtent)
+	const [x1, x2, y1, y2, z1, z2] = grid.attributes.WholeExtent.split(' ').map(e => parseInt(e))
+	const extent: Extent = { x1, x2, y1, y2, z1, z2 }
+	const indexBuffer = getIndexBufferFromExtent(extent)
 	geometry.index = new BufferAttribute(indexBuffer, 1)
 
-	return { geometry, properties }
+	return { type: 'VTS', geometry, properties, extent }
 }
 
 class VTSLoader extends BaseLoader<VTS> {
