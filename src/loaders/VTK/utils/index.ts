@@ -39,10 +39,10 @@ export const xmlToJson = (xml: any) => {
 	return obj
 }
 
-export const fileToJson = (stringFile: string) => {
+export const fileToJson = (fileString: string) => {
 	let dom: any
 	if ( window.DOMParser ) {
-		try { dom = ( new DOMParser() ).parseFromString(stringFile, 'text/xml') }
+		try { dom = ( new DOMParser() ).parseFromString(fileString, 'text/xml') }
 		catch ( e ) { dom = null }
 	} else if ( window.ActiveXObject ) {
 		try {
@@ -68,4 +68,29 @@ export interface Extent {
 	y2: number
 	z1: number
 	z2: number
+}
+
+const numBytesOfString = (str: string): number => new Blob([str]).size
+
+const RAW_APPENDED_DATA_BEGINNING = '<AppendedData encoding="raw">'
+const APPENDED_DATA_END = '</AppendedData>'
+
+export const getRawAppendedData = (fileBuffer: ArrayBuffer): ArrayBuffer => {
+	const decoder = new TextDecoder()
+	const fileString = decoder.decode(fileBuffer)
+
+	const searchStart = fileString.indexOf(RAW_APPENDED_DATA_BEGINNING), searchEnd = fileString.indexOf(APPENDED_DATA_END)
+	if (searchStart === -1 || searchEnd === -1) throw new Error(`raw appended data not found ${searchStart}, ${searchEnd}`)
+
+	const underscore_index = fileString.indexOf('_', searchStart)
+	if (underscore_index === -1) throw new Error('invalid appended data')
+
+	const stringStart = underscore_index + 1
+	let stringEnd = searchEnd
+	while (fileString[stringEnd - 1] === ' ' || fileString[stringEnd - 1] === '\n') stringEnd -= 1 // remove any space and new line characters
+
+	const byteStart = numBytesOfString(fileString.slice(0, stringStart))
+	const byteEnd = numBytesOfString(fileString.slice(0, stringEnd))
+
+	return fileBuffer.slice(byteStart, byteEnd)
 }

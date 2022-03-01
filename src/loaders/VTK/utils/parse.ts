@@ -1,23 +1,44 @@
 import { toByteArray } from 'base64-js'
 import { Axis } from '../../../three_utils'
-import { DataArray, NumberArray, PointData, Points, Polys, Property, VTKFile, typedArrayConstructorMap } from '../types'
-import { Extent } from './index'
+import {
+	DataArray,
+	NumberArray,
+	PointData,
+	Points,
+	Polys,
+	Property,
+	VTKFileInfo,
+	typedArrayConstructorMap
+} from '../types'
+import { Extent, getRawAppendedData } from './index'
 
-const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
+const getDataFromDataArray = (fileInfo: VTKFileInfo, dataArray: DataArray) => {
+	const { structure: file, buffer: fileBuffer } = fileInfo
+
 	if (dataArray.attributes.format === 'appended') {
-		if (dataArray.attributes.offset && file.AppendedData && file.AppendedData['#text']) {
-			const numBytesHeader = file.attributes.header_type === 'UInt32' ? 4 : 8
-			const headerArrayConstructor = typedArrayConstructorMap[file.attributes.header_type]
-			const offset = parseInt(dataArray.attributes.offset)
+		if (!(dataArray.attributes.offset && file.AppendedData)) throw new Error('cannot find appended data')
+		const numBytesHeader = file.attributes.header_type === 'UInt32' ? 4 : 8
+		const headerArrayConstructor = typedArrayConstructorMap[file.attributes.header_type]
+		const offset = parseInt(dataArray.attributes.offset)
+
+		let dataBeginningBuffer: ArrayBuffer
+		if (file.AppendedData.attributes.encoding === 'base64') {
+			if (file.AppendedData['#text'] === undefined) throw new Error('appended data does not contain any data')
 			const text = file.AppendedData['#text'].slice(offset+1) // account for the underscore at the beginning
 			const byteArray = toByteArray(text)
-			const header = new headerArrayConstructor(byteArray.slice(0, numBytesHeader).buffer)
-			const numBytesContent = header[0]
-			if (numBytesContent > Number.MAX_SAFE_INTEGER) throw new Error('number of bytes for content is larger than the max safe integer')
-			const content = byteArray.slice(numBytesHeader, numBytesHeader + Number(numBytesContent)) // first 4 or 8 bytes simply signify the number of content bytes
-			const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
-			return new arrayConstructor(content.buffer)
-		} else throw new Error('cannot find appended data')
+			dataBeginningBuffer = byteArray.buffer
+		} else if (file.AppendedData.attributes.encoding === 'raw') {
+			const appendedDataBuffer = getRawAppendedData(fileBuffer)
+			dataBeginningBuffer = appendedDataBuffer.slice(offset)
+		} else throw new Error('invalid appended data type')
+		const headerBuffer = dataBeginningBuffer.slice(0, numBytesHeader)
+		const header = new headerArrayConstructor(headerBuffer)
+		const numBytesContent = header[0]
+		if (numBytesContent > Number.MAX_SAFE_INTEGER) throw new Error(`number of bytes for content (${numBytesContent}) is larger than the max safe integer`)
+		const contentStart = numBytesHeader, contentEnd = contentStart + Number(numBytesContent)
+		const content = dataBeginningBuffer.slice(contentStart, contentEnd) // first 4 or 8 bytes simply signify the number of content bytes
+		const arrayConstructor = typedArrayConstructorMap[dataArray.attributes.type]
+		return new arrayConstructor(content)
 	} else if (dataArray.attributes.format === 'binary') {
 		const contentString = dataArray['#text']
 		const byteArray = toByteArray(contentString)
@@ -38,18 +59,18 @@ const getDataFromDataArray = (file: VTKFile, dataArray: DataArray) => {
 	} else throw new Error('unrecognised dataarray format')
 }
 
-export const parsePoints = (points: Points, file: VTKFile) => {
+export const parsePoints = (points: Points, fileInfo: VTKFileInfo) => {
 	const dataArray = points.DataArray
-	const positions = getDataFromDataArray(file, dataArray)
+	const positions = getDataFromDataArray(fileInfo, dataArray)
 	if (positions instanceof BigInt64Array || positions instanceof BigUint64Array) throw new Error('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
 	return positions
 }
 
-export const parsePointData = (pointData: PointData, file: VTKFile) => {
+export const parsePointData = (pointData: PointData, fileInfo: VTKFileInfo) => {
 	const pointDataDataArrays = pointData.DataArray instanceof Array ? pointData.DataArray : [pointData.DataArray]
 	const properties: Property[] = []
 	for (const dataArray of pointDataDataArrays) {
-		const propertyData = getDataFromDataArray(file, dataArray)
+		const propertyData = getDataFromDataArray(fileInfo, dataArray)
 		if (propertyData instanceof BigInt64Array || propertyData instanceof BigUint64Array) {
 			console.warn('data array type is BigInt64Array or BigUInt64Array which cannot be used for three.js')
 			continue
@@ -64,10 +85,10 @@ export const parsePointData = (pointData: PointData, file: VTKFile) => {
 	return properties
 }
 
-export const parsePolyData = (polys: Polys, file: VTKFile) => {
+export const parsePolyData = (polys: Polys, fileInfo: VTKFileInfo) => {
 	const polysDataArrays = polys.DataArray
 	const [connectivity, offsets] = polysDataArrays.map(d => {
-		const typedArray = getDataFromDataArray(file, d)
+		const typedArray = getDataFromDataArray(fileInfo, d)
 		if (typedArray instanceof BigInt64Array || typedArray instanceof BigUint64Array) {
 			let requiresBigInt = false
 			typedArray.forEach(val => {

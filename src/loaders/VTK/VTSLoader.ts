@@ -3,10 +3,11 @@
 
 import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
 import { SHADER_PROPERTY_PREFIX } from '../../constants'
+import { getPropertyVariableNameInShader } from '../../three_utils/shaders'
 import BaseLoader from './BaseLoader'
 import { Extent, fileToJson } from './utils'
 import { getIndexBufferFromExtent, parsePointData, parsePoints } from './utils/parse'
-import { Property, VTKFile } from './types'
+import { Property, VTKFile, VTKFileInfo } from './types'
 
 interface VTS {
 	type: 'VTS',
@@ -15,8 +16,12 @@ interface VTS {
 	extent: Extent
 }
 
-const parseXMLVTS = (stringFile: string): VTS => {
-	const file = fileToJson(stringFile) as VTKFile
+const parseXMLVTS = (fileBuffer: ArrayBuffer): VTS => {
+	const decoder = new TextDecoder()
+	const fileString = decoder.decode(fileBuffer)
+	const file = fileToJson(fileString) as VTKFile
+	const fileInfo: VTKFileInfo = { buffer: fileBuffer, structure: file }
+
 	if (file.StructuredGrid === undefined) throw new Error('the file does not contain StructuredGrid')
 	const grid = file.StructuredGrid
 	const piece = grid.Piece
@@ -25,14 +30,17 @@ const parseXMLVTS = (stringFile: string): VTS => {
 	const geometry = new BufferGeometry()
 
 	// PointData
-	const properties = parsePointData(piece.PointData, file)
-	properties.forEach(p => geometry.setAttribute(SHADER_PROPERTY_PREFIX + p.name, new BufferAttribute(p.data, 1)))
+	const properties = parsePointData(piece.PointData, fileInfo)
+	properties.forEach(p => {
+		const data = p.data instanceof Float64Array ? new Float32Array(p.data) : p.data
+		geometry.setAttribute(getPropertyVariableNameInShader(p.name), new BufferAttribute(data, 1))
+	})
 
 	// CellData
 
 	// Points
-	const positions = parsePoints(piece.Points, file)
-	geometry.setAttribute('position', new BufferAttribute(positions, 3))
+	const positions = parsePoints(piece.Points, fileInfo)
+	geometry.setAttribute('position', new BufferAttribute(positions instanceof Float64Array ? new Float32Array(positions) : positions, 3))
 
 	// Index buffer
 	const [x1, x2, y1, y2, z1, z2] = grid.attributes.WholeExtent.split(' ').map(e => parseInt(e))
@@ -46,10 +54,7 @@ const parseXMLVTS = (stringFile: string): VTS => {
 class VTSLoader extends BaseLoader<VTS> {
 	constructor( manager?: LoadingManager ) { super(manager) }
 
-	parse = (data: ArrayBuffer): VTS => {
-		const text = LoaderUtils.decodeText(data)
-		return parseXMLVTS(text)
-	}
+	parse = parseXMLVTS
 }
 
 export default VTSLoader

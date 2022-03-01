@@ -1,10 +1,12 @@
 import { SHADER_COLOR_MAP, SHADER_PROPERTY_PREFIX } from '../constants'
 
+export const getPropertyVariableNameInShader = (propertyName: string): string => SHADER_PROPERTY_PREFIX + propertyName.replace(/\s/g, '_')
+
 export const vertexShader = (property: string, min: number, max: number) => `
-	attribute float ${SHADER_PROPERTY_PREFIX + property};
+	attribute float ${getPropertyVariableNameInShader(property)};
 	varying float propertyValueNormalized;
 	void main() {
-		propertyValueNormalized = (${SHADER_PROPERTY_PREFIX + property} - (${min.toFixed(20)})) / (${max.toFixed(20)} - (${min.toFixed(20)}));
+		propertyValueNormalized = (${getPropertyVariableNameInShader(property)} - (${min.toFixed(20)})) / (${max.toFixed(20)} - (${min.toFixed(20)}));
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}
 `
