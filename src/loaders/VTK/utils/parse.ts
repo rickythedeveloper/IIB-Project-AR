@@ -86,18 +86,34 @@ export const parsePolyData = (polys: Polys, file: VTKFile) => {
  */
 const getFlatIndex = (i: number, j: number, k: number, numX: number, numY: number): number => k * numX * numY + j * numX + i
 
-const getFourFlatIndicesAround = (i: number, j: number, k: number, numX: number, numY: number) => {
-	return {
-		i1: getFlatIndex(i, j, k, numX, numY),
-		i2: getFlatIndex(i + 1, j, k, numX, numY),
-		i3: getFlatIndex(i, j + 1, k, numX, numY),
-		i4: getFlatIndex(i + 1, j + 1, k, numX, numY),
+const getFlatIndicesAround = (fixedAxis: Axis, fixedValue: number, variableValue1: number, variableValue2: number, numX: number, numY: number) => {
+	const a1 = variableValue1, a2 = variableValue1 + 1
+	const b1 = variableValue2, b2 = variableValue2 + 1
+	return fixedAxis === Axis.x ? {
+		i1: getFlatIndex(fixedValue, a1, b1, numX, numY),
+		i2: getFlatIndex(fixedValue, a2, b1, numX, numY),
+		i3: getFlatIndex(fixedValue, a1, b2, numX, numY),
+		i4: getFlatIndex(fixedValue, a2, b2, numX, numY),
+	} : fixedAxis === Axis.y ? {
+		i1: getFlatIndex(a1, fixedValue, b1, numX, numY),
+		i2: getFlatIndex(a2, fixedValue, b1, numX, numY),
+		i3: getFlatIndex(a1, fixedValue, b2, numX, numY),
+		i4: getFlatIndex(a2, fixedValue, b2, numX, numY),
+	} : {
+		i1: getFlatIndex(a1, b1, fixedValue, numX, numY),
+		i2: getFlatIndex(a2, b1, fixedValue, numX, numY),
+		i3: getFlatIndex(a1, b2, fixedValue, numX, numY),
+		i4: getFlatIndex(a2, b2, fixedValue, numX, numY),
 	}
 }
 
 const getIndexBufferWithFixedAxis = (extent: Extent, fixedAxis: Axis, fixedValue: number): Uint32Array => {
 	const { x1, x2, y1, y2, z1, z2 } = extent
 	const numX = x2 - x1 + 1, numY = y2 - y1 + 1
+	console.assert(
+		fixedAxis === Axis.x ? x1 <= fixedValue && fixedValue <= x2 :
+			fixedAxis === Axis.y ? y1 <= fixedValue && fixedValue <= y2 :
+				z1 <= fixedValue && fixedValue <= z2)
 
 	const a1 = fixedAxis === Axis.x ? y1 : x1
 	const a2 = fixedAxis === Axis.x ? y2 : x2
@@ -113,10 +129,7 @@ const getIndexBufferWithFixedAxis = (extent: Extent, fixedAxis: Axis, fixedValue
 	let index = 0
 	for (let b = 0; b < b2 - b1; b++) {
 		for (let a = 0; a < a2 - a1; a++) {
-			const { i1, i2, i3, i4 } =
-				fixedAxis === Axis.x ? getFourFlatIndicesAround(c, a, b, numX, numY) :
-					fixedAxis === Axis.y ? getFourFlatIndicesAround(a, c, b, numX, numY) :
-						getFourFlatIndicesAround(a, b, c, numX, numY)
+			const { i1, i2, i3, i4 } = getFlatIndicesAround(fixedAxis, c, a, b, numX, numY)
 			indexBuffer[index] = i1
 			indexBuffer[index+1] = i2
 			indexBuffer[index+2] = i3
