@@ -92,6 +92,11 @@ export interface VTKFile {
 	PolyData?: PolyData
 }
 
+export interface VTKFileInfo {
+	structure: VTKFile
+	buffer: ArrayBuffer
+}
+
 export interface Property {
 	name: string
 	min: number

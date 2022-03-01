@@ -1,9 +1,10 @@
 import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
 import { SHADER_PROPERTY_PREFIX } from '../../constants'
+import { getPropertyVariableNameInShader } from '../../three_utils/shaders'
 import BaseLoader from './BaseLoader'
 import { fileToJson } from './utils'
 import { getIndexBufferFromConnectivity, parsePointData, parsePoints, parsePolyData } from './utils/parse'
-import { Property, VTKFile } from './types'
+import { NumberArray, Property, TypedArray, VTKFile, VTKFileInfo } from './types'
 
 interface VTP {
 	type: 'VTP'
@@ -11,8 +12,12 @@ interface VTP {
 	properties: Property[]
 }
 
-const parse = (stringFile: string): VTP => {
-	const file = fileToJson(stringFile) as VTKFile
+const parseXMLVTP = (fileBuffer: ArrayBuffer): VTP => {
+	const decoder = new TextDecoder()
+	const fileString = decoder.decode(fileBuffer)
+	const file = fileToJson(fileString) as VTKFile
+	const fileInfo: VTKFileInfo = { buffer: fileBuffer, structure: file }
+
 	if (file.attributes.type !== 'PolyData' || file.PolyData === undefined) throw new Error('file is not PolyData')
 
 	const polyData = file.PolyData
@@ -22,14 +27,17 @@ const parse = (stringFile: string): VTP => {
 	const geometry = new BufferGeometry()
 
 	// PointData
-	const properties = parsePointData(piece.PointData, file)
-	properties.forEach(p => geometry.setAttribute(SHADER_PROPERTY_PREFIX + p.name, new BufferAttribute(p.data, 1)))
+	const properties = parsePointData(piece.PointData, fileInfo)
+	properties.forEach(p => {
+		const data = p.data instanceof Float64Array ? new Float32Array(p.data) : p.data
+		geometry.setAttribute(getPropertyVariableNameInShader(p.name), new BufferAttribute(data, 1))
+	})
 
 	// CellData
 
 	// Points
-	const positions = parsePoints(piece.Points, file)
-	geometry.setAttribute('position', new BufferAttribute(positions, 3))
+	const positions = parsePoints(piece.Points, fileInfo)
+	geometry.setAttribute('position', new BufferAttribute(positions instanceof Float64Array ? new Float32Array(positions) : positions, 3))
 
 	// Verts
 
@@ -38,7 +46,7 @@ const parse = (stringFile: string): VTP => {
 	// Strips
 
 	// Polys
-	const { connectivity, offsets } = parsePolyData(piece.Polys, file)
+	const { connectivity, offsets } = parsePolyData(piece.Polys, fileInfo)
 	const indexBuffer = getIndexBufferFromConnectivity(connectivity, offsets)
 	geometry.index = new BufferAttribute(indexBuffer, 1)
 
@@ -48,10 +56,7 @@ const parse = (stringFile: string): VTP => {
 class VTPLoader extends BaseLoader<VTP> {
 	constructor( manager?: LoadingManager ) { super(manager) }
 
-	parse = (data: ArrayBuffer): VTP => {
-		const text = LoaderUtils.decodeText(data)
-		return parse(text)
-	}
+	parse = parseXMLVTP
 }
 
 export default VTPLoader
