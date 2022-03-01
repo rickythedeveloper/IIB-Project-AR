@@ -1,8 +1,7 @@
 // https://vtk.org/Wiki/VTK_XML_Formats
 // https://kitware.github.io/vtk-examples/site/VTKFileFormats/#vtk-file-formats
 
-import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
-import { SHADER_PROPERTY_PREFIX } from '../../constants'
+import { BufferAttribute, BufferGeometry, LoadingManager } from 'three'
 import { getPropertyVariableNameInShader } from '../../three_utils/shaders'
 import BaseLoader from './BaseLoader'
 import { Extent, fileToJson } from './utils'

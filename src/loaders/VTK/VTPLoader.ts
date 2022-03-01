@@ -1,10 +1,9 @@
-import { BufferAttribute, BufferGeometry, LoaderUtils, LoadingManager } from 'three'
-import { SHADER_PROPERTY_PREFIX } from '../../constants'
+import { BufferAttribute, BufferGeometry, LoadingManager } from 'three'
 import { getPropertyVariableNameInShader } from '../../three_utils/shaders'
 import BaseLoader from './BaseLoader'
 import { fileToJson } from './utils'
 import { getIndexBufferFromConnectivity, parsePointData, parsePoints, parsePolyData } from './utils/parse'
-import { NumberArray, Property, TypedArray, VTKFile, VTKFileInfo } from './types'
+import { Property, VTKFile, VTKFileInfo } from './types'
 
 interface VTP {
 	type: 'VTP'
