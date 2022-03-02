@@ -1,15 +1,21 @@
+import { Property } from '../components/PropertyInspector'
 import { SHADER_COLOR_MAP, SHADER_PROPERTY_PREFIX } from '../constants'
 
 export const getPropertyVariableNameInShader = (propertyName: string): string => SHADER_PROPERTY_PREFIX + propertyName.replace(/\s/g, '_')
 
-export const vertexShader = (property: string, min: number, max: number) => `
-	attribute float ${getPropertyVariableNameInShader(property)};
-	varying float propertyValueNormalized;
-	void main() {
-		propertyValueNormalized = (${getPropertyVariableNameInShader(property)} - (${min.toFixed(20)})) / (${max.toFixed(20)} - (${min.toFixed(20)}));
-		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-	}
-`
+export const vertexShader = (property: Property, min: number, max: number) => {
+	const propertyVariableName = getPropertyVariableNameInShader(property.name)
+	const minValue = min.toFixed(20), maxValue = max.toFixed(20)
+	return `
+		attribute float ${propertyVariableName};
+		varying float propertyValueNormalized;
+		void main() {
+			propertyValueNormalized = 
+			(${propertyVariableName} - (${minValue})) / (${maxValue} - (${minValue}));
+			gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+		}
+	`
+}
 
 export const fragmentShader = (): string => `
 	uniform sampler2D ${SHADER_COLOR_MAP};

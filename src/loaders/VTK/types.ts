@@ -17,7 +17,7 @@ export interface DataArray {
 	attributes: {
 		type: DataType
 		Name: string
-		NumberOfComponents: string
+		NumberOfComponents?: string
 		format: DataFormat
 		RangeMin: string
 		RangeMax: string
@@ -102,6 +102,7 @@ export interface Property {
 	min: number
 	max: number
 	data: NumberArray
+	numComponents: number
 }
 
 export const typedArrayConstructorMap = {

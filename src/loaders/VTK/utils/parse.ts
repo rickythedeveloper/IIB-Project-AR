@@ -79,7 +79,8 @@ export const parsePointData = (pointData: PointData, fileInfo: VTKFileInfo) => {
 			name: dataArray.attributes.Name,
 			min: Number(dataArray.attributes.RangeMin),
 			max: Number(dataArray.attributes.RangeMax),
-			data: propertyData
+			data: propertyData,
+			numComponents: dataArray.attributes.NumberOfComponents ? parseInt(dataArray.attributes.NumberOfComponents) : 1
 		})
 	}
 	return properties

@@ -33,12 +33,12 @@ import { interpolateRdBu } from 'd3-scale-chromatic'
 import { Property } from '../components/PropertyInspector'
 
 const updateMeshVertexShader = (mesh: Mesh<BufferGeometry, ShaderMaterial>, property: Property) => {
-	mesh.material.vertexShader = vertexShader(property.name, property.min, property.max)
+	mesh.material.vertexShader = vertexShader(property, property.min, property.max)
 }
 
 const getMesh = (geometry: BufferGeometry, initialProperty: Property, opacity: number): Mesh<BufferGeometry, ShaderMaterial> => {
 	const material = new ShaderMaterial({
-		vertexShader: vertexShader(initialProperty.name, initialProperty.min, initialProperty.max),
+		vertexShader: vertexShader(initialProperty, initialProperty.min, initialProperty.max),
 		fragmentShader: fragmentShader(),
 		transparent: true,
 		side: DoubleSide,
@@ -56,8 +56,8 @@ const getPropertyInspector = (properties: Property[], meshes: Mesh<BufferGeometr
 		(newProperty) => {
 			for (const mesh of meshes) updateMeshVertexShader(mesh, newProperty)
 		},
-		(min, max, propertyName) => {
-			for (const mesh of meshes) mesh.material.vertexShader = vertexShader(propertyName, min, max)
+		(min, max, property) => {
+			for (const mesh of meshes) mesh.material.vertexShader = vertexShader(property, min, max)
 		}
 	)
 }

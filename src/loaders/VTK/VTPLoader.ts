@@ -3,7 +3,7 @@ import { getPropertyVariableNameInShader } from '../../three_utils/shaders'
 import BaseLoader from './BaseLoader'
 import { fileToJson } from './utils'
 import { getIndexBufferFromConnectivity, parsePointData, parsePoints, parsePolyData } from './utils/parse'
-import { Property, VTKFile, VTKFileInfo } from './types'
+import { NumberArray, Property, VTKFile, VTKFileInfo } from './types'
 
 interface VTP {
 	type: 'VTP'
@@ -28,8 +28,18 @@ const parseXMLVTP = (fileBuffer: ArrayBuffer): VTP => {
 	// PointData
 	const properties = parsePointData(piece.PointData, fileInfo)
 	properties.forEach(p => {
-		const data = p.data instanceof Float64Array ? new Float32Array(p.data) : p.data
-		geometry.setAttribute(getPropertyVariableNameInShader(p.name), new BufferAttribute(data, 1))
+		let bufferData: NumberArray
+		if (p.numComponents === 1) {
+			bufferData = p.data instanceof Float64Array ? new Float32Array(p.data) : p.data
+		} else {
+			bufferData = new Float32Array(p.data.length / p.numComponents)
+			for (let i = 0; i < p.data.length; i += p.numComponents) {
+				let squareSum = 0
+				for (let j = 0; j < p.numComponents; j++) squareSum += p.data[i + j] ** 2
+				bufferData[i / p.numComponents] = Math.sqrt(squareSum)
+			}
+		}
+		geometry.setAttribute(getPropertyVariableNameInShader(p.name), new BufferAttribute(bufferData, 1))
 	})
 
 	// CellData
