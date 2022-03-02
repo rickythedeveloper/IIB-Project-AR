@@ -11,6 +11,5 @@ The entry point of the website is `index.html` in the top directory. This HTML f
 
 ## How to Start Developing
 1. Clone this repo
-1. download part of the simulation data `https://dl.dropboxusercontent.com/s/0mmd7dczala0ljd/values_sch_all.bin` into the `data` folder as `values_sch_all.bin`. This file was too large to store on Git.
-1. In the project directory on Terminal, do `npm install` to install Typescript and the type declarations for Three.js
-1. `npm run compile` to compile `.ts` files in `src` folder into `.js` files in `build` folder
+2. In the project directory on Terminal, do `npm install` to install all dependencies including Typescript and the type declarations for Three.js etc.
+3. `npm run build` to compile `.ts` files in `src` folder into `bundle.js` in `build` folder.

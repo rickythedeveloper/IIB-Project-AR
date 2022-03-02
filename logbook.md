@@ -156,3 +156,6 @@ Used the sign of w to correct it.
 ## 08/02
 - refine VTSLoader
 - show property options
+
+## 02/03
+- had a look at [ear clipping](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf) for Lines in vtp files, but Lines may not form a closed polygon, so i don't know what to do.

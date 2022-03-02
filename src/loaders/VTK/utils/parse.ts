@@ -1,11 +1,11 @@
 import { toByteArray } from 'base64-js'
 import { Axis } from '../../../three_utils'
 import {
+	ConnectivityAndOffset,
 	DataArray,
 	NumberArray,
 	PointData,
 	Points,
-	Polys,
 	Property,
 	VTKFileInfo,
 	typedArrayConstructorMap
@@ -85,15 +85,18 @@ export const parsePointData = (pointData: PointData, fileInfo: VTKFileInfo) => {
 	return properties
 }
 
-export const parsePolyData = (polys: Polys, fileInfo: VTKFileInfo) => {
+export const parsePolyData = (polys: ConnectivityAndOffset, fileInfo: VTKFileInfo) => {
 	const polysDataArrays = polys.DataArray
 	const [connectivity, offsets] = polysDataArrays.map(d => {
 		const typedArray = getDataFromDataArray(fileInfo, d)
 		if (typedArray instanceof BigInt64Array || typedArray instanceof BigUint64Array) {
 			let requiresBigInt = false
-			typedArray.forEach(val => {
-				if (val > Number.MAX_SAFE_INTEGER) requiresBigInt = true
-			})
+			for (const val of typedArray) {
+				if (val > Number.MAX_SAFE_INTEGER) {
+					requiresBigInt = true
+					break
+				}
+			}
 			if (requiresBigInt) throw new Error(`${d.attributes.Name} array requires bigint`)
 			return typedArray instanceof BigInt64Array ? Int32Array.from(typedArray, (bigint) => Number(bigint)) : Uint32Array.from(typedArray, (bigint) => Number(bigint))
 		}
@@ -184,8 +187,9 @@ export const getIndexBufferFromConnectivity = (connectivity: NumberArray, offset
 		const jump = offset - lastOffset
 		if (jump === 3) {
 			indices.push(...connectivity.slice(lastOffset, offset))
+		} else {
+			throw new Error('jump is not valid')
 		}
-		// TODO implement for jump larger than 3
 		lastOffset = offset
 	}
 	return new Uint32Array(indices)

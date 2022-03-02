@@ -50,17 +50,17 @@ export interface PieceAttributes {
 	Extent?: string
 }
 
-export interface Polys { DataArray: [DataArray, DataArray] }
+export interface ConnectivityAndOffset { DataArray: [DataArray, DataArray] }
 
 export interface Piece {
 	attributes: PieceAttributes
 	PointData: PointData
 	Points: Points
 	Coordinates: [DataArray, DataArray, DataArray]
-	Verts: [DataArray, DataArray]
-	Lines: [DataArray, DataArray]
-	Strips: [DataArray, DataArray]
-	Polys: Polys
+	Verts: ConnectivityAndOffset
+	Lines: ConnectivityAndOffset
+	Strips: ConnectivityAndOffset
+	Polys: ConnectivityAndOffset
 	Cells: [DataArray, DataArray, DataArray]
 }
 

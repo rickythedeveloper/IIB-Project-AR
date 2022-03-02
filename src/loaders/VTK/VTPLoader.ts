@@ -45,9 +45,11 @@ const parseXMLVTP = (fileBuffer: ArrayBuffer): VTP => {
 	// Strips
 
 	// Polys
-	const { connectivity, offsets } = parsePolyData(piece.Polys, fileInfo)
-	const indexBuffer = getIndexBufferFromConnectivity(connectivity, offsets)
-	geometry.index = new BufferAttribute(indexBuffer, 1)
+	const { connectivity: polyConnectivity, offsets: polyOffsets } = parsePolyData(piece.Polys, fileInfo)
+	if (polyConnectivity.length > 0 && polyOffsets.length > 0) {
+		const indexBuffer = getIndexBufferFromConnectivity(polyConnectivity, polyOffsets)
+		geometry.index = new BufferAttribute(indexBuffer, 1)
+	}
 
 	return { type: 'VTP', geometry, properties }
 }
