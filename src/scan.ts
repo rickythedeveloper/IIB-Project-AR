@@ -10,7 +10,8 @@ const zeroQuaternion = new Quaternion(0, 0, 0, 1)
 const RECORD_INTERVAL = 20
 const UPDATE_INTERVAL = 500
 const MAX_MARKER_DISTANCE = 100
-const MIN_MEASUREMENTS = 1000
+const MIN_MEASUREMENTS = 500
+const MAX_MEASUREMENTS = 5000
 const MAX_VARIANCE = 0.05
 
 interface MarkerPairInfo {
@@ -52,6 +53,8 @@ const recordValues = (markers: Object3D[], markerPairMatrix: Matrix<MarkerPairIn
 			if (i === j) continue
 			const rel = calculateRelative(markers[i], markers[j])
 			if (rel === null) continue
+			while (markerPairMatrix[i][j].recordedRelativePositions.length >= MAX_MEASUREMENTS) markerPairMatrix[i][j].recordedRelativePositions.shift()
+			while (markerPairMatrix[i][j].recordedRelativeQuaternions.length >= MAX_MEASUREMENTS) markerPairMatrix[i][j].recordedRelativeQuaternions.shift()
 			markerPairMatrix[i][j].recordedRelativePositions.push(rel.position)
 			markerPairMatrix[i][j].recordedRelativeQuaternions.push(rel.quaternion)
 		}
