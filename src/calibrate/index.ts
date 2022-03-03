@@ -6,11 +6,12 @@ import {
 	Group,
 	Mesh,
 	Object3D,
-	PointLight,
-	ShaderMaterial
+	PointLight, Quaternion,
+	ShaderMaterial, Vector3
 } from 'three'
-import { createOption, createSlider } from '../components/generic'
+import { Option as OptionInfo, createDropdown, createOption, createSlider } from '../components/generic'
 import PropertyInspector from '../components/PropertyInspector'
+import SliderControl from '../components/SliderControl'
 import { getIndexBufferFromExtent } from '../loaders/VTK/utils/parse'
 import { Axis } from '../three_utils'
 import { fragmentShader, vertexShader } from '../three_utils/shaders'
@@ -31,6 +32,8 @@ import VTSLoader from '../loaders/VTK/VTSLoader'
 import VTPLoader from '../loaders/VTK/VTPLoader'
 import { interpolateRdBu } from 'd3-scale-chromatic'
 import { Property } from '../components/PropertyInspector'
+
+const OBJECT_CONTROL_INTERVAL = 100
 
 const updateMeshVertexShader = (mesh: Mesh<BufferGeometry, ShaderMaterial>, property: Property) => {
 	mesh.material.vertexShader = vertexShader(property, property.min, property.max)
@@ -60,6 +63,26 @@ const getPropertyInspector = (properties: Property[], meshes: Mesh<BufferGeometr
 			for (const mesh of meshes) mesh.material.vertexShader = vertexShader(property, min, max)
 		}
 	)
+}
+
+enum ObjectControlCommand {
+	translateX,
+	translateY,
+	translateZ,
+	rotateX,
+	rotateY,
+	rotateZ,
+}
+
+const getObjectControlCommandString = (command: ObjectControlCommand): string => {
+	switch (command) {
+	case ObjectControlCommand.translateX: return 'Translate X'
+	case ObjectControlCommand.translateY: return 'Translate Y'
+	case ObjectControlCommand.translateZ: return 'Translate Z'
+	case ObjectControlCommand.rotateX: return 'Rotate X'
+	case ObjectControlCommand.rotateY: return 'Rotate Y'
+	case ObjectControlCommand.rotateZ: return 'Rotate Z'
+	}
 }
 
 const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Object3D[]) => void, controlPanel: HTMLDivElement) => {
@@ -156,6 +179,8 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 	uploadButton.style.pointerEvents = 'auto' // enable mouse events for this element
 	controlPanel.appendChild(uploadButton)
 
+	let objectControlFunction = () => {}
+
 	const addCalibratableObject = (object: Object3D) => {
 		const objectControl = createObjectControlForObject(
 			object,
@@ -176,6 +201,36 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 		)
 		arena.addObjects(object, objectControl.container)
 		calibratableObjects.push(object)
+
+		const options: OptionInfo[] = []
+		for (const key of Object.keys(ObjectControlCommand)) {
+			// only add option if the key is non-numeric
+			if (isNaN(Number(key))) {
+				options.push({ value: key, label: getObjectControlCommandString(ObjectControlCommand[key as keyof typeof ObjectControlCommand]) })
+			}
+		}
+		const dropdown = createDropdown(options)
+		const sliderControl = new SliderControl((value) => {
+			const seconds = OBJECT_CONTROL_INTERVAL / 1000
+			const moveDistance = value * seconds
+			const rotationAngle = value * seconds
+
+			objectControlFunction = () => {
+				const objectIndex = arena.objectIndices[object.uuid]
+				arena.arenaObjects[objectIndex].positionInArena.add(new Vector3(
+					dropdown.value === ObjectControlCommand[ObjectControlCommand.translateX] ? moveDistance : 0,
+					dropdown.value === ObjectControlCommand[ObjectControlCommand.translateY] ? moveDistance : 0,
+					dropdown.value === ObjectControlCommand[ObjectControlCommand.translateZ] ? moveDistance : 0,
+				))
+				arena.arenaObjects[objectIndex].quaternionInArena.premultiply(new Quaternion(
+					dropdown.value === ObjectControlCommand[ObjectControlCommand.rotateX] ? Math.sin(rotationAngle) : 0,
+					dropdown.value === ObjectControlCommand[ObjectControlCommand.rotateY] ? Math.sin(rotationAngle) : 0,
+					dropdown.value === ObjectControlCommand[ObjectControlCommand.rotateZ] ? Math.sin(rotationAngle) : 0,
+					Math.cos(rotationAngle)
+				))
+			}
+		})
+		controlPanel.append(dropdown, sliderControl.element)
 	}
 
 	// getProcessedData().then(({ vertices, indices, colors }) => {
@@ -199,6 +254,10 @@ const calibrate = (setup: Setup, markers: MarkerInfo[], onComplete: (objects: Ob
 			markerIndicators[i].material.color.set(arena.markers[i].visible ? VISIBLE_MARKER_COLOR : HIDDEN_MARKER_COLOR)
 		}
 	}, MARKER_INDICATOR_UPDATE_INTERVAL)
+
+	setInterval(() => {
+		objectControlFunction()
+	}, OBJECT_CONTROL_INTERVAL)
 }
 
 export default calibrate
