@@ -18,7 +18,7 @@ const { controlPanelWrapper, controlPanel } = createControlPanel()
 document.body.appendChild(controlPanelWrapper)
 
 const arSetup = setupAR()
-const markerNumbers = [0]
+const markerNumbers = [0, 1, 2, 3, 4, 5, 6, 7]
 let markers: Object3D[] = []
 let recordValueInterval: NodeJS.Timer, setValueInterval: NodeJS.Timer
 
